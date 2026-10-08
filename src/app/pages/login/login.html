@@ -9,7 +9,7 @@
       <h1>Legião de Maria</h1>
 
       <p>
-       A missão que transforma corações.
+        A missão que transforma corações.
       </p>
     </div>
   </div>
@@ -24,15 +24,24 @@
         Entre na sua conta para continuar.
       </p>
 
-      <form>
+      <form
+        #loginForm="ngForm"
+        (ngSubmit)="entrar()"
+      >
 
         <div class="form-group">
           <label for="email">E-mail</label>
 
           <input
             id="email"
+            name="email"
             type="email"
             placeholder="Digite seu e-mail"
+            autocomplete="email"
+            [(ngModel)]="email"
+            required
+            email
+            [disabled]="carregando"
           />
         </div>
 
@@ -41,17 +50,44 @@
 
           <input
             id="password"
+            name="senha"
             type="password"
             placeholder="Digite sua senha"
+            autocomplete="current-password"
+            [(ngModel)]="senha"
+            required
+            [disabled]="carregando"
           />
         </div>
 
         <div class="forgot-password">
-          <a href="#">Esqueci minha senha</a>
+          <a
+            href="#"
+            (click)="$event.preventDefault()"
+            title="Será implementado na etapa de recuperação de senha"
+          >
+            Esqueci minha senha
+          </a>
         </div>
 
-        <button type="submit" (click)="submit()">
-          Entrar
+        @if (erro) {
+          <div
+            class="login-error"
+            role="alert"
+          >
+            {{ erro }}
+          </div>
+        }
+
+        <button
+          type="submit"
+          [disabled]="carregando || loginForm.invalid"
+        >
+          @if (carregando) {
+            Entrando...
+          } @else {
+            Entrar
+          }
         </button>
 
       </form>

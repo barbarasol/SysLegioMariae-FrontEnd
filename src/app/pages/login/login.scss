@@ -129,6 +129,11 @@
   box-shadow: 0 0 0 3px rgba(20, 38, 92, 0.1);
 }
 
+.form-group input:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
 
 /* =========================
    ESQUECI SENHA
@@ -143,6 +148,28 @@
   color: #14265c;
   font-size: 14px;
   text-decoration: none;
+}
+
+.forgot-password a:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================
+   ERRO
+========================= */
+
+.login-error {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+
+  border: 1px solid #e8b4b4;
+  border-radius: 8px;
+
+  background: #fff3f3;
+  color: #a12323;
+
+  font-size: 14px;
 }
 
 
@@ -168,8 +195,13 @@
   transition: 0.2s;
 }
 
-.login-form button:hover {
+.login-form button:hover:not(:disabled) {
   background: #0e1c47;
+}
+
+.login-form button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 

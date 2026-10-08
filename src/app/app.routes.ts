@@ -11,6 +11,7 @@ import { Afiliacao } from './pages/afiliacao/afiliacao';
 import { NovaUnidade } from './pages/afiliacao/nova-unidade/nova-unidade';
 import { SolicitacoesUnidades } from './pages/afiliacao/solicitacoes-unidades/solicitacoes-unidades';
 import { VisualizarSolicitacao } from './pages/afiliacao/solicitacoes-unidades/visualizar-solicitacao/visualizar-solicitacao';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -27,6 +28,7 @@ export const routes: Routes = [
   {
     path: '',
     component: Layout,
+    canActivate: [authGuard],
     children: [
       {
         path: 'home',
@@ -73,6 +75,5 @@ export const routes: Routes = [
         component: VisualizarSolicitacao
       }
     ]
-  },
-  
+  }
 ];
