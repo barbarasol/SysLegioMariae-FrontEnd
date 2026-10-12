@@ -1,0 +1,290 @@
+<div class="novo-usuario-container">
+  <div class="page-header">
+    <h2>Novo Usuário</h2>
+
+    <p>Crie uma conta de acesso para a plataforma.</p>
+  </div>
+
+  <div class="form-card">
+    <form
+      #usuarioForm="ngForm"
+      (ngSubmit)="criar()"
+    >
+      <!-- ETAPA 1 -->
+
+      @if (etapa === 1) {
+        <div class="form-grid">
+          <div class="full-width">
+            <label>Nome Completo</label>
+
+            <input
+              type="text"
+              class="form-control"
+              name="nome"
+              placeholder="Digite o nome completo"
+              autocomplete="name"
+              [(ngModel)]="nome"
+              required
+              [disabled]="carregando"
+            />
+          </div>
+
+          <div>
+            <label>Nome Preferido</label>
+
+            <input
+              type="text"
+              class="form-control"
+              name="nomePreferido"
+              placeholder="Como a pessoa quer ser chamada"
+              [(ngModel)]="nomePreferido"
+              [disabled]="carregando"
+            />
+          </div>
+
+          <div>
+            <label>CPF</label>
+
+            <input
+              type="text"
+              class="form-control"
+              name="cpf"
+              placeholder="000.000.000-00"
+              [(ngModel)]="cpf"
+              [disabled]="carregando"
+            />
+          </div>
+
+          <div>
+            <label>Celular</label>
+
+            <input
+              type="tel"
+              class="form-control"
+              name="celular"
+              placeholder="(00) 00000-0000"
+              autocomplete="tel"
+              [(ngModel)]="celular"
+              [disabled]="carregando"
+            />
+          </div>
+
+          <div>
+            <label>E-mail</label>
+
+            <input
+              type="email"
+              class="form-control"
+              name="email"
+              placeholder="usuario@exemplo.com"
+              autocomplete="email"
+              [(ngModel)]="email"
+              required
+              email
+              [disabled]="carregando"
+            />
+          </div>
+        </div>
+      }
+
+      <!-- ETAPA 2 -->
+
+      @if (etapa === 2) {
+        <div class="form-grid">
+          <div>
+            <label>Perfil de Acesso</label>
+
+            <select
+              class="form-select"
+              name="perfilCodigo"
+              [(ngModel)]="perfilCodigo"
+              required
+              [disabled]="carregando"
+            >
+              @for (perfil of perfis; track perfil.codigo) {
+                <option [value]="perfil.codigo">
+                  {{ perfil.nome }}
+                </option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label>Status Inicial</label>
+
+            <input
+              type="text"
+              class="form-control"
+              value="Ativo"
+              disabled
+            />
+          </div>
+
+          <div>
+            <label>Senha</label>
+
+            <input
+              type="password"
+              class="form-control"
+              name="senha"
+              placeholder="Mínimo de 6 caracteres"
+              [(ngModel)]="senha"
+              required
+              minlength="6"
+              [disabled]="carregando"
+            />
+          </div>
+
+          <div>
+            <label>Confirmar Senha</label>
+
+            <input
+              type="password"
+              class="form-control"
+              name="confirmarSenha"
+              placeholder="Repita a senha"
+              [(ngModel)]="confirmarSenha"
+              required
+              [disabled]="carregando"
+            />
+          </div>
+        </div>
+
+        @if (senhasDiferentes) {
+          <div
+            class="form-alert"
+            role="alert"
+          >
+            As senhas informadas não são iguais.
+          </div>
+        }
+      }
+
+      <!-- ETAPA 3 -->
+
+      @if (etapa === 3) {
+        <div class="form-grid">
+          <div class="full-width">
+            <label>Nome Completo</label>
+
+            <input
+              type="text"
+              class="form-control"
+              [value]="nome"
+              disabled
+            />
+          </div>
+
+          <div>
+            <label>E-mail</label>
+
+            <input
+              type="text"
+              class="form-control"
+              [value]="email"
+              disabled
+            />
+          </div>
+
+          <div>
+            <label>Perfil de Acesso</label>
+
+            <input
+              type="text"
+              class="form-control"
+              [value]="nomePerfilSelecionado"
+              disabled
+            />
+          </div>
+
+          <div>
+            <label>CPF</label>
+
+            <input
+              type="text"
+              class="form-control"
+              [value]="cpf || 'Não informado'"
+              disabled
+            />
+          </div>
+
+          <div>
+            <label>Celular</label>
+
+            <input
+              type="text"
+              class="form-control"
+              [value]="celular || 'Não informado'"
+              disabled
+            />
+          </div>
+        </div>
+
+        <div class="confirmacao-aviso">
+          <i class="bi bi-info-circle"></i>
+
+          O usuário será criado com status
+          <strong>Ativo</strong> e poderá acessar a aplicação
+          imediatamente.
+        </div>
+      }
+
+      @if (erro) {
+        <div
+        style="display: block; color: #842029; background-color: #f8d7da; border: 1px solid #f5c2c7; padding: 16px; margin: 16px 0; border-radius: 8px;"
+        role="alert"
+        >
+        <strong>Não foi possível cadastrar!</strong>
+        <br>
+        {{ erro }}
+
+        </div>
+      }
+
+      @if (sucesso) {
+        <div
+          class="form-alert form-alert-sucesso"
+          role="status"
+        >
+          {{ sucesso }}
+        </div>
+      }
+
+      <div class="form-actions">
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          (click)="voltar()"
+          [disabled]="etapa === 1 || carregando"
+        >
+          Anterior
+        </button>
+
+        @if (etapa < 3) {
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="proximo()"
+            [disabled]="!etapaValida"
+          >
+            Próximo
+          </button>
+        }
+
+        @if (etapa === 3) {
+          <button
+            type="submit"
+            class="btn btn-success"
+            [disabled]="carregando || usuarioForm.invalid"
+          >
+            @if (carregando) {
+              Criando...
+            } @else {
+              Criar Usuário
+            }
+          </button>
+        }
+      </div>
+    </form>
+  </div>
+</div>

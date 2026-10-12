@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -22,7 +22,8 @@ export class Login {
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   entrar(): void {
@@ -38,10 +39,11 @@ export class Login {
     this.carregando = true;
 
     this.authService
-      .login(this.email, this.senha)
+      .login(this.email.trim(), this.senha)
       .pipe(
         finalize(() => {
           this.carregando = false;
+          this.cdr.detectChanges();
         })
       )
       .subscribe({
@@ -49,9 +51,10 @@ export class Login {
           this.router.navigate(['/home']);
         },
         error: (error: HttpErrorResponse) => {
-          this.erro =
-            error.error?.message ||
-            'Não foi possível entrar. Verifique o e-mail e a senha.';
+          this.erro = error.status === 401
+            ? 'E-mail ou senha inválidos. Tente novamente.'
+            : error.error?.message ||
+              'Não foi possível entrar. Tente novamente.';
         }
       });
   }
