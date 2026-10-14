@@ -6,10 +6,10 @@
         alt="Legião de Maria"
       />
 
-      <h1>Legião de Maria</h1>
+      <h1>Sys Legio Mariae</h1>
 
       <p>
-        A missão que transforma corações.
+        Legião de Maria, que nome bem escolhido! (Pio XI)
       </p>
     </div>
   </div>
@@ -23,6 +23,25 @@
       <p class="subtitle">
         Entre na sua conta para continuar.
       </p>
+
+      @if (aviso) {
+        <div
+          role="status"
+          style="
+            display: block;
+            color: #664d03;
+            background-color: #fff3cd;
+            border: 1px solid #ffecb5;
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: 8px;
+          "
+        >
+          <strong>Cadastro realizado!</strong>
+          <br>
+          {{ aviso }}
+        </div>
+      }
 
       <form
         #loginForm="ngForm"
@@ -93,6 +112,15 @@
           } @else {
             Entrar
           }
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-primary"
+          (click)="criarUsuario()"
+          style="width: 100%; margin-top: 12px;"
+          >
+          <i class="bi bi-person-plus"></i>
+            Criar novo usuário
         </button>
 
       </form>

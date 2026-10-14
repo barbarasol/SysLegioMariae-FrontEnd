@@ -73,3 +73,81 @@
 .sidebar-footer {
   margin-top: auto;
 }
+
+/*
+ * ACRESCENTAR AO FINAL de:
+ * src/app/components/sidebar/sidebar.scss
+ */
+
+:host {
+  --sidebar-bg-start: var(--legio-red-600);
+  --sidebar-bg-end: var(--legio-red-800);
+  --sidebar-active: var(--legio-red-900);
+  --sidebar-hover: rgba(255, 255, 255, 0.12);
+}
+
+/*
+ * Cobertura dos nomes de classe mais comuns.
+ * Mantém o HTML atual.
+ */
+.sidebar,
+.sidebar-container,
+aside {
+  background:
+    linear-gradient(
+      180deg,
+      var(--sidebar-bg-start) 0%,
+      var(--sidebar-bg-end) 100%
+    ) !important;
+  color: var(--legio-white);
+}
+
+.sidebar a,
+.sidebar-container a,
+aside a,
+.sidebar .nav-link,
+.sidebar .menu-item {
+  color: rgba(255, 255, 255, 0.94) !important;
+}
+
+.sidebar a:hover,
+.sidebar-container a:hover,
+aside a:hover,
+.sidebar .nav-link:hover,
+.sidebar .menu-item:hover {
+  background: var(--sidebar-hover) !important;
+  color: var(--legio-white) !important;
+}
+
+.sidebar a.active,
+.sidebar-container a.active,
+aside a.active,
+.sidebar .nav-link.active,
+.sidebar .menu-item.active,
+.sidebar .active {
+  background: var(--sidebar-active) !important;
+  color: var(--legio-white) !important;
+  box-shadow:
+    0 6px 16px rgba(73, 13, 16, 0.18);
+}
+
+.sidebar i,
+.sidebar-container i,
+aside i {
+  color: inherit;
+}
+
+.sidebar .brand,
+.sidebar .logo,
+.sidebar-container .brand,
+.sidebar-container .logo {
+  color: var(--legio-white);
+}
+
+.sidebar-vexilium {
+  filter:
+    brightness(0)
+    invert(1) !important;
+
+  opacity: 1;
+}

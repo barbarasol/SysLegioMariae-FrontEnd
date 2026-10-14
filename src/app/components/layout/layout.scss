@@ -7,3 +7,52 @@
   min-height: 100vh;
   box-sizing: border-box;
 }
+
+/*
+ * ACRESCENTAR AO FINAL de:
+ * src/app/components/layout/layout.scss
+ */
+
+:host {
+  display: block;
+  min-height: 100vh;
+  background: var(--legio-rose-050);
+}
+
+.layout,
+.layout-container,
+.app-layout,
+.main-layout {
+  background: var(--legio-rose-050) !important;
+}
+
+main,
+.main-content,
+.content,
+.page-content {
+  background:
+    linear-gradient(
+      180deg,
+      var(--legio-rose-025) 0%,
+      var(--legio-rose-050) 100%
+    ) !important;
+}
+
+/*
+ * Faixa superior
+ */
+header,
+.topbar,
+.header,
+.app-header {
+  background: var(--legio-white) !important;
+  border-bottom:
+    1px solid var(--legio-border) !important;
+}
+
+header h1,
+.topbar h1,
+.header h1,
+.app-header h1 {
+  color: var(--legio-red-900);
+}

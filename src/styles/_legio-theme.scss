@@ -1,0 +1,38 @@
+/*
+ * Identidade visual Sys Legio Mariae
+ *
+ * Baseada em tons de vermelho suave, vinho e fundos rosados claros.
+ * Mantém contraste adequado sem deixar a interface visualmente pesada.
+ */
+
+$legio-red-900: #651a1d;
+$legio-red-800: #7a2024;
+$legio-red-700: #8f2b2f;
+$legio-red-600: #a13b40;
+$legio-red-500: #b65357;
+
+$legio-rose-100: #f5e5e6;
+$legio-rose-050: #fbf5f5;
+$legio-rose-025: #fdf9f9;
+
+$legio-border: #e7cfd1;
+$legio-text: #3e2527;
+$legio-text-muted: #7e6668;
+$legio-white: #ffffff;
+
+:root {
+  --legio-red-900: #{$legio-red-900};
+  --legio-red-800: #{$legio-red-800};
+  --legio-red-700: #{$legio-red-700};
+  --legio-red-600: #{$legio-red-600};
+  --legio-red-500: #{$legio-red-500};
+
+  --legio-rose-100: #{$legio-rose-100};
+  --legio-rose-050: #{$legio-rose-050};
+  --legio-rose-025: #{$legio-rose-025};
+
+  --legio-border: #{$legio-border};
+  --legio-text: #{$legio-text};
+  --legio-text-muted: #{$legio-text-muted};
+  --legio-white: #{$legio-white};
+}

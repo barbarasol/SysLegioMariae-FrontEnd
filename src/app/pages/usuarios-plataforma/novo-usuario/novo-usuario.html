@@ -2,7 +2,7 @@
   <div class="page-header">
     <h2>Novo Usuário</h2>
 
-    <p>Crie uma conta de acesso para a plataforma.</p>
+    <p>Crie sua conta de acesso. As permissões serão definidas posteriormente.</p>
   </div>
 
   <div class="form-card">
@@ -91,25 +91,7 @@
 
       @if (etapa === 2) {
         <div class="form-grid">
-          <div>
-            <label>Perfil de Acesso</label>
-
-            <select
-              class="form-select"
-              name="perfilCodigo"
-              [(ngModel)]="perfilCodigo"
-              required
-              [disabled]="carregando"
-            >
-              @for (perfil of perfis; track perfil.codigo) {
-                <option [value]="perfil.codigo">
-                  {{ perfil.nome }}
-                </option>
-              }
-            </select>
-          </div>
-
-          <div>
+<div>
             <label>Status Inicial</label>
 
             <input
@@ -185,19 +167,7 @@
               disabled
             />
           </div>
-
-          <div>
-            <label>Perfil de Acesso</label>
-
-            <input
-              type="text"
-              class="form-control"
-              [value]="nomePerfilSelecionado"
-              disabled
-            />
-          </div>
-
-          <div>
+<div>
             <label>CPF</label>
 
             <input
@@ -223,9 +193,7 @@
         <div class="confirmacao-aviso">
           <i class="bi bi-info-circle"></i>
 
-          O usuário será criado com status
-          <strong>Ativo</strong> e poderá acessar a aplicação
-          imediatamente.
+          O usuário será criado com status <strong>Pendente de ativação</strong> e sem perfil de acesso. Um administrador definirá as permissões posteriormente.
         </div>
       }
 

@@ -22,11 +22,22 @@ export const routes: Routes = [
       import('./pages/login/login')
         .then(m => m.Login)
   },
+
+  /*
+   * Cadastro público de usuário.
+   * Usa o mesmo componente da área administrativa.
+   */
+  {
+    path: 'cadastro',
+    component: NovoUsuario
+  },
+
   {
     path: '',
     redirectTo: 'login',
     pathMatch: 'full'
   },
+
   {
     path: '',
     component: Layout,
