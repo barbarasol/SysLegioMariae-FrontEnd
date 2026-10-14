@@ -1,171 +1,681 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
-import { mensagemDeErro, UsuarioService } from '../../services/usuario.service';
-import { PerfilDisponivel } from '../../models/usuario.model';
-import { ToastService } from '../../services/toast.service';
+import {
+  CommonModule
+} from '@angular/common';
+
+import {
+  HttpClient,
+  HttpParams
+} from '@angular/common/http';
+
+import {
+  ChangeDetectorRef,
+  Component,
+  OnInit
+} from '@angular/core';
+
+import {
+  FormsModule
+} from '@angular/forms';
+
+import {
+  finalize
+} from 'rxjs';
+
+import {
+  environment
+} from '../../../environments/environment';
+
+type CampoOrdenacao =
+  | 'nome'
+  | 'cpf'
+  | 'celular'
+  | 'email';
+
+type DirecaoOrdenacao =
+  | 'asc'
+  | 'desc';
+
+export interface UsuarioLista {
+  id: string;
+  pessoaId?: string;
+  nome: string;
+  nomePreferido?: string | null;
+  cpf: string | null;
+  celular: string | null;
+  email: string;
+  status: string;
+  perfisGlobais: string[];
+}
+
+interface UsuarioEdicao
+  extends UsuarioLista {
+  perfilCodigo: string;
+}
+
+interface PerfilAcessoGlobal {
+  id: string;
+  codigo: string;
+}
+
+interface RespostaUsuarios {
+  usuarios:
+    UsuarioLista[];
+}
+
+interface RespostaPerfis {
+  perfis:
+    PerfilAcessoGlobal[];
+}
 
 @Component({
+  selector:
+    'app-novo-usuario',
+
+  standalone:
+    true,
+
   imports: [
+    CommonModule,
     FormsModule
   ],
-  selector: 'app-novo-usuario',
-  styleUrl: './novo-usuario.scss',
-  templateUrl: './novo-usuario.html',
-})
-export class NovoUsuario {
-  etapa = 1;
-  
-  nome = '';
-  nomePreferido = '';
-  cpf = '';
-  celular = '';
-  email = '';
-  perfilCodigo = 'PLATFORM_ADMIN';
-  senha = '';
-  confirmarSenha = '';
 
-  /**
-   * Somente perfis de escopo GLOBAL. Os perfis de unidade
-   * (ADMIN_UNIDADE, OPERADOR, MEMBRO...) precisam de unidade_id
-   * e são concedidos via legio.usuario_unidade_perfil.
-   */
-  perfis: PerfilDisponivel[] = [
-    {
-      codigo: 'PLATFORM_OWNER',
-      nome: 'Proprietário da plataforma',
-      escopo: 'GLOBAL'
-    },
-    {
-      codigo: 'PLATFORM_ADMIN',
-      nome: 'Administrador da plataforma',
-      escopo: 'GLOBAL'
-    },
-    {
-      codigo: 'PLATFORM_FINANCEIRO',
-      nome: 'Financeiro da plataforma',
-      escopo: 'GLOBAL'
-    },
-    {
-      codigo: 'PLATFORM_SUPORTE',
-      nome: 'Suporte da plataforma',
-      escopo: 'GLOBAL'
-    }
-  ];
+  templateUrl:
+    './novo-usuario.html',
+
+  styleUrl:
+    './novo-usuario.scss'
+})
+export class NovoUsuario
+implements OnInit {
+
+  filtroNome = '';
+  filtroCpf = '';
+  filtroCelular = '';
+  filtroEmail = '';
+
+  usuarios:
+    UsuarioLista[] = [];
+
+  perfisDisponiveis:
+    PerfilAcessoGlobal[] = [];
+
+  carregando = false;
+  carregandoPerfis = false;
 
   erro = '';
-  sucesso = '';
-  carregando = false;
+
+  campoOrdenacao:
+    CampoOrdenacao =
+      'nome';
+
+  direcaoOrdenacao:
+    DirecaoOrdenacao =
+      'asc';
+
+  usuarioEdicao:
+    UsuarioEdicao | null =
+      null;
+
+  salvandoEdicao = false;
+  erroEdicao = '';
+
+  excluindoId:
+    string | null =
+      null;
 
   constructor(
-    private usuarioService: UsuarioService,
-    private cdr: ChangeDetectorRef,
-    private toastService: ToastService
+    private http:
+      HttpClient,
+
+    private cdr:
+      ChangeDetectorRef
   ) {}
 
-  get nomePerfilSelecionado(): string {
-    return (
-      this.perfis.find(
-        (perfil) => perfil.codigo === this.perfilCodigo
-      )?.nome ?? this.perfilCodigo
-    );
+  ngOnInit(): void {
+    this.carregarPerfisGlobais();
+    this.filtrar();
   }
 
-  get senhasDiferentes(): boolean {
-    return (
-      this.confirmarSenha.length > 0 &&
-      this.senha !== this.confirmarSenha
-    );
-  }
+  carregarPerfisGlobais():
+  void {
 
-  get etapaValida(): boolean {
-    if (this.etapa === 1) {
-      return (
-        !!this.nome.trim() &&
-        !!this.email.trim()
-      );
-    }
+    this.carregandoPerfis =
+      true;
 
-    if (this.etapa === 2) {
-      return (
-        !!this.perfilCodigo &&
-        this.senha.length >= 6 &&
-        !this.senhasDiferentes
-      );
-    }
-
-    return true;
-  }
-
-  proximo(): void {
-    if (this.etapa < 3 && this.etapaValida) {
-      this.erro = '';
-      this.etapa++;
-    }
-  }
-
-  voltar(): void {
-    if (this.etapa > 1) {
-      this.erro = '';
-      this.etapa--;
-    }
-  }
-
-  criar(): void {
-    if (this.carregando || !this.etapaValida) {
-      return;
-    }
-
-    this.erro = '';
-    this.sucesso = '';
-    this.carregando = true;
-
-    this.usuarioService
-      .criar({
-        nome: this.nome,
-        nomePreferido: this.nomePreferido,
-        email: this.email,
-        cpf: this.cpf,
-        celular: this.celular,
-        senha: this.senha,
-        perfilCodigo: this.perfilCodigo
-      })
+    this.http
+      .get<RespostaPerfis>(
+        `${environment.apiUrl}/usuarios/perfis-globais`
+      )
       .pipe(
         finalize(() => {
-          this.carregando = false;
-          this.cdr.detectChanges();
+          this.carregandoPerfis =
+            false;
+
+          this.cdr
+            .detectChanges();
         })
       )
       .subscribe({
-        next: (resultado) => {
-          this.toastService.sucesso(
-            `Usuário ${resultado.usuario.email} criado com sucesso.`
-          )
-          this.etapa = 1;
-          this.limpar();
-        },
-        error: (error: HttpErrorResponse) => {
-          this.toastService.erro(
-            mensagemDeErro(
-              error,
-              'Não foi possível criar o usuário. Tente novamente.'
+        next: (
+          resultado
+        ) => {
+
+          this.perfisDisponiveis =
+            Array.isArray(
+              resultado?.perfis
             )
+              ? resultado.perfis
+              : [];
+
+          this.cdr
+            .detectChanges();
+        },
+
+        error: (
+          error
+        ) => {
+
+          console.error(
+            'Erro ao carregar perfis globais:',
+            error
           );
+
+          this.perfisDisponiveis =
+            [];
+
+          this.cdr
+            .detectChanges();
         }
       });
   }
 
-  private limpar(): void {
-    this.nome = '';
-    this.nomePreferido = '';
-    this.cpf = '';
-    this.celular = '';
-    this.email = '';
-    this.perfilCodigo = 'PLATFORM_ADMIN';
-    this.senha = '';
-    this.confirmarSenha = '';
+  filtrar(): void {
+
+    if (
+      this.carregando
+    ) {
+      return;
+    }
+
+    let params =
+      new HttpParams();
+
+    const nome =
+      this.filtroNome
+        .trim();
+
+    const cpf =
+      this.filtroCpf
+        .trim();
+
+    const celular =
+      this.filtroCelular
+        .trim();
+
+    const email =
+      this.filtroEmail
+        .trim();
+
+    if (nome) {
+      params =
+        params.set(
+          'nome',
+          nome
+        );
+    }
+
+    if (cpf) {
+      params =
+        params.set(
+          'cpf',
+          cpf
+        );
+    }
+
+    if (celular) {
+      params =
+        params.set(
+          'celular',
+          celular
+        );
+    }
+
+    if (email) {
+      params =
+        params.set(
+          'email',
+          email
+        );
+    }
+
+    params =
+      params
+        .set(
+          'ordenarPor',
+          this.campoOrdenacao
+        )
+        .set(
+          'direcao',
+          this.direcaoOrdenacao
+        );
+
+    this.carregando =
+      true;
+
+    this.erro = '';
+
+    this.http
+      .get<RespostaUsuarios>(
+        `${environment.apiUrl}/usuarios`,
+        {
+          params
+        }
+      )
+      .pipe(
+        finalize(() => {
+
+          this.carregando =
+            false;
+
+          this.cdr
+            .detectChanges();
+        })
+      )
+      .subscribe({
+        next: (
+          resultado
+        ) => {
+
+          this.usuarios =
+            Array.isArray(
+              resultado?.usuarios
+            )
+              ? resultado.usuarios
+              : [];
+
+          this.cdr
+            .detectChanges();
+        },
+
+        error: (
+          error
+        ) => {
+
+          console.error(
+            'Erro ao listar usuários:',
+            error
+          );
+
+          this.usuarios = [];
+
+          this.erro =
+            error?.error?.message ??
+            'Não foi possível carregar os usuários.';
+
+          this.cdr
+            .detectChanges();
+        }
+      });
+  }
+
+  perfilUsuario(
+    usuario:
+      UsuarioLista
+  ): string {
+
+    if (
+      !usuario.perfisGlobais ||
+      usuario.perfisGlobais.length === 0
+    ) {
+      return '-';
+    }
+
+    return usuario
+      .perfisGlobais
+      .join(', ');
+  }
+
+  limparFiltros(): void {
+
+    this.filtroNome = '';
+    this.filtroCpf = '';
+    this.filtroCelular = '';
+    this.filtroEmail = '';
+
+    this.campoOrdenacao =
+      'nome';
+
+    this.direcaoOrdenacao =
+      'asc';
+
+    this.filtrar();
+  }
+
+  ordenar(
+    campo:
+      CampoOrdenacao
+  ): void {
+
+    if (
+      this.carregando
+    ) {
+      return;
+    }
+
+    if (
+      this.campoOrdenacao ===
+      campo
+    ) {
+
+      this.direcaoOrdenacao =
+        this.direcaoOrdenacao ===
+          'asc'
+          ? 'desc'
+          : 'asc';
+
+    } else {
+
+      this.campoOrdenacao =
+        campo;
+
+      this.direcaoOrdenacao =
+        'asc';
+    }
+
+    this.filtrar();
+  }
+
+  iconeOrdenacao(
+    campo:
+      CampoOrdenacao
+  ): string {
+
+    if (
+      this.campoOrdenacao !==
+      campo
+    ) {
+      return 'bi-arrow-down-up';
+    }
+
+    return (
+      this.direcaoOrdenacao ===
+      'asc'
+        ? 'bi-sort-down'
+        : 'bi-sort-up'
+    );
+  }
+
+  novoUsuario():
+  void {
+
+    console.log(
+      'Novo usuário'
+    );
+  }
+
+  editarUsuario(
+    usuario:
+      UsuarioLista
+  ): void {
+
+    this.erroEdicao = '';
+
+    const perfilAtual =
+      usuario
+        .perfisGlobais?.[0] ??
+      '';
+
+    this.usuarioEdicao = {
+      ...usuario,
+
+      nomePreferido:
+        usuario.nomePreferido ??
+        '',
+
+      cpf:
+        usuario.cpf ??
+        '',
+
+      celular:
+        usuario.celular ??
+        '',
+
+      perfisGlobais:
+        [
+          ...(usuario
+            .perfisGlobais ??
+            [])
+        ],
+
+      perfilCodigo:
+        perfilAtual
+    };
+
+    /*
+     * Se a listagem de perfis ainda
+     * não chegou, tenta novamente.
+     */
+    if (
+      this.perfisDisponiveis
+        .length === 0 &&
+      !this.carregandoPerfis
+    ) {
+      this.carregarPerfisGlobais();
+    }
+
+    this.cdr
+      .detectChanges();
+  }
+
+  cancelarEdicao():
+  void {
+
+    if (
+      this.salvandoEdicao
+    ) {
+      return;
+    }
+
+    this.usuarioEdicao =
+      null;
+
+    this.erroEdicao =
+      '';
+
+    this.cdr
+      .detectChanges();
+  }
+
+  salvarEdicao():
+  void {
+
+    if (
+      !this.usuarioEdicao ||
+      this.salvandoEdicao
+    ) {
+      return;
+    }
+
+    const nome =
+      this.usuarioEdicao
+        .nome
+        .trim();
+
+    const email =
+      this.usuarioEdicao
+        .email
+        .trim();
+
+    const perfilCodigo =
+      this.usuarioEdicao
+        .perfilCodigo
+        .trim();
+
+    if (!nome) {
+      this.erroEdicao =
+        'Informe o nome completo.';
+      return;
+    }
+
+    if (!email) {
+      this.erroEdicao =
+        'Informe o e-mail.';
+      return;
+    }
+
+    if (!perfilCodigo) {
+      this.erroEdicao =
+        'Selecione o perfil de acesso.';
+      return;
+    }
+
+    this.salvandoEdicao =
+      true;
+
+    this.erroEdicao = '';
+
+    this.http
+      .put<{
+        usuario:
+          UsuarioLista;
+      }>(
+        `${environment.apiUrl}/usuarios/${this.usuarioEdicao.id}`,
+        {
+          nome,
+
+          nomePreferido:
+            this.usuarioEdicao
+              .nomePreferido ??
+            '',
+
+          cpf:
+            this.usuarioEdicao
+              .cpf ??
+            '',
+
+          celular:
+            this.usuarioEdicao
+              .celular ??
+            '',
+
+          email,
+
+          status:
+            this.usuarioEdicao
+              .status,
+
+          perfilCodigo
+        }
+      )
+      .pipe(
+        finalize(() => {
+
+          this.salvandoEdicao =
+            false;
+
+          this.cdr
+            .detectChanges();
+        })
+      )
+      .subscribe({
+        next: () => {
+
+          this.usuarioEdicao =
+            null;
+
+          this.filtrar();
+
+          this.cdr
+            .detectChanges();
+        },
+
+        error: (
+          error
+        ) => {
+
+          console.error(
+            'Erro ao editar usuário:',
+            error
+          );
+
+          this.erroEdicao =
+            error?.error?.message ??
+            'Não foi possível atualizar o usuário.';
+
+          this.cdr
+            .detectChanges();
+        }
+      });
+  }
+
+  excluirUsuario(
+    usuario:
+      UsuarioLista
+  ): void {
+
+    if (
+      this.excluindoId
+    ) {
+      return;
+    }
+
+    const confirmou =
+      window.confirm(
+        `Deseja realmente excluir o usuário "${usuario.nome}"?\n\n` +
+        'A exclusão será lógica: o acesso será inativado e o histórico será preservado.'
+      );
+
+    if (!confirmou) {
+      return;
+    }
+
+    this.excluindoId =
+      usuario.id;
+
+    this.erro = '';
+
+    this.http
+      .delete<{
+        message:
+          string;
+      }>(
+        `${environment.apiUrl}/usuarios/${usuario.id}`
+      )
+      .pipe(
+        finalize(() => {
+
+          this.excluindoId =
+            null;
+
+          this.cdr
+            .detectChanges();
+        })
+      )
+      .subscribe({
+        next: () => {
+
+          this.filtrar();
+
+          this.cdr
+            .detectChanges();
+        },
+
+        error: (
+          error
+        ) => {
+
+          console.error(
+            'Erro ao excluir usuário:',
+            error
+          );
+
+          this.erro =
+            error?.error?.message ??
+            'Não foi possível excluir o usuário.';
+
+          this.cdr
+            .detectChanges();
+        }
+      });
   }
 }
-
-
