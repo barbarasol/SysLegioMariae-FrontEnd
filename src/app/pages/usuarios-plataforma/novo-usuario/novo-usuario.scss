@@ -1,0 +1,119 @@
+.novo-usuario-container {
+  min-height: 100vh;
+  background: #f5f6fa;
+  padding: 40px;
+}
+
+.page-header {
+  margin-bottom: 25px;
+}
+
+.page-header h2 {
+  color: #14265c;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.page-header p {
+  color: #666;
+}
+
+.form-card {
+  background: white;
+
+  border-radius: 12px;
+
+  padding: 25px;
+
+  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+
+.form-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, 1fr);
+
+  gap: 20px;
+}
+
+.full-width {
+  grid-column: span 2;
+}
+
+.form-grid label {
+  display: block;
+
+  margin-bottom: 6px;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.form-actions {
+  margin-top: 30px;
+
+  display: flex;
+  justify-content: flex-end;
+
+  gap: 10px;
+}
+
+.btn-primary {
+  background: #14265c;
+  border-color: #14265c;
+}
+
+.form-alert {
+  margin-top: 20px;
+
+  padding: 12px 16px;
+
+  border-radius: 8px;
+
+  background: #fdeaee;
+  border: 1px solid #f5c2c7;
+
+  color: #842029;
+
+  font-size: 14px;
+}
+
+.form-alert-sucesso {
+  background: #e7f7ee;
+  border-color: #badbcc;
+
+  color: #198754;
+}
+
+.confirmacao-aviso {
+  margin-top: 20px;
+
+  padding: 14px 16px;
+
+  border-radius: 8px;
+
+  background: #eef2fb;
+
+  color: #14265c;
+
+  font-size: 14px;
+}
+
+.confirmacao-aviso i {
+  margin-right: 8px;
+}
+
+@media (max-width: 720px) {
+  .novo-usuario-container {
+    padding: 20px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .full-width {
+    grid-column: span 1;
+  }
+}

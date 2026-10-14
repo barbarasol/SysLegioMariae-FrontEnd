@@ -12,7 +12,8 @@ import { NovaUnidade } from './pages/afiliacao/nova-unidade/nova-unidade';
 import { SolicitacoesUnidades } from './pages/afiliacao/solicitacoes-unidades/solicitacoes-unidades';
 import { VisualizarSolicitacao } from './pages/afiliacao/solicitacoes-unidades/visualizar-solicitacao/visualizar-solicitacao';
 import { authGuard } from './core/guards/auth.guard';
-import { NovoUsuario } from './pages/novo-usuario/novo-usuario';
+import { ListagemUsuarios } from './pages/usuarios-plataforma/listagem-usuarios/listagem-usuarios';
+import { NovoUsuario } from './pages/usuarios-plataforma/novo-usuario/novo-usuario';
 
 export const routes: Routes = [
   {
@@ -76,7 +77,11 @@ export const routes: Routes = [
         component: VisualizarSolicitacao
       },
       {
-        path: 'cadastro-usuario',
+        path: 'listagem-usuarios',
+        component: ListagemUsuarios
+      },
+      {
+        path: 'novo-usuario',
         component: NovoUsuario
       }
     ]

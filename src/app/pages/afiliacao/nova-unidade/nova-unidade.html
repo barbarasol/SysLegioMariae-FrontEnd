@@ -69,7 +69,7 @@
               type="text"
               class="form-control"
               name="nome"
-              placeholder="Inserir aqui "
+              placeholder="Inserir aqui"
               autocomplete="off"
               [(ngModel)]="solicitacao.nome"
               [disabled]="carregando"
@@ -96,7 +96,7 @@
               type="text"
               class="form-control"
               name="paroquia"
-              placeholder="Inserir aqui "
+              placeholder="Inserir aqui"
               autocomplete="off"
               [(ngModel)]="solicitacao.paroquia"
               [disabled]="carregando"
@@ -110,7 +110,7 @@
               type="text"
               class="form-control"
               name="cidade"
-              placeholder="Inserir aqui "
+              placeholder="Inserir aqui"
               autocomplete="off"
               [(ngModel)]="solicitacao.cidade"
               [disabled]="carregando"
@@ -150,33 +150,73 @@
           <div class="form-grid">
 
             <div class="full-width">
+              <label>Tipo da Unidade Superior</label>
+
+              <select
+                class="form-select"
+                name="tipoSuperior"
+                [(ngModel)]="solicitacao.tipoSuperior"
+                (ngModelChange)="aoTrocarTipoSuperior()"
+                [disabled]="carregando"
+              >
+                <option value="">Selecione o tipo</option>
+
+                @for (tipo of tiposSuperiorPermitidos; track tipo.codigo) {
+                  <option [value]="tipo.codigo">
+                    {{ tipo.nome }}
+                  </option>
+                }
+              </select>
+            </div>
+
+            <div>
               <label>Unidade Superior</label>
 
               <select
                 class="form-select"
                 name="unidadeSuperiorId"
                 [(ngModel)]="solicitacao.unidadeSuperiorId"
-                [disabled]="carregando || carregandoSuperiores"
+                [disabled]="
+                  carregando ||
+                  !solicitacao.tipoSuperior ||
+                  carregandoUnidades
+                "
               >
-                <option value="">Selecione</option>
+                <option value="">
+                  @if (!solicitacao.tipoSuperior) {
+                    Escolha o tipo primeiro
+                  } @else {
+                    Selecione
+                  }
+                </option>
 
-                @for (unidade of unidadesSuperiores; track unidade.id) {
+                @for (
+                  unidade of unidadesSuperiorDisponiveis;
+                  track unidade.id
+                ) {
                   <option [value]="unidade.id">
-                    {{ unidade.tipo }} — {{ unidade.nome }}
+                    {{ unidade.nome }}
+                    @if (unidade.cidade) {
+                      — {{ unidade.cidade }}
+                    }
                   </option>
                 }
               </select>
 
-              @if (carregandoSuperiores) {
+              @if (carregandoUnidades) {
                 <small class="campo-ajuda">
                   Carregando unidades...
                 </small>
               }
 
-              @if (!carregandoSuperiores && unidadesSuperiores.length === 0) {
+              @if (
+                !carregandoUnidades &&
+                solicitacao.tipoSuperior &&
+                unidadesSuperiorDisponiveis.length === 0
+              ) {
                 <small class="campo-ajuda campo-ajuda-alerta">
-                  Nenhuma unidade cadastrada. Cadastre uma unidade
-                  superior antes de continuar.
+                  Nenhuma unidade do tipo
+                  {{ nomeTipoSuperiorSelecionado }} cadastrada.
                 </small>
               }
             </div>
@@ -188,7 +228,7 @@
           <div class="aviso-neutro">
             <i class="bi bi-info-circle"></i>
 
-            <strong>{{ tipoSelecionado?.nome }}</strong> é o nível mais
+            <strong>{{ nomeTipoSelecionado }}</strong> é o nível mais
             alto da estrutura e não possui unidade superior.
           </div>
 
@@ -304,7 +344,7 @@
         </button>
       }
 
-      @if (etapa === 4) {
+      @if (etapa === 4 && !sucesso) {
         <button
           type="button"
           class="btn btn-success"

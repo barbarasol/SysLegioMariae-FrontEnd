@@ -2,17 +2,29 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
-import { mensagemDeErro } from '../../../services/usuario.service';
+
+import {
+  HIERARQUIA_UNIDADE,
+  TIPOS_UNIDADE,
+  nomeTipoUnidade,
+  tiposSuperiorPermitidos
+} from '../../../core/hierarquia/unidade-hierarquia';
 import { TipoUnidadeCodigo, UnidadeResumo } from '../../../models/unidade.model';
 import { UnidadeService } from '../../../services/unidade.service';
 import { ToastService } from '../../../services/toast.service';
-
+import { mensagemDeErro } from '../../../services/usuario.service';
 
 interface OpcaoTipo {
   codigo: TipoUnidadeCodigo;
   nome: string;
-  exigeSuperior: boolean;
 }
+
+const TODOS_OS_TIPOS: OpcaoTipo[] = TIPOS_UNIDADE.map(
+  (codigo) => ({
+    codigo,
+    nome: nomeTipoUnidade(codigo)
+  })
+);
 
 @Component({
   selector: 'app-nova-unidade',
@@ -24,20 +36,7 @@ export class NovaUnidade implements OnInit {
 
   etapa = 1;
 
-  /**
-   * CONCILIUM é o único tipo que pode existir sem unidade superior —
-   * a trigger fn_validar_hierarquia_unidade rejeita os demais sem pai.
-   */
-  readonly tipos: OpcaoTipo[] = [
-    { codigo: 'CONCILIUM', nome: 'Concilium', exigeSuperior: false },
-    { codigo: 'SENATUS', nome: 'Senatus', exigeSuperior: true },
-    { codigo: 'REGIA', nome: 'Regia', exigeSuperior: true },
-    { codigo: 'COMITIUM', nome: 'Comitium', exigeSuperior: true },
-    { codigo: 'CURIA', nome: 'Cúria', exigeSuperior: true },
-    { codigo: 'PRAESIDIUM', nome: 'Praesidium', exigeSuperior: true },
-    { codigo: 'PATRICIOS', nome: 'Patrícios', exigeSuperior: true },
-    { codigo: 'VELITE', nome: 'Velite', exigeSuperior: true }
-  ];
+  readonly tipos: OpcaoTipo[] = TODOS_OS_TIPOS;
 
   solicitacao = {
     tipo: '' as TipoUnidadeCodigo | '',
@@ -47,16 +46,18 @@ export class NovaUnidade implements OnInit {
     uf: '',
     paroquia: '',
     dataFundacao: '',
+    tipoSuperior: '' as TipoUnidadeCodigo | '',
     unidadeSuperiorId: '',
     justificativa: ''
   };
 
-  unidadesSuperiores: UnidadeResumo[] = [];
+  /** Todas as unidades carregadas do back. */
+  private todasUnidades: UnidadeResumo[] = [];
 
+  carregando = false;
   erro = '';
   sucesso = '';
-  carregando = false;
-  carregandoSuperiores = false;
+  carregandoUnidades = false;
 
   constructor(
     private unidadeService: UnidadeService,
@@ -65,7 +66,7 @@ export class NovaUnidade implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.carregarSuperiores();
+    this.carregarUnidades();
   }
 
   get tipoSelecionado(): OpcaoTipo | undefined {
@@ -74,18 +75,56 @@ export class NovaUnidade implements OnInit {
     );
   }
 
+  get nomeTipoSelecionado(): string {
+    return nomeTipoUnidade(this.solicitacao.tipo);
+  }
+
+  /**
+   * Tipos que podem ser pai do tipo escolhido. Vazio quando o tipo
+   * é o topo da estrutura (CONCILIUM) ou não pode ter filho.
+   */
+  get tiposSuperiorPermitidos(): OpcaoTipo[] {
+    const permitidos = tiposSuperiorPermitidos(
+      this.solicitacao.tipo
+    );
+
+    return TODOS_OS_TIPOS.filter(
+      (tipo) => permitidos.includes(tipo.codigo)
+    );
+  }
+
   get exigeSuperior(): boolean {
-    return this.tipoSelecionado?.exigeSuperior ?? false;
+    return this.tiposSuperiorPermitidos.length > 0;
+  }
+
+  get nomeTipoSuperiorSelecionado(): string {
+    return (
+      this.tipos.find(
+        (tipo) => tipo.codigo === this.solicitacao.tipoSuperior
+      )?.nome ?? '-'
+    );
+  }
+
+  /**
+   * Unidades concretas do tipo de pai escolhido — só existe
+   * depois que o usuário seleciona o tipo superior.
+   */
+  get unidadesSuperiorDisponiveis(): UnidadeResumo[] {
+    if (!this.solicitacao.tipoSuperior) {
+      return [];
+    }
+
+    return this.todasUnidades.filter(
+      (unidade) => unidade.tipo === this.solicitacao.tipoSuperior
+    );
   }
 
   get nomeUnidadeSuperiorSelecionada(): string {
-    const unidade = this.unidadesSuperiores.find(
+    const unidade = this.todasUnidades.find(
       (item) => item.id === this.solicitacao.unidadeSuperiorId
     );
 
-    return unidade
-      ? `${unidade.tipo} — ${unidade.nome}`
-      : '-';
+    return unidade ? unidade.nome : '-';
   }
 
   get etapaValida(): boolean {
@@ -97,11 +136,26 @@ export class NovaUnidade implements OnInit {
     }
 
     if (this.etapa === 2) {
-      return !this.exigeSuperior ||
-        !!this.solicitacao.unidadeSuperiorId;
+      return (
+        !this.exigeSuperior ||
+        (
+          !!this.solicitacao.tipoSuperior &&
+          !!this.solicitacao.unidadeSuperiorId
+        )
+      );
     }
 
     return true;
+  }
+
+  /** Trocar o tipo da unidade invalida o pai já escolhido. */
+  aoTrocarTipo(): void {
+    this.solicitacao.tipoSuperior = '';
+    this.solicitacao.unidadeSuperiorId = '';
+  }
+
+  aoTrocarTipoSuperior(): void {
+    this.solicitacao.unidadeSuperiorId = '';
   }
 
   proximaEtapa(): void {
@@ -118,22 +172,22 @@ export class NovaUnidade implements OnInit {
     }
   }
 
-  carregarSuperiores(): void {
-    this.carregandoSuperiores = true;
+  carregarUnidades(): void {
+    this.carregandoUnidades = true;
 
     this.unidadeService
       .listar()
       .pipe(
         finalize(() => {
-          this.carregandoSuperiores = false;
+          this.carregandoUnidades = false;
         })
       )
       .subscribe({
-        next: (unidades: any) => {
-          this.unidadesSuperiores = unidades;
+        next: (unidades) => {
+          this.todasUnidades = unidades;
         },
         error: () => {
-          this.unidadesSuperiores = [];
+          this.todasUnidades = [];
         }
       });
   }
@@ -144,12 +198,10 @@ export class NovaUnidade implements OnInit {
     }
 
     if (!this.solicitacao.tipo) {
-      this.erro = 'Selecione o tipo da unidade.';
+      this.toastService.erro('Selecione o tipo da unidade.');
       return;
     }
 
-    this.erro = '';
-    this.sucesso = '';
     this.carregando = true;
 
     this.unidadeService
@@ -173,13 +225,14 @@ export class NovaUnidade implements OnInit {
         })
       )
       .subscribe({
-        next: (unidade: any) => {
+        next: (unidade) => {
           this.toastService.sucesso(
             `Unidade "${unidade.nome}" registrada com sucesso.`
           );
 
+          this.etapa = 1;
           this.limpar();
-          this.carregarSuperiores();
+          this.carregarUnidades();
         },
         error: (error: HttpErrorResponse) => {
           this.toastService.erro(
@@ -211,8 +264,6 @@ export class NovaUnidade implements OnInit {
   }
 
   private limpar(): void {
-    console.log('ta cheando aq')
-    this.etapa = 1;
     this.solicitacao = {
       tipo: '',
       nome: '',
@@ -221,6 +272,7 @@ export class NovaUnidade implements OnInit {
       uf: '',
       paroquia: '',
       dataFundacao: '',
+      tipoSuperior: '',
       unidadeSuperiorId: '',
       justificativa: ''
     };

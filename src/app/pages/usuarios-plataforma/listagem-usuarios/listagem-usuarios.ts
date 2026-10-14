@@ -23,7 +23,8 @@ import {
 
 import {
   environment
-} from '../../../environments/environment';
+} from '../../../../environments/environment';
+import { Router } from '@angular/router';
 
 type CampoOrdenacao =
   | 'nome'
@@ -59,17 +60,17 @@ interface PerfilAcessoGlobal {
 
 interface RespostaUsuarios {
   usuarios:
-    UsuarioLista[];
+  UsuarioLista[];
 }
 
 interface RespostaPerfis {
   perfis:
-    PerfilAcessoGlobal[];
+  PerfilAcessoGlobal[];
 }
 
 @Component({
   selector:
-    'app-novo-usuario',
+    'app-listagem-usuarios',
 
   standalone:
     true,
@@ -80,13 +81,13 @@ interface RespostaPerfis {
   ],
 
   templateUrl:
-    './novo-usuario.html',
+    './listagem-usuarios.html',
 
   styleUrl:
-    './novo-usuario.scss'
+    './listagem-usuarios.scss'
 })
-export class NovoUsuario
-implements OnInit {
+export class ListagemUsuarios
+  implements OnInit {
 
   filtroNome = '';
   filtroCpf = '';
@@ -106,30 +107,32 @@ implements OnInit {
 
   campoOrdenacao:
     CampoOrdenacao =
-      'nome';
+    'nome';
 
   direcaoOrdenacao:
     DirecaoOrdenacao =
-      'asc';
+    'asc';
 
   usuarioEdicao:
     UsuarioEdicao | null =
-      null;
+    null;
 
   salvandoEdicao = false;
   erroEdicao = '';
 
   excluindoId:
     string | null =
-      null;
+    null;
 
   constructor(
     private http:
       HttpClient,
 
     private cdr:
-      ChangeDetectorRef
-  ) {}
+      ChangeDetectorRef,
+    
+    private router: Router
+  ) { }
 
   ngOnInit(): void {
     this.carregarPerfisGlobais();
@@ -137,7 +140,7 @@ implements OnInit {
   }
 
   carregarPerfisGlobais():
-  void {
+    void {
 
     this.carregandoPerfis =
       true;
@@ -399,18 +402,16 @@ implements OnInit {
 
     return (
       this.direcaoOrdenacao ===
-      'asc'
+        'asc'
         ? 'bi-sort-down'
         : 'bi-sort-up'
     );
   }
 
   novoUsuario():
-  void {
+    void {
 
-    console.log(
-      'Novo usuário'
-    );
+    this.router.navigate(['/novo-usuario'])
   }
 
   editarUsuario(
@@ -468,7 +469,7 @@ implements OnInit {
   }
 
   cancelarEdicao():
-  void {
+    void {
 
     if (
       this.salvandoEdicao
@@ -487,7 +488,7 @@ implements OnInit {
   }
 
   salvarEdicao():
-  void {
+    void {
 
     if (
       !this.usuarioEdicao ||
@@ -537,7 +538,7 @@ implements OnInit {
     this.http
       .put<{
         usuario:
-          UsuarioLista;
+        UsuarioLista;
       }>(
         `${environment.apiUrl}/usuarios/${this.usuarioEdicao.id}`,
         {
@@ -637,7 +638,7 @@ implements OnInit {
     this.http
       .delete<{
         message:
-          string;
+        string;
       }>(
         `${environment.apiUrl}/usuarios/${usuario.id}`
       )
