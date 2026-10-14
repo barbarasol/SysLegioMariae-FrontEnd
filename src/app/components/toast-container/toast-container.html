@@ -1,0 +1,37 @@
+<div
+  class="toast-stack"
+  aria-live="polite"
+  aria-atomic="false"
+>
+  @for (toast of toasts(); track toast.id) {
+    <div
+      class="toast-item"
+      [class.toast-sucesso]="toast.tipo === 'sucesso'"
+      [class.toast-erro]="toast.tipo === 'erro'"
+      [class.toast-info]="toast.tipo === 'info'"
+      role="status"
+      (click)="fecharAoClicar(toast.id)"
+    >
+      <i
+        class="toast-icon"
+        [class.bi]="true"
+        [class.bi-check-circle-fill]="toast.tipo === 'sucesso'"
+        [class.bi-exclamation-triangle-fill]="toast.tipo === 'erro'"
+        [class.bi-info-circle-fill]="toast.tipo === 'info'"
+      ></i>
+
+      <span class="toast-mensagem">
+        {{ toast.mensagem }}
+      </span>
+
+      <button
+        type="button"
+        class="toast-fechar"
+        aria-label="Fechar"
+        (click)="fechar(toast.id); $event.stopPropagation()"
+      >
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+  }
+</div>

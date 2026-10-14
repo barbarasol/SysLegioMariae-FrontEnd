@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { mensagemDeErro, UsuarioService } from '../../services/usuario.service';
 import { PerfilDisponivel } from '../../models/usuario.model';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   imports: [
@@ -59,7 +60,8 @@ export class NovoUsuario {
 
   constructor(
     private usuarioService: UsuarioService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toastService: ToastService
   ) {}
 
   get nomePerfilSelecionado(): string {
@@ -137,17 +139,18 @@ export class NovoUsuario {
       )
       .subscribe({
         next: (resultado) => {
-          this.sucesso =
-            `Usuário ${resultado.usuario.email} criado com sucesso ` +
-            `(status ${resultado.usuario.status}).`;
-
+          this.toastService.sucesso(
+            `Usuário ${resultado.usuario.email} criado com sucesso.`
+          )
           this.etapa = 1;
           this.limpar();
         },
         error: (error: HttpErrorResponse) => {
-          this.erro = mensagemDeErro(
-            error,
-            'Não foi possível criar o usuário. Tente novamente.'
+          this.toastService.erro(
+            mensagemDeErro(
+              error,
+              'Não foi possível criar o usuário. Tente novamente.'
+            )
           );
         }
       });

@@ -19,7 +19,7 @@
       <i class="bi bi-clock-history"></i>
 
       <div>
-        <h3>12</h3>
+        <h3>{{ resumo.pendentes }}</h3>
         <span>Pendentes</span>
       </div>
     </div>
@@ -28,7 +28,7 @@
       <i class="bi bi-check-circle"></i>
 
       <div>
-        <h3>48</h3>
+        <h3>{{ resumo.aprovadas }}</h3>
         <span>Aprovadas</span>
       </div>
     </div>
@@ -37,7 +37,7 @@
       <i class="bi bi-x-circle"></i>
 
       <div>
-        <h3>3</h3>
+        <h3>{{ resumo.rejeitadas }}</h3>
         <span>Rejeitadas</span>
       </div>
     </div>
@@ -52,33 +52,53 @@
       <div>
         <label>Status</label>
 
-        <select class="form-select">
-          <option>Todos</option>
-          <option>Pendente</option>
-          <option>Aprovada</option>
-          <option>Rejeitada</option>
+        <select
+          class="form-select"
+          name="filtroStatus"
+          [(ngModel)]="filtroStatus"
+        >
+          <option value="">Todos</option>
+          <option value="PENDENTE">Pendente</option>
+          <option value="APROVADA">Aprovada</option>
+          <option value="REJEITADA">Rejeitada</option>
+          <option value="CANCELADA">Cancelada</option>
         </select>
       </div>
 
       <div>
         <label>Tipo</label>
 
-        <select class="form-select">
-          <option>Todos</option>
-          <option>Comitium</option>
-          <option>Cúria</option>
-          <option>Praesidium</option>
+        <select
+          class="form-select"
+          name="filtroTipo"
+          [(ngModel)]="filtroTipo"
+        >
+          <option value="">Todos</option>
+          <option value="CONCILIUM">Concilium</option>
+          <option value="SENATUS">Senatus</option>
+          <option value="REGIA">Regia</option>
+          <option value="COMITIUM">Comitium</option>
+          <option value="CURIA">Cúria</option>
+          <option value="PRAESIDIUM">Praesidium</option>
         </select>
       </div>
 
-      <div>
-        <label>Comitium</label>
+      <div class="filter-actions">
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="filtrar()"
+        >
+          Filtrar
+        </button>
 
-        <select class="form-select">
-          <option>Todos</option>
-          <option>Comitium de Brasília</option>
-          <option>Comitium de Goiânia</option>
-        </select>
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          (click)="limparFiltros()"
+        >
+          Limpar
+        </button>
       </div>
 
     </div>
@@ -87,6 +107,20 @@
 
   <!-- Lista -->
   <div class="requests-list">
+
+    @if (carregando) {
+      <div class="empty-state">
+        <i class="bi bi-hourglass-split"></i>
+        <p>Carregando solicitações...</p>
+      </div>
+    }
+
+    @if (!carregando && solicitacoes.length === 0) {
+      <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <p>Nenhuma solicitação encontrada.</p>
+      </div>
+    }
 
     @for (solicitacao of solicitacoes; track solicitacao.id) {
 
@@ -98,21 +132,21 @@
 
             <span
               class="badge-status"
-              [class.pendente]="solicitacao.status === 'Pendente'"
-              [class.aprovada]="solicitacao.status === 'Aprovada'"
-              [class.rejeitada]="solicitacao.status === 'Rejeitada'"
+              [class.pendente]="solicitacao.status === 'PENDENTE'"
+              [class.aprovada]="solicitacao.status === 'APROVADA'"
+              [class.rejeitada]="solicitacao.status === 'REJEITADA'"
             >
-              {{ solicitacao.status }}
+              {{ rotulo(solicitacao.status) }}
             </span>
 
             <h4>
-              {{ solicitacao.nome }}
+              {{ solicitacao.unidadeNome }}
             </h4>
 
           </div>
 
           <span class="request-date">
-            {{ solicitacao.data }}
+            {{ solicitacao.solicitadoEm | date: 'dd/MM/yyyy' }}
           </span>
 
         </div>
@@ -121,38 +155,73 @@
 
           <div>
             <strong>Tipo:</strong>
-            {{ solicitacao.tipo }}
+            {{ solicitacao.unidadeTipo }}
           </div>
 
           <div>
             <strong>Solicitante:</strong>
-            {{ solicitacao.solicitante }}
+            {{ solicitacao.solicitanteNome || '-'
+            }}
           </div>
 
           <div>
-            <strong>Comitium:</strong>
-            {{ solicitacao.comitium }}
+            <strong>Cidade:</strong>
+            {{ solicitacao.unidadeCidade || '-'
+            }}@if (solicitacao.unidadeEstado) {
+              - {{ solicitacao.unidadeEstado }}
+            }
+          </div>
+
+          <div>
+            <strong>Unidade superior:</strong>
+            {{ solicitacao.unidadeSuperior || 'Nenhuma' }}
           </div>
 
         </div>
 
+        @if (solicitacao.justificativa) {
+          <p class="request-justificativa">
+            {{ solicitacao.justificativa }}
+          </p>
+        }
+
         <div class="request-actions">
 
-          <button class="btn btn-outline-primary"  routerLink="/visualizar-solicitacao">
+          <button
+            class="btn btn-outline-primary"
+            [routerLink]="['/visualizar-solicitacao']"
+            [queryParams]="{ id: solicitacao.id }"
+          >
             <i class="bi bi-eye"></i>
             Visualizar
           </button>
 
-          @if(solicitacao.status === 'Pendente') {
+          @if (solicitacao.status === 'PENDENTE') {
 
-            <button class="btn btn-success">
-              <i class="bi bi-check-lg"></i>
-              Aprovar
+            <button
+              class="btn btn-success"
+              (click)="aprovar(solicitacao)"
+              [disabled]="processandoId === solicitacao.id"
+            >
+              @if (processandoId === solicitacao.id) {
+                Aprovando...
+              } @else {
+                <i class="bi bi-check-lg"></i>
+                Aprovar
+              }
             </button>
 
-            <button class="btn btn-danger">
-              <i class="bi bi-x-lg"></i>
-              Rejeitar
+            <button
+              class="btn btn-danger"
+              (click)="rejeitar(solicitacao)"
+              [disabled]="processandoId === solicitacao.id"
+            >
+              @if (processandoId === solicitacao.id) {
+                Rejeitando...
+              } @else {
+                <i class="bi bi-x-lg"></i>
+                Rejeitar
+              }
             </button>
 
           }

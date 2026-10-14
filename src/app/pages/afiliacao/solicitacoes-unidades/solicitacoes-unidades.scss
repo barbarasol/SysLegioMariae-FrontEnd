@@ -66,6 +66,12 @@
   display: grid;
   grid-template-columns: repeat(3,1fr);
   gap: 20px;
+  align-items: end;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 10px;
 }
 
 /* Lista */
@@ -99,14 +105,44 @@
 
 .request-info {
   display: flex;
+  flex-wrap: wrap;
   gap: 40px;
   margin-bottom: 20px;
   color: #555;
 }
 
+.request-justificativa {
+  background: #f8f9fc;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+  color: #555;
+  font-size: 14px;
+}
+
 .request-actions {
   display: flex;
   gap: 10px;
+}
+
+/* Estado vazio */
+
+.empty-state {
+  background: white;
+  border-radius: 12px;
+  padding: 60px 25px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+
+  i {
+    font-size: 42px;
+    color: #c3cad9;
+  }
+
+  p {
+    margin-top: 15px;
+    color: #777;
+  }
 }
 
 /* Status */

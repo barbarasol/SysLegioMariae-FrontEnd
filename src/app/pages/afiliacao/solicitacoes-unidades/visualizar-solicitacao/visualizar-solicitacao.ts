@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ModalConfirmacao } from '../../../../components/modal-confirmacao/modal-confirmacao';
+import { Router } from '@angular/router';
 
 @Component({
   imports: [
@@ -12,6 +13,10 @@ import { ModalConfirmacao } from '../../../../components/modal-confirmacao/modal
 export class VisualizarSolicitacao {
   modalAprovacao = false;
 
+  constructor(
+    private router: Router
+  ) {}
+
   abrirModalAprovacao() {
     this.modalAprovacao = true;
   }
@@ -21,10 +26,10 @@ export class VisualizarSolicitacao {
   }
 
   confirmarAprovacao() {
-
     this.modalAprovacao = false;
+  }
 
-    console.log('Solicitação aprovada');
-
+  voltarParaSolicitacao(){
+    this.router.navigate(['/solicitacoes-unidades'])
   }
 }

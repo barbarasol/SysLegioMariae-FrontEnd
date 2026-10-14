@@ -8,7 +8,6 @@
     </p>
   </div>
 
-  <!-- Wizard -->
   <div class="wizard-card">
 
     <div class="wizard-steps">
@@ -25,7 +24,7 @@
 
       <div class="step" [class.active]="etapa === 3">
         <span>3</span>
-        Justificativa
+        Detalhes
       </div>
 
       <div class="step" [class.active]="etapa === 4">
@@ -36,7 +35,7 @@
     </div>
 
     <!-- ETAPA 1 -->
-    @if(etapa === 1) {
+    @if (etapa === 1) {
 
       <div class="form-section">
 
@@ -49,12 +48,17 @@
 
             <select
               class="form-select"
+              name="tipo"
               [(ngModel)]="solicitacao.tipo"
+              [disabled]="carregando"
             >
               <option value="">Selecione</option>
-              <option value="comitium">Comitium</option>
-              <option value="curia">Cúria</option>
-              <option value="praesidium">Praesidium</option>
+
+              @for (tipo of tipos; track tipo.codigo) {
+                <option [value]="tipo.codigo">
+                  {{ tipo.nome }}
+                </option>
+              }
             </select>
           </div>
 
@@ -64,7 +68,11 @@
             <input
               type="text"
               class="form-control"
+              name="nome"
+              placeholder="Inserir aqui "
+              autocomplete="off"
               [(ngModel)]="solicitacao.nome"
+              [disabled]="carregando"
             >
           </div>
 
@@ -74,17 +82,53 @@
             <input
               type="date"
               class="form-control"
+              name="dataFundacao"
+              autocomplete="off"
               [(ngModel)]="solicitacao.dataFundacao"
+              [disabled]="carregando"
             >
           </div>
 
-          <div>
-            <label>Responsável</label>
+          <div class="full-width">
+            <label>Paróquia</label>
 
             <input
               type="text"
               class="form-control"
-              [(ngModel)]="solicitacao.responsavel"
+              name="paroquia"
+              placeholder="Inserir aqui "
+              autocomplete="off"
+              [(ngModel)]="solicitacao.paroquia"
+              [disabled]="carregando"
+            >
+          </div>
+
+          <div>
+            <label>Cidade</label>
+
+            <input
+              type="text"
+              class="form-control"
+              name="cidade"
+              placeholder="Inserir aqui "
+              autocomplete="off"
+              [(ngModel)]="solicitacao.cidade"
+              [disabled]="carregando"
+            >
+          </div>
+
+          <div>
+            <label>UF</label>
+
+            <input
+              type="text"
+              class="form-control"
+              name="uf"
+              placeholder="Inserir aqui"
+              maxlength="2"
+              autocomplete="off"
+              [(ngModel)]="solicitacao.uf"
+              [disabled]="carregando"
             >
           </div>
 
@@ -95,87 +139,89 @@
     }
 
     <!-- ETAPA 2 -->
-    @if(etapa === 2) {
+    @if (etapa === 2) {
 
       <div class="form-section">
 
         <h4>Estrutura Hierárquica</h4>
 
-        <div class="form-grid">
+        @if (exigeSuperior) {
 
-          <div>
-            <label>Comitium Superior</label>
+          <div class="form-grid">
 
-            <select
-              class="form-select"
-              [(ngModel)]="solicitacao.comitium"
-            >
-              <option>Comitium de Brasília</option>
-              <option>Comitium de Goiânia</option>
-            </select>
-          </div>
-
-          @if(solicitacao.tipo === 'praesidium') {
-
-            <div>
-              <label>Cúria Superior</label>
+            <div class="full-width">
+              <label>Unidade Superior</label>
 
               <select
                 class="form-select"
-                [(ngModel)]="solicitacao.curia"
+                name="unidadeSuperiorId"
+                [(ngModel)]="solicitacao.unidadeSuperiorId"
+                [disabled]="carregando || carregandoSuperiores"
               >
-                <option>Cúria Nossa Senhora Aparecida</option>
-                <option>Cúria Nossa Senhora de Fátima</option>
+                <option value="">Selecione</option>
+
+                @for (unidade of unidadesSuperiores; track unidade.id) {
+                  <option [value]="unidade.id">
+                    {{ unidade.tipo }} — {{ unidade.nome }}
+                  </option>
+                }
               </select>
+
+              @if (carregandoSuperiores) {
+                <small class="campo-ajuda">
+                  Carregando unidades...
+                </small>
+              }
+
+              @if (!carregandoSuperiores && unidadesSuperiores.length === 0) {
+                <small class="campo-ajuda campo-ajuda-alerta">
+                  Nenhuma unidade cadastrada. Cadastre uma unidade
+                  superior antes de continuar.
+                </small>
+              }
             </div>
 
-          }
+          </div>
 
-        </div>
+        } @else {
+
+          <div class="aviso-neutro">
+            <i class="bi bi-info-circle"></i>
+
+            <strong>{{ tipoSelecionado?.nome }}</strong> é o nível mais
+            alto da estrutura e não possui unidade superior.
+          </div>
+
+        }
 
       </div>
 
     }
 
     <!-- ETAPA 3 -->
-    @if(etapa === 3) {
+    @if (etapa === 3) {
 
       <div class="form-section">
 
         <h4>Justificativa</h4>
 
-        <label>
-          Motivo da criação da unidade
-        </label>
+        <label>Motivo da criação da unidade</label>
 
         <textarea
           rows="6"
           class="form-control"
+          name="justificativa"
+          placeholder="Descreva o motivo da criação desta unidade."
           [(ngModel)]="solicitacao.justificativa"
+          [disabled]="carregando"
         ></textarea>
-
-        <div class="upload-area">
-
-          <i class="bi bi-file-earmark-arrow-up"></i>
-
-          <h5>Anexos</h5>
-
-          <p>
-            Ata de fundação, documentos ou arquivos complementares.
-          </p>
-
-          <button class="btn btn-outline-primary">
-            Selecionar Arquivo
-          </button>
-
-        </div>
 
       </div>
 
     }
 
     <!-- ETAPA 4 -->
-    @if(etapa === 4) {
+    @if (etapa === 4) {
 
       <div class="form-section">
 
@@ -185,32 +231,47 @@
 
           <p>
             <strong>Tipo:</strong>
-            {{ solicitacao.tipo }}
+            {{ tipoSelecionado?.nome || '-' }}
           </p>
 
           <p>
             <strong>Nome:</strong>
-            {{ solicitacao.nome }}
+            {{ solicitacao.nome || '-' }}
           </p>
 
           <p>
-            <strong>Responsável:</strong>
-            {{ solicitacao.responsavel }}
+            <strong>Cidade:</strong>
+            {{ solicitacao.cidade || '-' }}
           </p>
 
           <p>
-            <strong>Comitium:</strong>
-            {{ solicitacao.comitium }}
+            <strong>UF:</strong>
+            {{ solicitacao.uf || '-' }}
           </p>
 
           <p>
-            <strong>Cúria:</strong>
-            {{ solicitacao.curia }}
+            <strong>Paróquia:</strong>
+            {{ solicitacao.paroquia || '-' }}
+          </p>
+
+          <p>
+            <strong>Data prevista de fundação:</strong>
+            {{ solicitacao.dataFundacao || '-' }}
+          </p>
+
+          <p>
+            <strong>Unidade superior:</strong>
+
+            @if (exigeSuperior) {
+              {{ nomeUnidadeSuperiorSelecionada }}
+            } @else {
+              Não se aplica
+            }
           </p>
 
           <p>
             <strong>Justificativa:</strong>
-            {{ solicitacao.justificativa }}
+            {{ solicitacao.justificativa || '-' }}
           </p>
 
         </div>
@@ -221,30 +282,40 @@
 
     <div class="wizard-actions">
 
-      @if(etapa > 1) {
+      @if (etapa > 1) {
         <button
+          type="button"
           class="btn btn-outline-secondary"
           (click)="voltar()"
+          [disabled]="carregando"
         >
           Voltar
         </button>
       }
 
-      @if(etapa < 4) {
+      @if (etapa < 4) {
         <button
+          type="button"
           class="btn btn-primary"
           (click)="proximaEtapa()"
+          [disabled]="!etapaValida"
         >
           Próximo
         </button>
       }
 
-      @if(etapa === 4) {
+      @if (etapa === 4) {
         <button
+          type="button"
           class="btn btn-success"
           (click)="enviarSolicitacao()"
+          [disabled]="carregando"
         >
-          Enviar Solicitação
+          @if (carregando) {
+            Enviando...
+          } @else {
+            Enviar Solicitação
+          }
         </button>
       }
 
