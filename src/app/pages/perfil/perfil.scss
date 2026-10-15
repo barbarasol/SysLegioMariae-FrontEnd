@@ -1,3 +1,7 @@
+/* =========================
+   CONFIGURAÇÕES
+========================= */
+
 .config-container {
   min-height: 100vh;
   background: #f5f6fa;
@@ -8,20 +12,20 @@
    CABEÇALHO
 ========================= */
 
-.page-header {
+.config-container .page-header {
   margin-bottom: 25px;
 }
 
-.page-header h2 {
+.config-container .page-header h2 {
   margin: 0;
-  color: #14265c;
+  color: #7a2024;
   font-size: 30px;
   font-weight: 700;
 }
 
-.page-header p {
+.config-container .page-header p {
   margin-top: 8px;
-  color: #666;
+  color: #7e6668;
   font-size: 15px;
 }
 
@@ -31,7 +35,7 @@
 
 .config-layout {
   display: grid;
-  grid-template-columns: 250px 1fr;
+  grid-template-columns: 250px minmax(0, 1fr);
   gap: 25px;
   align-items: start;
 }
@@ -42,37 +46,27 @@
 
 .config-menu {
   background: #ffffff;
+  border: 1px solid #eadada;
   border-radius: 12px;
   padding: 15px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 14px rgba(101, 26, 29, 0.05);
 }
 
 .menu-option {
   width: 100%;
-
   display: flex;
   align-items: center;
-
   gap: 12px;
-
   padding: 14px 16px;
-
   margin-bottom: 8px;
-
-  border: none;
+  border: 1px solid transparent;
   border-radius: 10px;
-
   background: transparent;
-
-  color: #14265c;
-
+  color: #7a2024;
   font-size: 14px;
   font-weight: 600;
-
   text-align: left;
-
   cursor: pointer;
-
   transition: all 0.2s ease;
 }
 
@@ -85,12 +79,19 @@
 }
 
 .menu-option:hover {
-  background: #eef1fa;
+  background: #fff3f3;
+  border-color: #f0dada;
 }
 
 .menu-option.active {
-  background: #14265c;
+  background: #a13b40;
+  border-color: #a13b40;
   color: #ffffff;
+}
+
+.menu-option.active:hover {
+  background: #8f2b2f;
+  border-color: #8f2b2f;
 }
 
 /* =========================
@@ -103,12 +104,10 @@
 
 .config-card {
   background: #ffffff;
-
+  border: 1px solid #eadada;
   border-radius: 12px;
-
   padding: 30px;
-
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 14px rgba(101, 26, 29, 0.05);
 }
 
 /* =========================
@@ -118,45 +117,35 @@
 .profile-header {
   display: flex;
   align-items: center;
-
   gap: 20px;
-
   padding-bottom: 25px;
-
   margin-bottom: 30px;
-
-  border-bottom: 1px solid #eeeeee;
+  border-bottom: 1px solid #eadada;
 }
 
 .profile-avatar {
   width: 70px;
   height: 70px;
-
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-
   border-radius: 50%;
-
-  background: #eef1fa;
-
-  color: #14265c;
-
+  background: #fff3f3;
+  border: 1px solid #eadada;
+  color: #a13b40;
   font-size: 45px;
 }
 
 .profile-header h3 {
   margin: 0 0 5px;
-
-  color: #14265c;
-
+  color: #7a2024;
   font-size: 22px;
   font-weight: 700;
 }
 
 .profile-header span {
-  color: #777;
-
+  color: #7e6668;
   font-size: 14px;
 }
 
@@ -166,18 +155,14 @@
 
 .config-card > h3 {
   margin: 0 0 8px;
-
-  color: #14265c;
-
+  color: #7a2024;
   font-size: 22px;
   font-weight: 700;
 }
 
 .section-description {
   margin: 0 0 25px;
-
-  color: #777;
-
+  color: #7e6668;
   font-size: 14px;
 }
 
@@ -185,44 +170,36 @@
    FORMULÁRIO
 ========================= */
 
-.form-grid {
+.config-container .form-grid {
   display: grid;
-
-  grid-template-columns: repeat(2, 1fr);
-
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
 }
 
-.form-grid label {
+.config-container .form-grid label {
   display: block;
-
   margin-bottom: 7px;
-
-  color: #444;
-
+  color: #424242;
   font-size: 14px;
   font-weight: 600;
 }
 
-.form-control,
-.form-select {
+.config-container .form-control,
+.config-container .form-select {
   min-height: 42px;
-
-  border: 1px solid #d8deef;
-
+  border: 1px solid #ded6d6;
   border-radius: 8px;
-
-  color: #333;
+  color: #424242;
+  background-color: #ffffff;
 }
 
-.form-control:focus,
-.form-select:focus {
-  border-color: #14265c;
-
-  box-shadow: 0 0 0 0.15rem rgba(20, 38, 92, 0.15);
+.config-container .form-control:focus,
+.config-container .form-select:focus {
+  border-color: #a13b40;
+  box-shadow: 0 0 0 0.15rem rgba(161, 59, 64, 0.15);
 }
 
-.full-width {
+.config-container .full-width {
   grid-column: span 2;
 }
 
@@ -233,28 +210,22 @@
 .security-info {
   display: flex;
   flex-direction: column;
-
   gap: 10px;
-
   margin-top: 25px;
-
   padding: 18px 20px;
-
-  background: #f8f9fc;
-
+  background: #fff8f8;
+  border: 1px solid #f0e1e1;
+  border-left: 4px solid #a13b40;
   border-radius: 10px;
-
-  border-left: 4px solid #14265c;
 }
 
 .info-item {
-  color: #666;
-
+  color: #6b5556;
   font-size: 13px;
 }
 
 .info-item strong {
-  color: #14265c;
+  color: #7a2024;
 }
 
 /* =========================
@@ -264,98 +235,101 @@
 .preferences-list {
   display: flex;
   flex-direction: column;
-
   gap: 15px;
 }
 
 .preference-item {
   display: flex;
-
   align-items: center;
   justify-content: space-between;
-
   gap: 20px;
-
   padding: 18px 20px;
-
-  border: 1px solid #eeeeee;
-
+  border: 1px solid #eadada;
   border-radius: 10px;
-
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .preference-item:hover {
-  background: #f8f9fc;
+  background: #fff8f8;
+  border-color: #e7c5c7;
 }
 
 .preference-item strong {
   display: block;
-
-  color: #14265c;
-
+  color: #7a2024;
   font-size: 14px;
   font-weight: 600;
 }
 
 .preference-item p {
   margin: 5px 0 0;
-
-  color: #777;
-
+  color: #7e6668;
   font-size: 13px;
 }
 
 /* Switch do Bootstrap */
 
-.form-check {
+.config-container .form-check {
   margin: 0;
+  flex-shrink: 0;
 }
 
-.form-check-input {
+.config-container .form-check-input {
   width: 45px;
   height: 23px;
-
   cursor: pointer;
+  border-color: #c9b5b6;
 }
 
-.form-check-input:checked {
-  background-color: #14265c;
+.config-container .form-check-input:checked {
+  background-color: #a13b40;
+  border-color: #a13b40;
+}
 
-  border-color: #14265c;
+.config-container .form-check-input:focus {
+  border-color: #a13b40;
+  box-shadow: 0 0 0 0.15rem rgba(161, 59, 64, 0.15);
 }
 
 /* =========================
    BOTÕES
 ========================= */
 
-.actions {
+.config-container .actions {
   display: flex;
   justify-content: flex-end;
-
   margin-top: 30px;
-
   padding-top: 20px;
-
-  border-top: 1px solid #eeeeee;
+  border-top: 1px solid #eadada;
 }
 
-.btn-primary {
-  background: #14265c;
-
-  border-color: #14265c;
-
+.config-container .btn-primary {
+  background: #a13b40;
+  border: 1px solid #a13b40;
+  color: #ffffff;
   padding: 10px 20px;
-
   border-radius: 8px;
+  font-weight: 600;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
 
+.config-container .btn-primary:hover {
+  background: #8f2b2f;
+  border-color: #8f2b2f;
+}
+
+.config-container .btn-outline-primary {
+  background: #ffffff;
+  border: 1px solid #a13b40;
+  color: #a13b40;
+  border-radius: 8px;
   font-weight: 600;
 }
 
-.btn-primary:hover {
-  background: #0f1d47;
-
-  border-color: #0f1d47;
+.config-container .btn-outline-primary:hover {
+  background: #fff3f3;
+  border-color: #8f2b2f;
+  color: #8f2b2f;
 }
 
 /* =========================
@@ -363,31 +337,24 @@
 ========================= */
 
 @media (max-width: 900px) {
-
   .config-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .config-menu {
     display: flex;
-
     gap: 8px;
-
     overflow-x: auto;
   }
 
   .menu-option {
     min-width: 150px;
-
     justify-content: center;
-
     margin-bottom: 0;
   }
-
 }
 
 @media (max-width: 768px) {
-
   .config-container {
     padding: 20px;
   }
@@ -396,11 +363,11 @@
     padding: 20px;
   }
 
-  .form-grid {
+  .config-container .form-grid {
     grid-template-columns: 1fr;
   }
 
-  .full-width {
+  .config-container .full-width {
     grid-column: span 1;
   }
 
@@ -408,17 +375,19 @@
     align-items: flex-start;
   }
 
-  .page-header h2 {
+  .config-container .page-header h2 {
     font-size: 24px;
   }
 
   .preference-item {
     align-items: flex-start;
   }
-
 }
 
 @media (max-width: 500px) {
+  .config-container {
+    padding: 14px;
+  }
 
   .profile-header {
     flex-direction: column;
@@ -426,19 +395,25 @@
 
   .config-menu {
     flex-direction: column;
+    overflow-x: visible;
   }
 
   .menu-option {
     width: 100%;
+    min-width: 0;
     justify-content: flex-start;
   }
 
-  .actions {
+  .config-container .actions {
     justify-content: stretch;
   }
 
-  .actions .btn {
+  .config-container .actions .btn {
     width: 100%;
   }
 
+  .preference-item {
+    gap: 12px;
+    padding: 14px;
+  }
 }

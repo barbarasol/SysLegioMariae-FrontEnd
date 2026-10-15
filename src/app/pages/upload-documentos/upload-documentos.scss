@@ -1,3 +1,7 @@
+/* =========================
+   CONTAINER
+========================= */
+
 .page-container {
   min-height: 100vh;
   background: #f5f6fa;
@@ -8,20 +12,20 @@
    CABEÇALHO
 ========================= */
 
-.page-header {
+.page-container .page-header {
   margin-bottom: 25px;
 }
 
-.page-header h2 {
+.page-container .page-header h2 {
   margin: 0;
-  color: #14265c;
+  color: #7a2024;
   font-size: 30px;
   font-weight: 700;
 }
 
-.page-header p {
+.page-container .page-header p {
   margin-top: 8px;
-  color: #666;
+  color: #7e6668;
   font-size: 15px;
 }
 
@@ -31,51 +35,57 @@
 
 .upload-card {
   background: #ffffff;
-
-  border: 2px dashed #d8deef;
+  border: 2px dashed #e7c5c7;
   border-radius: 12px;
-
   padding: 50px;
-
   text-align: center;
-
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-
-  transition: all .2s ease;
-
+  box-shadow: 0 4px 14px rgba(101, 26, 29, 0.05);
+  transition: all 0.2s ease;
   margin-bottom: 25px;
 }
 
 .upload-card:hover {
-  border-color: #14265c;
+  border-color: #a13b40;
+  background: #fffdfd;
 }
 
 .upload-icon {
   font-size: 60px;
-  color: #14265c;
+  color: #a13b40;
   margin-bottom: 15px;
 }
 
 .upload-card h4 {
-  color: #14265c;
+  color: #7a2024;
   font-weight: 600;
 }
 
 .upload-card p {
-  color: #777;
+  color: #7e6668;
   margin-bottom: 25px;
 }
 
+/* Botão de selecionar/enviar arquivo */
+
 .upload-card .btn-primary {
-  background: #14265c;
-  border-color: #14265c;
+  background: #a13b40;
+  border: 1px solid #a13b40;
+  color: #ffffff;
   padding: 10px 20px;
   border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
 .upload-card .btn-primary:hover {
-  background: #0f1d47;
-  border-color: #0f1d47;
+  background: #8f2b2f;
+  border-color: #8f2b2f;
+}
+
+.upload-card .btn-primary:focus-visible {
+  outline: 3px solid rgba(161, 59, 64, 0.2);
+  outline-offset: 2px;
+  box-shadow: none;
 }
 
 /* =========================
@@ -84,20 +94,16 @@
 
 .documents-card {
   background: #ffffff;
-
+  border: 1px solid #eadada;
   border-radius: 12px;
-
   padding: 25px;
-
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 14px rgba(101, 26, 29, 0.05);
 }
 
-.card-title {
-  color: #14265c;
-
+.documents-card .card-title {
+  color: #7a2024;
   font-size: 20px;
-  font-weight: 600;
-
+  font-weight: 700;
   margin-bottom: 20px;
 }
 
@@ -105,69 +111,100 @@
    TABELA
 ========================= */
 
-.table {
+.documents-card .table {
   margin-bottom: 0;
 }
 
-.table thead th {
-  color: #14265c;
+.documents-card .table thead th {
+  color: #651a1d;
+  background: #fff3f3;
   font-weight: 600;
-  border-bottom-width: 1px;
+  border-bottom: 1px solid #e7cfd1;
+  white-space: nowrap;
 }
 
-.table td,
-.table th {
+.documents-card .table td,
+.documents-card .table th {
   vertical-align: middle;
 }
 
-.table tbody tr:hover {
-  background: #f8f9fc;
+.documents-card .table tbody td {
+  color: #424242;
+  border-color: #f0e5e5;
+}
+
+.documents-card .table tbody tr:hover > * {
+  background: #fff8f8;
 }
 
 /* =========================
-   PDF
+   ÍCONE PDF
 ========================= */
 
 .pdf-icon {
-  color: #dc3545;
+  color: #a13b40;
   font-size: 18px;
   margin-right: 8px;
 }
 
 /* =========================
-   BOTÕES
+   BOTÕES DE AÇÃO
 ========================= */
 
 .btn-action {
   width: 36px;
   height: 36px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
+  border: 1px solid transparent;
   border-radius: 8px;
+  background: transparent;
+  transition: all 0.2s ease;
 }
 
 .btn-view {
-  color: #14265c;
+  color: #a13b40;
+}
+
+.btn-view:hover {
+  background: #fff3f3;
+  border-color: #e7c5c7;
+  color: #7a2024;
 }
 
 .btn-download {
   color: #198754;
 }
 
+.btn-download:hover {
+  background: #e7f7ee;
+  border-color: #badbcc;
+  color: #146c43;
+}
+
 .btn-delete {
-  background: #dc3545;
-  border-color: #dc3545;
+  background: #a13b40;
+  border-color: #a13b40;
+  color: #ffffff;
+}
+
+.btn-delete:hover {
+  background: #8f2b2f;
+  border-color: #8f2b2f;
+  color: #ffffff;
+}
+
+.btn-action:focus-visible {
+  outline: 3px solid rgba(161, 59, 64, 0.2);
+  outline-offset: 2px;
 }
 
 /* =========================
-   RESPONSIVO
+   RESPONSIVIDADE
 ========================= */
 
 @media (max-width: 768px) {
-
   .page-container {
     padding: 20px;
   }
@@ -176,8 +213,30 @@
     padding: 30px 20px;
   }
 
-  .page-header h2 {
+  .upload-icon {
+    font-size: 48px;
+  }
+
+  .page-container .page-header h2 {
     font-size: 24px;
   }
 
+  .documents-card {
+    padding: 18px;
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-container {
+    padding: 14px;
+  }
+
+  .upload-card {
+    padding: 25px 15px;
+  }
+
+  .documents-card {
+    padding: 14px;
+  }
 }

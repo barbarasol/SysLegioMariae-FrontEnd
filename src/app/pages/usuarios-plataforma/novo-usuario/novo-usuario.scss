@@ -4,116 +4,164 @@
   padding: 40px;
 }
 
-.page-header {
+.novo-usuario-container .page-header {
   margin-bottom: 25px;
 }
 
-.page-header h2 {
-  color: #14265c;
+.novo-usuario-container .page-header h2 {
+  color: #7a2024;
   font-size: 30px;
   font-weight: 700;
 }
 
-.page-header p {
-  color: #666;
+.novo-usuario-container .page-header p {
+  color: #7e6668;
 }
 
-.form-card {
-  background: white;
-
+.novo-usuario-container .form-card {
+  background: #ffffff;
+  border: 1px solid #eadada;
   border-radius: 12px;
-
   padding: 25px;
-
-  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+  box-shadow: 0 4px 14px rgba(101, 26, 29, 0.05);
 }
 
-.form-grid {
+.novo-usuario-container .form-grid {
   display: grid;
-
-  grid-template-columns:
-    repeat(2, 1fr);
-
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
 }
 
-.full-width {
+.novo-usuario-container .full-width {
   grid-column: span 2;
 }
 
-.form-grid label {
+.novo-usuario-container .form-grid label {
   display: block;
-
   margin-bottom: 6px;
-
+  color: #424242;
   font-size: 14px;
   font-weight: 600;
 }
 
-.form-actions {
-  margin-top: 30px;
+/* Campos */
 
+.novo-usuario-container .form-control,
+.novo-usuario-container .form-select {
+  border: 1px solid #ded6d6;
+  border-radius: 8px;
+  color: #424242;
+}
+
+.novo-usuario-container .form-control:focus,
+.novo-usuario-container .form-select:focus {
+  border-color: #a13b40;
+  box-shadow: 0 0 0 0.2rem rgba(161, 59, 64, 0.15);
+  outline: none;
+}
+
+/* Botões */
+
+.novo-usuario-container .form-actions {
+  margin-top: 30px;
   display: flex;
   justify-content: flex-end;
-
+  flex-wrap: wrap;
   gap: 10px;
 }
 
-.btn-primary {
-  background: #14265c;
-  border-color: #14265c;
+.novo-usuario-container .btn-primary {
+  background: #a13b40;
+  border: 1px solid #a13b40;
+  color: #ffffff;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: 0.2s ease;
 }
 
-.form-alert {
-  margin-top: 20px;
+.novo-usuario-container .btn-primary:hover {
+  background: #8f2b2f;
+  border-color: #8f2b2f;
+}
 
-  padding: 12px 16px;
-
+.novo-usuario-container .btn-outline-primary {
+  background: #ffffff;
+  border: 1px solid #a13b40;
+  color: #a13b40;
   border-radius: 8px;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
 
-  background: #fdeaee;
-  border: 1px solid #f5c2c7;
+.novo-usuario-container .btn-outline-primary:hover {
+  background: #fff3f3;
+  border-color: #8f2b2f;
+  color: #8f2b2f;
+}
 
-  color: #842029;
+/* Mensagens de alerta */
 
+.novo-usuario-container .form-alert {
+  margin-top: 20px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #fff3f3;
+  border: 1px solid #e7c5c7;
+  color: #7a2024;
   font-size: 14px;
 }
 
-.form-alert-sucesso {
+.novo-usuario-container .form-alert-sucesso {
   background: #e7f7ee;
   border-color: #badbcc;
-
   color: #198754;
 }
 
-.confirmacao-aviso {
+/* Aviso de confirmação */
+
+.novo-usuario-container .confirmacao-aviso {
   margin-top: 20px;
-
   padding: 14px 16px;
-
   border-radius: 8px;
-
-  background: #eef2fb;
-
-  color: #14265c;
-
+  background: #fff3f3;
+  border: 1px solid #eadada;
+  color: #7a2024;
   font-size: 14px;
 }
 
-.confirmacao-aviso i {
+.novo-usuario-container .confirmacao-aviso i {
   margin-right: 8px;
+  color: #a13b40;
 }
+
+/* Responsividade */
 
 @media (max-width: 720px) {
   .novo-usuario-container {
     padding: 20px;
   }
 
-  .form-grid {
+  .novo-usuario-container .form-grid {
     grid-template-columns: 1fr;
   }
 
-  .full-width {
+  .novo-usuario-container .full-width {
     grid-column: span 1;
+  }
+
+  .novo-usuario-container .form-card {
+    padding: 18px;
+  }
+
+  .novo-usuario-container .page-header h2 {
+    font-size: 25px;
+  }
+
+  .novo-usuario-container .form-actions {
+    flex-direction: column;
+  }
+
+  .novo-usuario-container .form-actions .btn {
+    width: 100%;
   }
 }

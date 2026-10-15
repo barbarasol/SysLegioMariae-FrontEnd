@@ -1,6 +1,10 @@
 .dashboard-container {
   min-height: 100vh;
-  background: #f5f6fa;
+  background: linear-gradient(
+    180deg,
+    #fffafa 0%,
+    #f5f6fa 100%
+  );
   padding: 40px;
 }
 
@@ -8,134 +12,115 @@
    CABEÇALHO
 ========================= */
 
-.page-header {
+.dashboard-container .page-header {
   margin-bottom: 25px;
-}
 
-.page-header h2 {
-  margin: 0;
+  h2 {
+    margin: 0;
+    color: #7a2024;
+    font-size: 30px;
+    font-weight: 700;
+  }
 
-  color: #14265c;
-
-  font-size: 30px;
-  font-weight: 700;
-}
-
-.page-header p {
-  margin-top: 8px;
-
-  color: #666;
-
-  font-size: 15px;
+  p {
+    margin-top: 8px;
+    color: #7e6668;
+    font-size: 15px;
+  }
 }
 
 /* =========================
    CARDS DE INDICADORES
 ========================= */
 
-.stats-grid {
+.dashboard-container .stats-grid {
   display: grid;
-
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-
   gap: 20px;
-
   margin-bottom: 30px;
 }
 
-.stat-card {
-  background: #ffffff;
-
+.dashboard-container .stat-card {
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #eadada;
   border-radius: 12px;
-
   padding: 25px;
-
   display: flex;
   align-items: center;
-
   gap: 18px;
+  box-shadow: 0 8px 20px rgba(111, 32, 36, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-
-  transition: all .2s ease;
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(111, 32, 36, 0.12);
+  }
 }
 
-.stat-card:hover {
-  transform: translateY(-3px);
-
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-}
-
-.stat-icon {
+.dashboard-container .stat-icon {
   width: 55px;
   height: 55px;
-
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-
   border-radius: 12px;
-
-  background: #eef1fa;
-
-  color: #14265c;
-
+  background: #f5e5e6;
+  color: #a13b40;
   font-size: 24px;
 }
 
-.stat-content h3 {
-  margin: 0;
+.dashboard-container .stat-content {
+  min-width: 0;
 
-  color: #14265c;
+  h3 {
+    margin: 0;
+    color: #7a2024;
+    font-size: 28px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
 
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.stat-content span {
-  color: #777;
-
-  font-size: 13px;
+  span {
+    color: #7e6668;
+    font-size: 13px;
+  }
 }
 
 /* =========================
    GRÁFICOS
 ========================= */
 
-.charts-grid {
+.dashboard-container .charts-grid {
   display: grid;
-
-  grid-template-columns: repeat(2, 1fr);
-
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
-
   margin-bottom: 20px;
 }
 
-.chart-card {
-  background: #ffffff;
-
+.dashboard-container .chart-card {
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #eadada;
   border-radius: 12px;
-
   padding: 25px;
-
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 20px rgba(111, 32, 36, 0.06);
 }
 
-.full-width {
+.dashboard-container .full-width {
   margin-bottom: 20px;
 }
 
-.card-title {
-  color: #14265c;
-
+.dashboard-container .card-title {
+  color: #7a2024;
   font-size: 18px;
   font-weight: 600;
-
   margin-bottom: 20px;
 }
 
-.chart-card canvas {
+.dashboard-container .chart-card canvas {
+  display: block;
   width: 100% !important;
   max-height: 320px;
 }
@@ -144,54 +129,80 @@
    TABELA
 ========================= */
 
-.table-card {
-  background: #ffffff;
-
+.dashboard-container .table-card {
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #eadada;
   border-radius: 12px;
-
   padding: 25px;
-
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 20px rgba(111, 32, 36, 0.06);
 }
 
-.table {
+.dashboard-container .table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.dashboard-container .table {
   margin-bottom: 0;
-}
 
-.table thead th {
-  color: #14265c;
+  thead th {
+    background: #fff3f3;
+    color: #7a2024;
+    font-weight: 600;
+    border-color: #eadada;
+    white-space: nowrap;
+  }
 
-  font-weight: 600;
+  td,
+  th {
+    padding: 12px;
+    vertical-align: middle;
+  }
 
-  border-bottom-width: 1px;
-}
+  tbody tr {
+    border-color: #f0e5e5;
 
-.table td,
-.table th {
-  vertical-align: middle;
-}
+    &:hover > * {
+      background-color: #fff8f8;
+    }
+  }
 
-.table tbody tr:hover {
-  background: #f8f9fc;
+  td {
+    color: #424242;
+  }
 }
 
 /* =========================
    STATUS
 ========================= */
 
-.status-badge {
+.dashboard-container .status-badge {
   display: inline-block;
-
   padding: 6px 12px;
-
   border-radius: 20px;
-
   background: #e7f7ee;
-
   color: #198754;
-
   font-size: 12px;
   font-weight: 600;
+}
+
+/* Outros estados, caso existam no HTML */
+
+.dashboard-container .status-badge.inativo,
+.dashboard-container .status-badge.inactive {
+  background: #fdecec;
+  color: #dc3545;
+}
+
+/* =========================
+   ACESSIBILIDADE
+========================= */
+
+.dashboard-container button:focus-visible,
+.dashboard-container a:focus-visible {
+  outline: 2px solid #a13b40;
+  outline-offset: 2px;
 }
 
 /* =========================
@@ -199,84 +210,50 @@
 ========================= */
 
 @media (max-width: 1200px) {
-
-  .stats-grid {
-    grid-template-columns: repeat(3, 1fr);
+  .dashboard-container .stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-
 }
 
 @media (max-width: 900px) {
-
-  .charts-grid {
-    grid-template-columns: 1fr;
+  .dashboard-container .charts-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .dashboard-container .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
 }
 
 @media (max-width: 768px) {
-
   .dashboard-container {
     padding: 20px;
   }
 
-  .stats-grid {
-    grid-template-columns: 1fr;
+  .dashboard-container .stats-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .page-header h2 {
+  .dashboard-container .page-header h2 {
     font-size: 24px;
   }
 
+  .dashboard-container .chart-card,
+  .dashboard-container .table-card {
+    padding: 18px;
+  }
 }
 
-/*
- * ACRESCENTAR AO FINAL de:
- * src/app/pages/dashboard/dashboard.scss
- */
+@media (max-width: 480px) {
+  .dashboard-container {
+    padding: 16px 12px;
+  }
 
-:host {
-  display: block;
-  background: var(--legio-rose-050);
-}
+  .dashboard-container .stat-card {
+    padding: 18px;
+  }
 
-.dashboard,
-.dashboard-container,
-.dashboard-content {
-  background:
-    linear-gradient(
-      180deg,
-      var(--legio-rose-025) 0%,
-      var(--legio-rose-050) 100%
-    ) !important;
-}
-
-.dashboard h1,
-.dashboard h2,
-.dashboard-title,
-.page-title {
-  color: var(--legio-red-900);
-}
-
-.dashboard .card,
-.dashboard-card,
-.metric-card,
-.stat-card {
-  background: var(--legio-white);
-  border:
-    1px solid var(--legio-border);
-  box-shadow:
-    0 8px 20px rgba(111, 32, 36, 0.06);
-}
-
-.dashboard .card-icon,
-.dashboard-card .icon,
-.metric-card .icon,
-.stat-card .icon {
-  background: var(--legio-rose-100) !important;
-  color: var(--legio-red-800) !important;
+  .dashboard-container .stat-content h3 {
+    font-size: 24px;
+  }
 }

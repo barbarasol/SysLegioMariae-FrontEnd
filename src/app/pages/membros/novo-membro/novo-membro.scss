@@ -4,50 +4,74 @@
   padding: 40px;
 }
 
+// ==========================================
+// CABEÇALHO
+// ==========================================
+
 .page-header {
   margin-bottom: 25px;
 }
 
 .page-header h2 {
-  color: #14265c;
+  margin: 0;
+  color: #7a2024;
   font-size: 30px;
   font-weight: 700;
 }
 
 .page-header p {
-  color: #666;
+  margin-top: 8px;
+  color: #6b6b6b;
+  font-size: 15px;
 }
+
+// ==========================================
+// CARD DO FORMULÁRIO
+// ==========================================
 
 .form-card {
-  background: white;
-
+  background: #fff;
   border-radius: 12px;
-
   padding: 25px;
-
-  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+  border: 1px solid #f0e5e5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
+
+// ==========================================
+// ABAS
+// ==========================================
 
 .nav-tabs {
   margin-bottom: 25px;
+  border-bottom: 1px solid #eadada;
 }
 
 .nav-link {
-  color: #14265c;
+  color: #7a2024;
   font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: 8px 8px 0 0;
+  transition: 0.2s ease;
+
+  &:hover {
+    color: #a13b40;
+    border-color: #f0d3d3 #f0d3d3 #eadada;
+  }
 }
 
 .nav-link.active {
-  color: #14265c;
-  border-color: #14265c #14265c #fff;
+  color: #a13b40;
+  background: #fff;
+  border-color: #eadada #eadada #fff;
 }
+
+// ==========================================
+// GRID DO FORMULÁRIO
+// ==========================================
 
 .form-grid {
   display: grid;
-
-  grid-template-columns:
-    repeat(2, 1fr);
-
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
 }
 
@@ -55,83 +79,223 @@
   grid-column: span 2;
 }
 
+// ==========================================
+// CAMPOS DO FORMULÁRIO
+// ==========================================
+
+.form-card label {
+  color: #424242;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.form-card .form-control,
+.form-card .form-select {
+  min-height: 42px;
+  border: 1px solid #ded6d6;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: 0.2s ease;
+
+  &:focus {
+    border-color: #a13b40;
+    box-shadow: 0 0 0 3px rgba(161, 59, 64, 0.12);
+    outline: none;
+  }
+
+  &:disabled {
+    background: #f5f5f5;
+    cursor: not-allowed;
+  }
+}
+
+// ==========================================
+// AÇÕES DO FORMULÁRIO
+// ==========================================
+
 .form-actions {
   margin-top: 30px;
-
   display: flex;
   justify-content: flex-end;
-
+  flex-wrap: wrap;
   gap: 10px;
 }
 
-.btn-primary {
-  background: #14265c;
-  border-color: #14265c;
+.form-actions .btn {
+  min-height: 42px;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: 0.2s ease;
 }
+
+// Botão principal
+.btn-primary {
+  background: #a13b40 !important;
+  border: 1px solid #a13b40 !important;
+  color: #fff !important;
+
+  &:hover:not(:disabled) {
+    background: #8f2b2f !important;
+    border-color: #8f2b2f !important;
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba(161, 59, 64, 0.2);
+    outline-offset: 2px;
+    box-shadow: none;
+  }
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+}
+
+// Botões secundários
+.btn-outline-primary {
+  background: #fff !important;
+  border: 1px solid #a13b40 !important;
+  color: #a13b40 !important;
+
+  &:hover:not(:disabled) {
+    background: #fff3f3 !important;
+    border-color: #8f2b2f !important;
+    color: #8f2b2f !important;
+  }
+}
+
+// ==========================================
+// STEPPER — ETAPAS DO CADASTRO
+// ==========================================
 
 .stepper {
   display: flex;
-
   align-items: center;
   justify-content: center;
-
   margin-bottom: 30px;
 }
 
 .step {
   display: flex;
-
   flex-direction: column;
-
   align-items: center;
-
   min-width: 140px;
 }
 
 .step-circle {
   width: 45px;
   height: 45px;
-
   border-radius: 50%;
-
-  background: #d8deef;
-
-  color: #14265c;
-
+  background: #f0e1e1;
+  color: #7a2024;
+  border: 1px solid #e6cccc;
   display: flex;
   align-items: center;
   justify-content: center;
-
   font-weight: 700;
-
-  transition: .3s;
+  transition: 0.3s ease;
 }
 
+// Etapa atual
 .step.active .step-circle {
-  background: #14265c;
-  color: white;
+  background: #a13b40;
+  border-color: #a13b40;
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(161, 59, 64, 0.12);
 }
 
 .step span {
   margin-top: 10px;
-
   text-align: center;
-
   font-size: 13px;
   font-weight: 600;
-
-  color: #666;
+  color: #777;
 }
 
 .step.active span {
-  color: #14265c;
+  color: #7a2024;
 }
 
+// Linha entre etapas
 .step-line {
   width: 120px;
   height: 2px;
-
-  background: #d8deef;
-
+  background: #eadada;
   margin: 0 10px;
+}
+
+// ==========================================
+// RESPONSIVIDADE
+// ==========================================
+
+@media (max-width: 800px) {
+  .novo-membro-container {
+    padding: 25px;
+  }
+
+  .step {
+    min-width: 100px;
+  }
+
+  .step-line {
+    width: 60px;
+    margin: 0 5px;
+  }
+}
+
+@media (max-width: 600px) {
+  .novo-membro-container {
+    padding: 20px 15px;
+  }
+
+  .page-header h2 {
+    font-size: 25px;
+  }
+
+  .form-card {
+    padding: 18px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .full-width {
+    grid-column: auto;
+  }
+
+  .stepper {
+    align-items: flex-start;
+  }
+
+  .step {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .step-circle {
+    width: 38px;
+    height: 38px;
+    font-size: 13px;
+  }
+
+  .step span {
+    font-size: 11px;
+  }
+
+  .step-line {
+    flex: 1;
+    width: auto;
+    margin-top: 18px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+
+    .btn {
+      width: 100%;
+    }
+  }
 }

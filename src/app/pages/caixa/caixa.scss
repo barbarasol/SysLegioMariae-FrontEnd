@@ -8,7 +8,7 @@
 /* CABEÇALHO */
 /* ============================= */
 
-.page-header {
+.caixa-container .page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -17,33 +17,33 @@
 
   h2 {
     margin: 0;
-    color: #14265c;
+    color: #7a2024;
     font-size: 30px;
     font-weight: 700;
   }
 
   p {
     margin: 8px 0 0;
-    color: #666;
+    color: #7e6668;
     font-size: 15px;
   }
 }
-
 
 /* ============================= */
 /* FILTROS */
 /* ============================= */
 
-.filter-card {
+.caixa-container .filter-card {
   background: #fff;
+  border: 1px solid #eadada;
   border-radius: 12px;
   padding: 25px;
   margin-bottom: 25px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(122, 32, 36, 0.05);
 }
 
-.card-title {
-  color: #14265c;
+.caixa-container .card-title {
+  color: #7a2024;
   font-size: 16px;
   font-weight: 700;
   margin-bottom: 20px;
@@ -53,122 +53,139 @@
   }
 }
 
-.filters-grid {
+.caixa-container .filters-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 18px;
 
   label {
     display: block;
     margin-bottom: 7px;
-    color: #444;
+    color: #424242;
     font-size: 13px;
     font-weight: 600;
   }
 
   .form-select {
     min-height: 42px;
-    border: 1px solid #d8deef;
+    border: 1px solid #ded6d6;
     border-radius: 8px;
     font-size: 13px;
 
     &:focus {
-      border-color: #14265c;
-      box-shadow: 0 0 0 0.15rem rgba(20, 38, 92, 0.15);
+      border-color: #a13b40;
+      box-shadow: 0 0 0 0.15rem rgba(161, 59, 64, 0.15);
     }
   }
 }
 
-.filter-actions {
+.caixa-container .filter-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
   margin-top: 20px;
 }
 
-
 /* ============================= */
 /* BOTÕES */
 /* ============================= */
 
-.btn-primary {
-  background: #14265c;
-  border-color: #14265c;
+.caixa-container .btn-primary {
+  background: #a13b40;
+  border-color: #a13b40;
+  color: #fff;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    background: #8f2b2f;
+    border-color: #8f2b2f;
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 0.2rem rgba(161, 59, 64, 0.25);
+  }
+}
+
+.caixa-container .btn-outline-primary {
+  background: #fff;
+  border-color: #a13b40;
+  color: #a13b40;
   padding: 9px 18px;
   border-radius: 8px;
   font-weight: 600;
 
   &:hover {
-    background: #0f1d47;
-    border-color: #0f1d47;
+    background: #fff3f3;
+    color: #7a2024;
+    border-color: #8f2b2f;
   }
 }
-
 
 /* ============================= */
 /* CARDS FINANCEIROS */
 /* ============================= */
 
-.stats-grid {
+.caixa-container .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 20px;
   margin-bottom: 25px;
 }
 
-.stat-card {
+.caixa-container .stat-card {
   display: flex;
   align-items: center;
   gap: 18px;
-
+  min-width: 0;
   padding: 22px;
-
   background: #fff;
+  border: 1px solid #eadada;
   border-radius: 12px;
-
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-
-  transition: transform 0.2s ease;
+  box-shadow: 0 2px 8px rgba(122, 32, 36, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 
   &:hover {
     transform: translateY(-3px);
+    box-shadow: 0 5px 14px rgba(122, 32, 36, 0.09);
   }
 }
 
-.stat-icon {
+.caixa-container .stat-icon {
   width: 52px;
   height: 52px;
-
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-
   border-radius: 10px;
-
   font-size: 23px;
 }
 
-.stat-content {
+.caixa-container .stat-content {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 
   span {
-    color: #777;
+    color: #7e6668;
     font-size: 12px;
   }
 
   h3 {
     margin: 5px 0 0;
-    color: #14265c;
+    color: #7a2024;
     font-size: 20px;
     font-weight: 700;
+    overflow-wrap: anywhere;
   }
 }
 
-
 /* Entrada */
 
-.stat-card.entrada {
+.caixa-container .stat-card.entrada {
   .stat-icon {
     background: #e8f7ef;
     color: #198754;
@@ -179,10 +196,9 @@
   }
 }
 
-
 /* Saída */
 
-.stat-card.saida {
+.caixa-container .stat-card.saida {
   .stat-icon {
     background: #fdecec;
     color: #dc3545;
@@ -193,57 +209,47 @@
   }
 }
 
-
 /* Saldo */
 
-.stat-card.saldo {
+.caixa-container .stat-card.saldo {
   .stat-icon {
-    background: #eef1fa;
-    color: #14265c;
+    background: #f5e5e6;
+    color: #a13b40;
   }
 }
 
-
 /* Acumulado */
 
-.stat-card.acumulado {
+.caixa-container .stat-card.acumulado {
   .stat-icon {
     background: #fff7df;
     color: #c9a227;
   }
 }
 
-
 /* ============================= */
 /* GRÁFICOS */
 /* ============================= */
 
-.charts-grid {
+.caixa-container .charts-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
   margin-bottom: 25px;
 }
 
-// .chart-card {
-//   background: #fff;
-//   border-radius: 12px;
-//   padding: 25px;
-//   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-// }
-
-.chart-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 25px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-
+.caixa-container .chart-card {
   min-width: 0;
   height: 350px;
+  background: #fff;
+  border: 1px solid #eadada;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(122, 32, 36, 0.05);
   overflow: hidden;
 }
 
-.chart-container {
+.caixa-container .chart-container {
   position: relative;
   width: 100%;
   height: 260px;
@@ -251,33 +257,31 @@
   overflow: hidden;
 }
 
-.chart-container canvas {
+.caixa-container .chart-container canvas {
   display: block !important;
   width: 100% !important;
   height: 260px !important;
   max-height: 260px !important;
 }
 
-
 /* ============================= */
 /* TABELA */
 /* ============================= */
 
-.table-card {
+.caixa-container .table-card {
+  min-width: 0;
   background: #fff;
+  border: 1px solid #eadada;
   border-radius: 12px;
   padding: 25px;
-
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(122, 32, 36, 0.05);
 }
 
-.table-header {
+.caixa-container .table-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   gap: 20px;
-
   margin-bottom: 15px;
 
   .card-title {
@@ -285,152 +289,165 @@
   }
 }
 
-.table-description {
-  color: #888;
+.caixa-container .table-description {
+  color: #7e6668;
   font-size: 12px;
 }
 
-.table {
+.caixa-container .table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.caixa-container .table {
   margin-bottom: 0;
 
   th {
     padding: 14px 12px;
-
-    background: #f8f9fc;
-
-    color: #555;
-
+    background: #fff3f3;
+    color: #7a2024;
+    border-color: #eadada;
     font-size: 12px;
     font-weight: 700;
-
     white-space: nowrap;
   }
 
   td {
     padding: 14px 12px;
-
-    color: #666;
-
+    color: #424242;
+    border-color: #f0e5e5;
     font-size: 13px;
-
     vertical-align: middle;
   }
 
   tbody tr {
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #eadada;
 
-    &:hover {
-      background: #fafbff;
+    &:hover > * {
+      background-color: #fff8f8;
     }
   }
 }
-
 
 /* ============================= */
 /* BADGES */
 /* ============================= */
 
-.type-badge {
+.caixa-container .type-badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-
   padding: 5px 9px;
-
   border-radius: 20px;
-
   font-size: 11px;
   font-weight: 700;
 }
 
-.entrada-badge {
+.caixa-container .entrada-badge {
   background: #e8f7ef;
   color: #198754;
 }
 
-.saida-badge {
+.caixa-container .saida-badge {
   background: #fdecec;
   color: #dc3545;
 }
-
 
 /* ============================= */
 /* AÇÕES */
 /* ============================= */
 
-.action-buttons {
+.caixa-container .action-buttons {
   display: flex;
   gap: 6px;
 
   .btn {
     width: 32px;
     height: 32px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     padding: 0;
-
     border-radius: 7px;
+  }
+
+  .btn-outline-primary {
+    color: #a13b40;
+    border-color: #e7cfd1;
+
+    &:hover {
+      background: #fff3f3;
+      border-color: #a13b40;
+    }
+  }
+
+  .btn-outline-danger {
+    &:hover {
+      color: #fff;
+    }
   }
 }
 
+/* ============================= */
+/* ACESSIBILIDADE */
+/* ============================= */
+
+.caixa-container button:focus-visible,
+.caixa-container a:focus-visible {
+  outline: 2px solid #a13b40;
+  outline-offset: 2px;
+}
 
 /* ============================= */
 /* RESPONSIVO */
 /* ============================= */
 
 @media (max-width: 1200px) {
-
-  .filters-grid {
-    grid-template-columns: repeat(3, 1fr);
+  .caixa-container .filters-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .caixa-container .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
 }
 
-
 @media (max-width: 900px) {
-
   .caixa-container {
     padding: 25px;
   }
 
-  .page-header {
+  .caixa-container .page-header {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .filters-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .caixa-container .filters-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .charts-grid {
-    grid-template-columns: 1fr;
+  .caixa-container .charts-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
-
 }
 
-
 @media (max-width: 600px) {
-
   .caixa-container {
-    padding: 20px;
+    padding: 20px 15px;
   }
 
-  .filters-grid {
-    grid-template-columns: 1fr;
+  .caixa-container .filter-card,
+  .caixa-container .chart-card,
+  .caixa-container .table-card {
+    padding: 18px;
   }
 
-  .stats-grid {
-    grid-template-columns: 1fr;
+  .caixa-container .filters-grid,
+  .caixa-container .stats-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .filter-actions {
+  .caixa-container .filter-actions {
     justify-content: stretch;
 
     button {
@@ -438,13 +455,16 @@
     }
   }
 
-  .table-header {
+  .caixa-container .table-header {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .table-header .btn {
+  .caixa-container .table-header .btn {
     width: 100%;
   }
 
+  .caixa-container .chart-card {
+    padding: 16px;
+  }
 }
