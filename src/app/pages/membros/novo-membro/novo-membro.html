@@ -38,44 +38,85 @@
       <div class="form-grid">
         <div class="full-width">
           <label>Nome Completo</label>
-          <input type="text" class="form-control" />
+
+          <input
+            type="text"
+            class="form-control"
+            name="nome"
+            placeholder="Inserir aqui"
+            autocomplete="off"
+            [(ngModel)]="membro.nome"
+            [disabled]="carregando"
+          />
         </div>
 
         <div>
           <label>CPF</label>
-          <input type="text" class="form-control" />
+
+          <input
+            type="text"
+            class="form-control"
+            name="cpf"
+            placeholder="000.000.000-00"
+            autocomplete="off"
+            [(ngModel)]="membro.cpf"
+            [disabled]="carregando"
+          />
         </div>
 
         <div>
           <label>RG</label>
-          <input type="text" class="form-control" />
+
+          <input
+            type="text"
+            class="form-control"
+            name="rg"
+            placeholder="Inserir aqui"
+            autocomplete="off"
+            [(ngModel)]="membro.rg"
+            [disabled]="carregando"
+          />
         </div>
 
         <div>
           <label>Data de Nascimento</label>
-          <input type="date" class="form-control" />
-        </div>
 
-        <div>
-          <label>Sexo</label>
-          <select class="form-select">
-            <option>Selecione</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Telefone</label>
-          <input type="text" class="form-control" />
+          <input
+            type="date"
+            class="form-control"
+            name="dataNascimento"
+            [(ngModel)]="membro.dataNascimento"
+            autocomplete="off"
+            [disabled]="carregando"
+          />
         </div>
 
         <div>
           <label>Celular</label>
-          <input type="text" class="form-control" />
+
+          <input
+            type="text"
+            class="form-control"
+            name="celular"
+            placeholder="(00) 00000-0000"
+            autocomplete="off"
+            [(ngModel)]="membro.celular"
+            [disabled]="carregando"
+          />
         </div>
 
         <div class="full-width">
           <label>E-mail</label>
-          <input type="email" class="form-control" />
+
+          <input
+            type="email"
+            class="form-control"
+            name="email"
+            placeholder="Inserir aqui"
+            autocomplete="off"
+            [(ngModel)]="membro.email"
+            [disabled]="carregando"
+          />
         </div>
       </div>
     }
@@ -85,49 +126,156 @@
     @if (etapa === 2) {
       <div class="form-grid">
         <div>
-          <label>Data de Ingresso</label>
-          <input type="date" class="form-control" />
-        </div>
+          <label>Categoria de Membro</label>
 
-        <div>
-          <label>Tipo de Membro</label>
+          <select
+            class="form-select"
+            name="categoriaCodigo"
+            [(ngModel)]="membro.categoriaCodigo"
+            [disabled]="carregando || carregandoCatalogos"
+          >
+            <option value="">Selecione</option>
 
-          <select class="form-select">
-            <option>Ativo</option>
-            <option>Auxiliar</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Cargo</label>
-
-          <select class="form-select">
-            <option>Selecione</option>
+            @for (categoria of catalogos.categorias; track categoria.codigo) {
+              <option [value]="categoria.codigo">
+                {{ categoria.nome }}
+              </option>
+            }
           </select>
         </div>
 
         <div>
           <label>Status</label>
 
-          <select class="form-select">
-            <option>Ativo</option>
-            <option>Inativo</option>
+          <select
+            class="form-select"
+            name="status"
+            [(ngModel)]="membro.status"
+            [disabled]="carregando"
+          >
+            <option value="ATIVO">Ativo</option>
+            <option value="INATIVO">Inativo</option>
+            <option value="FALECIDO">Falecido</option>
           </select>
         </div>
 
         <div>
-          <label>Promessa Legionária</label>
+          <label>Data de Recrutamento</label>
 
-          <select class="form-select">
-            <option>Sim</option>
-            <option>Não</option>
-          </select>
+          <input
+            type="date"
+            class="form-control"
+            name="dtRecrutamento"
+            autocomplete="off"
+            [(ngModel)]="membro.dtRecrutamento"
+            [disabled]="carregando"
+          />
         </div>
 
         <div>
-          <label>Data da Promessa</label>
+          <label>Data de Ingresso</label>
 
-          <input type="date" class="form-control" />
+          <input
+            type="date"
+            class="form-control"
+            name="dtIngresso"
+            [(ngModel)]="membro.dtIngresso"
+            autocomplete="off"
+            [disabled]="carregando"
+          />
+        </div>
+
+        <div>
+          <label>Data do Compromisso (Promessa)</label>
+
+          <input
+            type="date"
+            class="form-control"
+            name="dtCompromisso"
+            [(ngModel)]="membro.dtCompromisso"
+            autocomplete="off"
+            [disabled]="carregando"
+          />
+        </div>
+
+        <div>
+          <label>Formação Escolar</label>
+
+          <input
+            type="text"
+            class="form-control"
+            name="formacaoEscolar"
+            placeholder="Inserir aqui"
+            autocomplete="off"
+            [(ngModel)]="membro.formacaoEscolar"
+            [disabled]="carregando"
+          />
+        </div>
+
+        <div class="full-width">
+          <label>Funções Legionárias</label>
+
+          <div class="checkbox-grid">
+            <label class="checkbox-item">
+              <input
+                type="checkbox"
+                name="pretoriano"
+                [(ngModel)]="membro.pretoriano"
+                [disabled]="carregando"
+              />
+              Pretoriano
+            </label>
+
+            <label class="checkbox-item">
+              <input
+                type="checkbox"
+                name="adjutor"
+                [(ngModel)]="membro.adjutor"
+                [disabled]="carregando"
+              />
+              Adjutor
+            </label>
+
+            <label class="checkbox-item">
+              <input
+                type="checkbox"
+                name="mesc"
+                [(ngModel)]="membro.mesc"
+                [disabled]="carregando"
+              />
+              MESC
+            </label>
+
+            <label class="checkbox-item">
+              <input
+                type="checkbox"
+                name="catequista"
+                [(ngModel)]="membro.catequista"
+                [disabled]="carregando"
+              />
+              Catequista
+            </label>
+
+            <label class="checkbox-item">
+              <input
+                type="checkbox"
+                name="coroinha"
+                [(ngModel)]="membro.coroinha"
+                [disabled]="carregando"
+              />
+              Coroinha
+            </label>
+
+            <label class="checkbox-item">
+              <input
+                type="checkbox"
+                name="aposentado"
+                [(ngModel)]="membro.aposentado"
+                [disabled]="carregando"
+              />
+              Aposentado
+            </label>
+          </div>
         </div>
       </div>
     }
@@ -136,51 +284,112 @@
 
     @if (etapa === 3) {
       <div class="form-grid">
-        <div>
-          <label>Comitium</label>
+        <div class="full-width">
+          <label>Unidade</label>
 
-          <select class="form-select">
-            <option>Selecione</option>
+          <select
+            class="form-select"
+            name="unidadeId"
+            [(ngModel)]="membro.unidadeId"
+            [disabled]="carregando || carregandoCatalogos"
+          >
+            <option value="">Selecione</option>
+
+            @for (unidade of catalogos.unidades; track unidade.id) {
+              <option [value]="unidade.id">
+                {{ unidade.tipo }} — {{ unidade.nome }}
+                @if (unidade.cidade) {
+                  ({{ unidade.cidade }})
+                }
+              </option>
+            }
           </select>
         </div>
 
         <div>
-          <label>Cúria</label>
+          <label>Cargo / Oficial</label>
 
-          <select class="form-select">
-            <option>Selecione</option>
+          <select
+            class="form-select"
+            name="cargoCodigo"
+            [(ngModel)]="membro.cargoCodigo"
+            [disabled]="carregando || carregandoCatalogos"
+          >
+            <option value="">Nenhum</option>
+
+            @for (cargo of catalogos.cargos; track cargo.codigo) {
+              <option [value]="cargo.codigo">
+                {{ cargo.nome }}
+              </option>
+            }
           </select>
         </div>
 
         <div>
-          <label>Praesidium</label>
+          <label>Número do Mandato</label>
 
-          <select class="form-select">
-            <option>Selecione</option>
-          </select>
+          <input
+            type="number"
+            class="form-control"
+            name="numeroMandato"
+            min="1"
+            placeholder="Inserir aqui"
+            autocomplete="off"
+            [(ngModel)]="membro.numeroMandato"
+            [disabled]="carregando || !membro.cargoCodigo"
+          />
         </div>
 
-        <div>
-          <label>Função</label>
+        <div class="full-width">
+          <label>Observação</label>
 
-          <select class="form-select">
-            <option>Selecione</option>
-          </select>
+          <textarea
+            rows="4"
+            class="form-control"
+            name="observacao"
+            placeholder="Informações complementares sobre o membro."
+            autocomplete="off"
+            [(ngModel)]="membro.observacao"
+            [disabled]="carregando"
+          ></textarea>
         </div>
       </div>
     }
 
     <div class="form-actions">
-      <button class="btn btn-outline-secondary" (click)="voltar()" [disabled]="etapa === 1">
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        (click)="voltar()"
+        [disabled]="etapa === 1 || carregando"
+      >
         Anterior
       </button>
 
       @if (etapa < 3) {
-        <button class="btn btn-primary" (click)="proximo()">Próximo</button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="proximo()"
+          [disabled]="!etapaValida"
+        >
+          Próximo
+        </button>
       }
 
       @if (etapa === 3) {
-        <button class="btn btn-success">Salvar Membro</button>
+        <button
+          type="button"
+          class="btn btn-success"
+          (click)="salvar()"
+          [disabled]="carregando || !etapaValida"
+        >
+          @if (carregando) {
+            Salvando...
+          } @else {
+            Salvar Membro
+          }
+        </button>
       }
     </div>
   </div>

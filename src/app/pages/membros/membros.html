@@ -12,105 +12,216 @@
     </button>
   </div>
 
-  <!-- Filtros -->
+  <!-- Cards Resumo -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <i class="bi bi-people"></i>
 
+      <div>
+        <h3>{{ resumo.total }}</h3>
+        <span>Total</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <i class="bi bi-check-circle"></i>
+
+      <div>
+        <h3>{{ resumo.ativos }}</h3>
+        <span>Ativos</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <i class="bi bi-pause-circle"></i>
+
+      <div>
+        <h3>{{ resumo.inativos }}</h3>
+        <span>Inativos</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
   <div class="filter-card">
-    <div class="card-title">Filtros</div>
+    <div class="card-title">
+      <i class="bi bi-funnel"></i>
+      Filtros
+    </div>
 
     <div class="filters-grid">
-      <div>
-        <label>Comitium</label>
+      <div class="filter-field">
+        <label for="busca">Buscar</label>
+        <input
+          id="busca"
+          type="text"
+          class="form-control"
+          name="busca"
+          placeholder="Nome, CPF ou e-mail"
+          [(ngModel)]="filtros.busca"
+          (keyup.enter)="filtrar()"
+        />
+      </div>
 
-        <select class="form-select">
-          <option>Todos</option>
+      <div class="filter-field">
+        <label for="unidadeId">Unidade</label>
+        <select id="unidadeId" class="form-select" name="unidadeId" [(ngModel)]="filtros.unidadeId">
+          <option value="">Todas</option>
+
+          @for (unidade of catalogos.unidades; track unidade.id) {
+            <option [value]="unidade.id">{{ unidade.tipo }} — {{ unidade.nome }}</option>
+          }
         </select>
       </div>
 
-      <div>
-        <label>Cúria</label>
+      <div class="filter-field">
+        <label for="categoriaCodigo">Categoria</label>
+        <select
+          id="categoriaCodigo"
+          class="form-select"
+          name="categoriaCodigo"
+          [(ngModel)]="filtros.categoriaCodigo"
+        >
+          <option value="">Todas</option>
 
-        <select class="form-select">
-          <option>Todas</option>
+          @for (categoria of catalogos.categorias; track categoria.codigo) {
+            <option [value]="categoria.codigo">
+              {{ categoria.nome }}
+            </option>
+          }
         </select>
       </div>
 
-      <div>
-        <label>Praesidium</label>
-
-        <select class="form-select">
-          <option>Todos</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Cargo</label>
-
-        <select class="form-select">
-          <option>Todos</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Status</label>
-
-        <select class="form-select">
-          <option>Todos</option>
-          <option>Ativo</option>
-          <option>Inativo</option>
+      <div class="filter-field">
+        <label for="status">Status</label>
+        <select id="status" class="form-select" name="status" [(ngModel)]="filtros.status">
+          <option value="">Todos</option>
+          <option value="ATIVO">Ativo</option>
+          <option value="INATIVO">Inativo</option>
+          <option value="FALECIDO">Falecido</option>
         </select>
       </div>
     </div>
 
     <div class="filter-actions">
-      <button class="btn btn-primary">Filtrar</button>
+      <button class="btn btn-primary" (click)="filtrar()">
+        <i class="bi bi-funnel"></i>
+        Filtrar
+      </button>
 
-      <button class="btn btn-outline-secondary">Limpar</button>
+      <button class="btn btn-outline-secondary" (click)="limparFiltros()">
+        <i class="bi bi-x-circle"></i>
+        Limpar
+      </button>
     </div>
   </div>
 
   <!-- Tabela -->
-
   <div class="table-card">
-    <div class="card-title">Lista de Membros</div>
+    <div class="card-title">
+      Lista de Membros
 
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Cargo</th>
-          <th>Praesidium</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
+      @if (!carregando) {
+        <span class="contador">({{ membros.length }})</span>
+      }
+    </div>
 
-      <tbody>
-        @for (membro of membros; track membro.id) {
+    @if (carregando) {
+      <div class="empty-state">
+        <i class="bi bi-hourglass-split"></i>
+        <p>Carregando membros...</p>
+      </div>
+    }
+
+    @if (!carregando && membros.length === 0) {
+      <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <p>Nenhum membro encontrado.</p>
+      </div>
+    }
+
+    @if (!carregando && membros.length > 0) {
+      <table class="table">
+        <thead>
           <tr>
-            <td>{{ membro.nome }}</td>
-
-            <td>{{ membro.cargo }}</td>
-
-            <td>{{ membro.presidium }}</td>
-
-            <td>
-              <span class="status-badge">
-                {{ membro.status }}
-              </span>
-            </td>
-
-            <td>
-              <button class="btn btn-sm btn-light me-2">
-                <i class="bi bi-pencil"></i>
-              </button>
-
-              <button class="btn btn-sm btn-danger">
-                <i class="bi bi-trash"></i>
-              </button>
-            </td>
+            <th>Nome</th>
+            <th>CPF</th>
+            <th>Cargo</th>
+            <th>Unidade</th>
+            <th>Funções</th>
+            <th>Status</th>
+            <th>Ações</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+
+        <tbody>
+          @for (membro of membros; track membro.id) {
+            <tr>
+              <td>
+                <strong>
+                  {{ membro.nomePreferido || membro.nome }}
+                </strong>
+
+                @if (membro.nomePreferido) {
+                  <span class="nome-completo">
+                    {{ membro.nome }}
+                  </span>
+                }
+              </td>
+
+              <td>{{ membro.cpf || '-' }}</td>
+
+              <td>
+                {{ membro.cargoNome || '-' }}
+
+                @if (membro.cargo === null) {
+                  <span class="sem-cargo">—</span>
+                }
+              </td>
+
+              <td>
+                @if (membro.unidadeNome) {
+                  {{ membro.unidadeNome }}
+
+                  @if (membro.totalUnidades > 1) {
+                    <span class="badge-extra"> +{{ membro.totalUnidades - 1 }} </span>
+                  }
+                } @else {
+                  -
+                }
+              </td>
+
+              <td>
+                @if (funcoes(membro).length > 0) {
+                  {{ funcoes(membro).join(', ') }}
+                } @else {
+                  -
+                }
+              </td>
+
+              <td>
+                <span
+                  class="status-badge"
+                  [class.inativo]="membro.status === 'INATIVO'"
+                  [class.falecido]="membro.status === 'FALECIDO'"
+                >
+                  {{ rotulo(membro.status) }}
+                </span>
+              </td>
+
+              <td>
+                <button class="btn btn-sm btn-light me-2">
+                  <i class="bi bi-pencil"></i>
+                </button>
+
+                <button class="btn btn-sm btn-danger">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
   </div>
 </div>

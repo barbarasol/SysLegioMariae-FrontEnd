@@ -33,50 +33,80 @@
   display: flex;
   gap: 12px;
   align-items: center;
-}
 
-.btn-solicitacoes,
-.btn-nova-unidade {
-  height: 42px;
-  padding: 0 18px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  border: none;
+  .btn {
+    min-height: 42px;
+    padding: 0 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
 
-  display: flex;
-  align-items: center;
-  gap: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.2s ease;
 
-/* Botão Solicitações */
-.btn-solicitacoes {
-  background: #ffffff;
-  color: #14265c;
-  border: 1px solid #14265c;
+    cursor: pointer;
 
-  &:hover {
-    background: #eef1fa;
+    i {
+      font-size: 15px;
+    }
+
+    &:focus-visible {
+      outline: 3px solid rgba(20, 38, 92, 0.2);
+      outline-offset: 2px;
+      box-shadow: none;
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  // Solicitações — botão secundário
+  .btn-outline-primary {
+    background: #fff;
+    color: #14265c;
+    border: 1px solid #14265c;
+
+    &:hover {
+      background: #eef1fa;
+      border-color: #1d3475;
+      color: #14265c;
+    }
+  }
+
+  // Nova Unidade — botão principal
+  .btn-primary {
+    background: #14265c;
+    color: #fff;
+    border: 1px solid #14265c;
+
+    &:hover {
+      background: #1d3475;
+      border-color: #1d3475;
+      color: #fff;
+      transform: translateY(-1px);
+    }
   }
 }
 
-/* Botão Nova Unidade */
-.btn-nova-unidade {
-  background: #14265c;
-  color: #ffffff;
+// Responsividade
+@media (max-width: 600px) {
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
 
-  &:hover {
-    background: #1d3475;
-    transform: translateY(-1px);
+    .btn {
+      flex: 1;
+    }
   }
-}
-
-.btn-solicitacoes i,
-.btn-nova-unidade i {
-  font-size: 15px;
 }
 
 // ==========================================
