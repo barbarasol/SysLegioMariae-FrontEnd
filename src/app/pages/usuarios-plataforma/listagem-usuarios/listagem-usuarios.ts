@@ -3,7 +3,6 @@ import {
 } from '@angular/common';
 
 import {
-  HttpClient,
   HttpParams
 } from '@angular/common/http';
 
@@ -18,13 +17,24 @@ import {
 } from '@angular/forms';
 
 import {
-  finalize
+  Router
+} from '@angular/router';
+
+import {
+  finalize,
+  forkJoin
 } from 'rxjs';
 
 import {
-  environment
-} from '../../../../environments/environment';
-import { Router } from '@angular/router';
+  AcessoUnidade,
+  PerfilDisponivel,
+  UnidadeDisponivel,
+  UsuarioLista
+} from '../../../models/usuario.model';
+
+import {
+  UsuarioService
+} from '../../../services/usuario.service';
 
 type CampoOrdenacao =
   | 'nome'
@@ -36,36 +46,15 @@ type DirecaoOrdenacao =
   | 'asc'
   | 'desc';
 
-export interface UsuarioLista {
-  id: string;
-  pessoaId?: string;
-  nome: string;
-  nomePreferido?: string | null;
-  cpf: string | null;
-  celular: string | null;
-  email: string;
-  status: string;
-  perfisGlobais: string[];
-}
-
 interface UsuarioEdicao
   extends UsuarioLista {
   perfilCodigo: string;
 }
 
-interface PerfilAcessoGlobal {
-  id: string;
-  codigo: string;
-}
-
-interface RespostaUsuarios {
-  usuarios:
-  UsuarioLista[];
-}
-
-interface RespostaPerfis {
-  perfis:
-  PerfilAcessoGlobal[];
+interface AcessoFormulario {
+  unidadeId: string;
+  perfilCodigo: string;
+  observacao: string;
 }
 
 @Component({
@@ -87,7 +76,7 @@ interface RespostaPerfis {
     './listagem-usuarios.scss'
 })
 export class ListagemUsuarios
-  implements OnInit {
+implements OnInit {
 
   filtroNome = '';
   filtroCpf = '';
@@ -97,61 +86,105 @@ export class ListagemUsuarios
   usuarios:
     UsuarioLista[] = [];
 
-  perfisDisponiveis:
-    PerfilAcessoGlobal[] = [];
+  perfisGlobais:
+    PerfilDisponivel[] = [];
 
-  carregando = false;
-  carregandoPerfis = false;
+  perfisUnidade:
+    PerfilDisponivel[] = [];
 
-  erro = '';
+  unidadesDisponiveis:
+    UnidadeDisponivel[] = [];
 
-  campoOrdenacao:
-    CampoOrdenacao =
-    'nome';
-
-  direcaoOrdenacao:
-    DirecaoOrdenacao =
-    'asc';
+  acessosUnidade:
+    AcessoUnidade[] = [];
 
   usuarioEdicao:
     UsuarioEdicao | null =
-    null;
+      null;
 
+  acessoFormulario:
+    AcessoFormulario = {
+      unidadeId: '',
+      perfilCodigo: '',
+      observacao: ''
+    };
+
+  acessoEditando:
+    AcessoUnidade | null =
+      null;
+
+  carregando = false;
+  carregandoCadastros = false;
+  carregandoAcessos = false;
   salvandoEdicao = false;
-  erroEdicao = '';
+  salvandoAcesso = false;
 
   excluindoId:
     string | null =
-    null;
+      null;
+
+  removendoAcessoChave:
+    string | null =
+      null;
+
+  erro = '';
+  erroEdicao = '';
+  erroAcesso = '';
+  sucessoEdicao = '';
+  sucessoAcesso = '';
+
+  campoOrdenacao:
+    CampoOrdenacao =
+      'nome';
+
+  direcaoOrdenacao:
+    DirecaoOrdenacao =
+      'asc';
 
   constructor(
-    private http:
-      HttpClient,
+    private usuarioService:
+      UsuarioService,
+
+    private router:
+      Router,
 
     private cdr:
-      ChangeDetectorRef,
-    
-    private router: Router
-  ) { }
+      ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
-    this.carregarPerfisGlobais();
+    this.carregarCadastrosApoio();
     this.filtrar();
   }
 
-  carregarPerfisGlobais():
-    void {
+  carregarCadastrosApoio():
+  void {
 
-    this.carregandoPerfis =
+    if (
+      this.carregandoCadastros
+    ) {
+      return;
+    }
+
+    this.carregandoCadastros =
       true;
 
-    this.http
-      .get<RespostaPerfis>(
-        `${environment.apiUrl}/usuarios/perfis-globais`
-      )
+    forkJoin({
+      globais:
+        this.usuarioService
+          .listarPerfisGlobais(),
+
+      unidade:
+        this.usuarioService
+          .listarPerfisUnidade(),
+
+      unidades:
+        this.usuarioService
+          .listarUnidadesDisponiveis()
+    })
       .pipe(
         finalize(() => {
-          this.carregandoPerfis =
+          this.carregandoCadastros =
             false;
 
           this.cdr
@@ -163,11 +196,37 @@ export class ListagemUsuarios
           resultado
         ) => {
 
-          this.perfisDisponiveis =
+          this.perfisGlobais =
             Array.isArray(
-              resultado?.perfis
+              resultado
+                .globais
+                ?.perfis
             )
-              ? resultado.perfis
+              ? resultado
+                  .globais
+                  .perfis
+              : [];
+
+          this.perfisUnidade =
+            Array.isArray(
+              resultado
+                .unidade
+                ?.perfis
+            )
+              ? resultado
+                  .unidade
+                  .perfis
+              : [];
+
+          this.unidadesDisponiveis =
+            Array.isArray(
+              resultado
+                .unidades
+                ?.unidades
+            )
+              ? resultado
+                  .unidades
+                  .unidades
               : [];
 
           this.cdr
@@ -179,12 +238,9 @@ export class ListagemUsuarios
         ) => {
 
           console.error(
-            'Erro ao carregar perfis globais:',
+            'Erro ao carregar perfis/unidades:',
             error
           );
-
-          this.perfisDisponiveis =
-            [];
 
           this.cdr
             .detectChanges();
@@ -267,12 +323,9 @@ export class ListagemUsuarios
 
     this.erro = '';
 
-    this.http
-      .get<RespostaUsuarios>(
-        `${environment.apiUrl}/usuarios`,
-        {
-          params
-        }
+    this.usuarioService
+      .listar(
+        params
       )
       .pipe(
         finalize(() => {
@@ -291,9 +344,11 @@ export class ListagemUsuarios
 
           this.usuarios =
             Array.isArray(
-              resultado?.usuarios
+              resultado
+                ?.usuarios
             )
-              ? resultado.usuarios
+              ? resultado
+                  .usuarios
               : [];
 
           this.cdr
@@ -321,16 +376,18 @@ export class ListagemUsuarios
       });
   }
 
-  perfilUsuario(
+  perfilGlobalUsuario(
     usuario:
       UsuarioLista
   ): string {
 
     if (
       !usuario.perfisGlobais ||
-      usuario.perfisGlobais.length === 0
+      usuario
+        .perfisGlobais
+        .length === 0
     ) {
-      return '-';
+      return 'SEM PERFIL GLOBAL';
     }
 
     return usuario
@@ -338,7 +395,23 @@ export class ListagemUsuarios
       .join(', ');
   }
 
-  limparFiltros(): void {
+  statusUsuario(
+    status:
+      string
+  ): string {
+
+    if (
+      status ===
+      'PENDENTE_EMAIL'
+    ) {
+      return 'PENDENTE DE AUTORIZAÇÃO';
+    }
+
+    return status;
+  }
+
+  limparFiltros():
+  void {
 
     this.filtroNome = '';
     this.filtroCpf = '';
@@ -402,16 +475,18 @@ export class ListagemUsuarios
 
     return (
       this.direcaoOrdenacao ===
-        'asc'
+      'asc'
         ? 'bi-sort-down'
         : 'bi-sort-up'
     );
   }
 
   novoUsuario():
-    void {
+  void {
 
-    this.router.navigate(['/novo-usuario'])
+    this.router.navigate([
+      '/novo-usuario'
+    ]);
   }
 
   editarUsuario(
@@ -420,17 +495,21 @@ export class ListagemUsuarios
   ): void {
 
     this.erroEdicao = '';
+    this.erroAcesso = '';
+    this.sucessoEdicao = '';
+    this.sucessoAcesso = '';
 
-    const perfilAtual =
-      usuario
-        .perfisGlobais?.[0] ??
-      '';
+    this.acessoEditando =
+      null;
+
+    this.limparFormularioAcesso();
 
     this.usuarioEdicao = {
       ...usuario,
 
       nomePreferido:
-        usuario.nomePreferido ??
+        usuario
+          .nomePreferido ??
         '',
 
       cpf:
@@ -441,54 +520,111 @@ export class ListagemUsuarios
         usuario.celular ??
         '',
 
-      perfisGlobais:
-        [
-          ...(usuario
+      perfisGlobais: [
+        ...(
+          usuario
             .perfisGlobais ??
-            [])
-        ],
+          []
+        )
+      ],
 
       perfilCodigo:
-        perfilAtual
+        usuario
+          .perfisGlobais
+          ?.[0] ??
+        ''
     };
 
-    /*
-     * Se a listagem de perfis ainda
-     * não chegou, tenta novamente.
-     */
     if (
-      this.perfisDisponiveis
-        .length === 0 &&
-      !this.carregandoPerfis
+      (
+        this.perfisGlobais
+          .length === 0 ||
+        this.perfisUnidade
+          .length === 0 ||
+        this.unidadesDisponiveis
+          .length === 0
+      ) &&
+      !this.carregandoCadastros
     ) {
-      this.carregarPerfisGlobais();
+      this.carregarCadastrosApoio();
     }
+
+    this.carregarAcessosUnidade();
 
     this.cdr
       .detectChanges();
   }
 
-  cancelarEdicao():
-    void {
+  carregarAcessosUnidade():
+  void {
 
     if (
-      this.salvandoEdicao
+      !this.usuarioEdicao
     ) {
       return;
     }
 
-    this.usuarioEdicao =
-      null;
+    this.carregandoAcessos =
+      true;
 
-    this.erroEdicao =
-      '';
+    this.erroAcesso = '';
 
-    this.cdr
-      .detectChanges();
+    this.usuarioService
+      .listarAcessosUnidade(
+        this.usuarioEdicao.id
+      )
+      .pipe(
+        finalize(() => {
+
+          this.carregandoAcessos =
+            false;
+
+          this.cdr
+            .detectChanges();
+        })
+      )
+      .subscribe({
+        next: (
+          resultado
+        ) => {
+
+          this.acessosUnidade =
+            Array.isArray(
+              resultado
+                ?.acessos
+            )
+              ? resultado
+                  .acessos
+              : [];
+
+          this.cdr
+            .detectChanges();
+        },
+
+        error: (
+          error
+        ) => {
+
+          console.error(
+            'Erro ao carregar acessos por unidade:',
+            error
+          );
+
+          this.acessosUnidade =
+            [];
+
+          this.erroAcesso =
+            error?.error?.message ??
+            'Não foi possível carregar os acessos por unidade.';
+
+          this.cdr
+            .detectChanges();
+        }
+      });
   }
 
   salvarEdicao():
-    void {
+  void {
 
     if (
       !this.usuarioEdicao ||
@@ -507,11 +643,6 @@ export class ListagemUsuarios
         .email
         .trim();
 
-    const perfilCodigo =
-      this.usuarioEdicao
-        .perfilCodigo
-        .trim();
-
     if (!nome) {
       this.erroEdicao =
         'Informe o nome completo.';
@@ -524,23 +655,15 @@ export class ListagemUsuarios
       return;
     }
 
-    if (!perfilCodigo) {
-      this.erroEdicao =
-        'Selecione o perfil de acesso.';
-      return;
-    }
-
     this.salvandoEdicao =
       true;
 
     this.erroEdicao = '';
+    this.sucessoEdicao = '';
 
-    this.http
-      .put<{
-        usuario:
-        UsuarioLista;
-      }>(
-        `${environment.apiUrl}/usuarios/${this.usuarioEdicao.id}`,
+    this.usuarioService
+      .atualizar(
+        this.usuarioEdicao.id,
         {
           nome,
 
@@ -565,7 +688,13 @@ export class ListagemUsuarios
             this.usuarioEdicao
               .status,
 
-          perfilCodigo
+          /*
+           * Vazio = sem perfil global.
+           */
+          perfilCodigo:
+            this.usuarioEdicao
+              .perfilCodigo ||
+            null
         }
       )
       .pipe(
@@ -579,10 +708,23 @@ export class ListagemUsuarios
         })
       )
       .subscribe({
-        next: () => {
+        next: (
+          resultado
+        ) => {
 
-          this.usuarioEdicao =
-            null;
+          this.usuarioEdicao = {
+            ...this.usuarioEdicao!,
+            ...resultado.usuario,
+            perfilCodigo:
+              resultado
+                .usuario
+                .perfisGlobais
+                ?.[0] ??
+              ''
+          };
+
+          this.sucessoEdicao =
+            'Dados do usuário e perfil global atualizados com sucesso.';
 
           this.filtrar();
 
@@ -607,6 +749,324 @@ export class ListagemUsuarios
             .detectChanges();
         }
       });
+  }
+
+  editarAcesso(
+    acesso:
+      AcessoUnidade
+  ): void {
+
+    this.erroAcesso = '';
+    this.sucessoAcesso = '';
+
+    this.acessoEditando = {
+      ...acesso
+    };
+
+    this.acessoFormulario = {
+      unidadeId:
+        acesso.unidadeId,
+
+      perfilCodigo:
+        acesso.perfilCodigo,
+
+      observacao:
+        ''
+    };
+
+    this.cdr
+      .detectChanges();
+  }
+
+  cancelarEdicaoAcesso():
+  void {
+
+    if (
+      this.salvandoAcesso
+    ) {
+      return;
+    }
+
+    this.acessoEditando =
+      null;
+
+    this.limparFormularioAcesso();
+
+    this.erroAcesso = '';
+    this.sucessoAcesso = '';
+
+    this.cdr
+      .detectChanges();
+  }
+
+  salvarAcesso():
+  void {
+
+    if (
+      !this.usuarioEdicao ||
+      this.salvandoAcesso
+    ) {
+      return;
+    }
+
+    const unidadeId =
+      this.acessoFormulario
+        .unidadeId
+        .trim();
+
+    const perfilCodigo =
+      this.acessoFormulario
+        .perfilCodigo
+        .trim();
+
+    if (!unidadeId) {
+      this.erroAcesso =
+        'Selecione a unidade.';
+      return;
+    }
+
+    if (!perfilCodigo) {
+      this.erroAcesso =
+        'Selecione o perfil da unidade.';
+      return;
+    }
+
+    this.salvandoAcesso =
+      true;
+
+    this.erroAcesso = '';
+    this.sucessoAcesso = '';
+
+    const payload = {
+      unidadeId,
+      perfilCodigo,
+
+      observacao:
+        this.acessoFormulario
+          .observacao
+          .trim() ||
+        null
+    };
+
+    const requisicao =
+      this.acessoEditando
+        ? this.usuarioService
+            .alterarAcessoUnidade(
+              this.usuarioEdicao.id,
+              this.acessoEditando
+                .unidadeId,
+              this.acessoEditando
+                .perfilCodigo,
+              payload
+            )
+        : this.usuarioService
+            .adicionarAcessoUnidade(
+              this.usuarioEdicao.id,
+              payload
+            );
+
+    requisicao
+      .pipe(
+        finalize(() => {
+
+          this.salvandoAcesso =
+            false;
+
+          this.cdr
+            .detectChanges();
+        })
+      )
+      .subscribe({
+        next: () => {
+
+          this.sucessoAcesso =
+            this.acessoEditando
+              ? 'Acesso por unidade atualizado com sucesso.'
+              : 'Acesso por unidade incluído com sucesso.';
+
+          this.acessoEditando =
+            null;
+
+          this.limparFormularioAcesso();
+
+          this.carregarAcessosUnidade();
+
+          this.cdr
+            .detectChanges();
+        },
+
+        error: (
+          error
+        ) => {
+
+          console.error(
+            'Erro ao salvar acesso por unidade:',
+            error
+          );
+
+          this.erroAcesso =
+            error?.error?.message ??
+            'Não foi possível salvar o acesso por unidade.';
+
+          this.cdr
+            .detectChanges();
+        }
+      });
+  }
+
+  removerAcesso(
+    acesso:
+      AcessoUnidade
+  ): void {
+
+    if (
+      !this.usuarioEdicao ||
+      this.removendoAcessoChave
+    ) {
+      return;
+    }
+
+    const confirmou =
+      window.confirm(
+        `Remover o perfil ${acesso.perfilCodigo} da unidade "${acesso.unidadeNome}"?`
+      );
+
+    if (!confirmou) {
+      return;
+    }
+
+    this.removendoAcessoChave =
+      this.chaveAcesso(
+        acesso
+      );
+
+    this.erroAcesso = '';
+    this.sucessoAcesso = '';
+
+    this.usuarioService
+      .removerAcessoUnidade(
+        this.usuarioEdicao.id,
+        acesso.unidadeId,
+        acesso.perfilCodigo
+      )
+      .pipe(
+        finalize(() => {
+
+          this.removendoAcessoChave =
+            null;
+
+          this.cdr
+            .detectChanges();
+        })
+      )
+      .subscribe({
+        next: () => {
+
+          if (
+            this.acessoEditando &&
+            this.chaveAcesso(
+              this.acessoEditando
+            ) ===
+            this.chaveAcesso(
+              acesso
+            )
+          ) {
+            this.acessoEditando =
+              null;
+
+            this.limparFormularioAcesso();
+          }
+
+          this.sucessoAcesso =
+            'Acesso removido com sucesso.';
+
+          this.carregarAcessosUnidade();
+
+          this.cdr
+            .detectChanges();
+        },
+
+        error: (
+          error
+        ) => {
+
+          console.error(
+            'Erro ao remover acesso:',
+            error
+          );
+
+          this.erroAcesso =
+            error?.error?.message ??
+            'Não foi possível remover o acesso.';
+
+          this.cdr
+            .detectChanges();
+        }
+      });
+  }
+
+  chaveAcesso(
+    acesso:
+      AcessoUnidade
+  ): string {
+
+    return (
+      `${acesso.unidadeId}` +
+      ':' +
+      `${acesso.perfilCodigo}`
+    );
+  }
+
+  unidadeAprovada(
+    unidade:
+      UnidadeDisponivel
+  ): boolean {
+
+    return (
+      unidade
+        .statusAprovacao ===
+      'APROVADA'
+    );
+  }
+
+  perfilMembroSelecionado():
+  boolean {
+
+    return (
+      this.acessoFormulario
+        .perfilCodigo ===
+      'MEMBRO'
+    );
+  }
+
+  cancelarEdicao():
+  void {
+
+    if (
+      this.salvandoEdicao ||
+      this.salvandoAcesso
+    ) {
+      return;
+    }
+
+    this.usuarioEdicao =
+      null;
+
+    this.acessosUnidade =
+      [];
+
+    this.acessoEditando =
+      null;
+
+    this.limparFormularioAcesso();
+
+    this.erroEdicao = '';
+    this.erroAcesso = '';
+    this.sucessoEdicao = '';
+    this.sucessoAcesso = '';
+
+    this.cdr
+      .detectChanges();
   }
 
   excluirUsuario(
@@ -635,12 +1095,9 @@ export class ListagemUsuarios
 
     this.erro = '';
 
-    this.http
-      .delete<{
-        message:
-        string;
-      }>(
-        `${environment.apiUrl}/usuarios/${usuario.id}`
+    this.usuarioService
+      .excluir(
+        usuario.id
       )
       .pipe(
         finalize(() => {
@@ -678,5 +1135,15 @@ export class ListagemUsuarios
             .detectChanges();
         }
       });
+  }
+
+  private limparFormularioAcesso():
+  void {
+
+    this.acessoFormulario = {
+      unidadeId: '',
+      perfilCodigo: '',
+      observacao: ''
+    };
   }
 }

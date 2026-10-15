@@ -1,3 +1,97 @@
 /* You can add global styles to this file, and also import other style files */
 @use 'bootstrap/scss/bootstrap';
 @use 'bootstrap-icons/font/bootstrap-icons.css';
+/*
+ * ACRESCENTAR AO FINAL de src/styles.scss
+ */
+
+@use './styles/legio-theme';
+
+html,
+body {
+  background: var(--legio-rose-050);
+  color: var(--legio-text);
+}
+
+body {
+  margin: 0;
+}
+
+/*
+ * Botões padrão
+ */
+button,
+.btn {
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.btn-primary,
+button.btn-primary {
+  background-color: var(--legio-red-800);
+  border-color: var(--legio-red-800);
+  color: var(--legio-white);
+}
+
+.btn-primary:hover,
+button.btn-primary:hover {
+  background-color: var(--legio-red-900);
+  border-color: var(--legio-red-900);
+}
+
+.btn-outline-primary,
+button.btn-outline-primary {
+  background-color: transparent;
+  border-color: var(--legio-red-800);
+  color: var(--legio-red-800);
+}
+
+.btn-outline-primary:hover,
+button.btn-outline-primary:hover {
+  background-color: var(--legio-red-800);
+  border-color: var(--legio-red-800);
+  color: var(--legio-white);
+}
+
+/*
+ * Campos
+ */
+input,
+select,
+textarea,
+.form-control,
+.form-select {
+  border-color: var(--legio-border);
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--legio-red-600);
+  box-shadow: 0 0 0 0.2rem rgba(161, 59, 64, 0.14);
+  outline: none;
+}
+
+/*
+ * Cards
+ */
+.card {
+  border-color: var(--legio-border);
+  background: var(--legio-white);
+}
+
+/*
+ * Links
+ */
+a {
+  color: var(--legio-red-800);
+}
+
+a:hover {
+  color: var(--legio-red-900);
+}

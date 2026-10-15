@@ -213,3 +213,89 @@
   }
 
 }
+
+/*
+ * ACRESCENTAR AO FINAL de:
+ * src/app/pages/home/home.scss
+ *
+ * As classes abaixo existem no home.html atual.
+ */
+
+.home-container {
+  background:
+    linear-gradient(
+      180deg,
+      var(--legio-rose-025) 0%,
+      var(--legio-rose-050) 100%
+    );
+}
+
+.home-header {
+  background: var(--legio-white);
+  border-bottom:
+    1px solid var(--legio-border);
+}
+
+.portal-title h1 {
+  color: var(--legio-red-900);
+}
+
+.user-profile {
+  color: var(--legio-text);
+}
+
+.user-role {
+  color: var(--legio-text-muted);
+}
+
+.welcome-section {
+  background:
+    linear-gradient(
+      135deg,
+      var(--legio-white) 0%,
+      #fffafa 100%
+    );
+  border:
+    1px solid var(--legio-border);
+  box-shadow:
+    0 10px 26px rgba(111, 32, 36, 0.06);
+}
+
+.welcome-label {
+  color: var(--legio-red-700) !important;
+}
+
+.welcome-section h2 {
+  color: var(--legio-red-900);
+}
+
+.welcome-section p {
+  color: var(--legio-text-muted);
+}
+
+.info-card {
+  background: var(--legio-white);
+  border:
+    1px solid var(--legio-border);
+  box-shadow:
+    0 8px 20px rgba(111, 32, 36, 0.06);
+}
+
+.info-card:hover {
+  border-color: #d8afb2;
+  box-shadow:
+    0 10px 26px rgba(111, 32, 36, 0.10);
+}
+
+.card-icon {
+  background: var(--legio-rose-100) !important;
+  color: var(--legio-red-800) !important;
+}
+
+.info-card h3 {
+  color: var(--legio-text);
+}
+
+.info-card p {
+  color: var(--legio-text-muted);
+}

@@ -233,3 +233,50 @@
   }
 
 }
+
+/*
+ * ACRESCENTAR AO FINAL de:
+ * src/app/pages/dashboard/dashboard.scss
+ */
+
+:host {
+  display: block;
+  background: var(--legio-rose-050);
+}
+
+.dashboard,
+.dashboard-container,
+.dashboard-content {
+  background:
+    linear-gradient(
+      180deg,
+      var(--legio-rose-025) 0%,
+      var(--legio-rose-050) 100%
+    ) !important;
+}
+
+.dashboard h1,
+.dashboard h2,
+.dashboard-title,
+.page-title {
+  color: var(--legio-red-900);
+}
+
+.dashboard .card,
+.dashboard-card,
+.metric-card,
+.stat-card {
+  background: var(--legio-white);
+  border:
+    1px solid var(--legio-border);
+  box-shadow:
+    0 8px 20px rgba(111, 32, 36, 0.06);
+}
+
+.dashboard .card-icon,
+.dashboard-card .icon,
+.metric-card .icon,
+.stat-card .icon {
+  background: var(--legio-rose-100) !important;
+  color: var(--legio-red-800) !important;
+}

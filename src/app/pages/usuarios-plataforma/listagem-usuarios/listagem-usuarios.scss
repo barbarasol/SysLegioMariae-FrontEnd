@@ -117,3 +117,172 @@
     grid-column: span 1;
   }
 }
+
+.listagem-usuarios-container {
+  padding: 24px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.page-header h2 {
+  margin: 0 0 6px;
+  color: var(--legio-red-900, #651a1d);
+}
+
+.page-header p {
+  margin: 0;
+  color: var(--legio-text-muted, #7e6668);
+}
+
+.filter-card,
+.table-card {
+  background: #fff;
+  border: 1px solid var(--legio-border, #e7cfd1);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 22px rgba(101, 26, 29, 0.05);
+}
+
+.card-title {
+  font-weight: 700;
+  color: var(--legio-red-900, #651a1d);
+  margin-bottom: 16px;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.filters-grid label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.perfil-global-badge {
+  background: var(--legio-rose-100, #f5e5e6);
+  color: var(--legio-red-900, #651a1d);
+  border: 1px solid var(--legio-border, #e7cfd1);
+}
+
+.perfil-global-badge.sem-perfil {
+  background: #f8f4f4;
+  color: #7e6668;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #e7f5ec;
+  color: #23643b;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.status-badge.status-inativo {
+  background: #f5e5e6;
+  color: #7a2024;
+}
+
+.status-badge.status-pendente {
+  background: #fff3cd;
+  color: #664d03;
+}
+
+.edicao-section {
+  padding: 4px 0 22px;
+}
+
+.edicao-section + .edicao-section {
+  border-top: 1px solid var(--legio-border, #e7cfd1);
+  padding-top: 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.section-header h6 {
+  margin: 0 0 5px;
+  color: var(--legio-red-900, #651a1d);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.section-header p {
+  margin: 0;
+  color: var(--legio-text-muted, #7e6668);
+}
+
+.section-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.access-form-card {
+  background: var(--legio-rose-025, #fdf9f9);
+  border: 1px solid var(--legio-border, #e7cfd1);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.perfil-unidade-badge {
+  background: var(--legio-red-800, #7a2024);
+  color: #fff;
+}
+
+.access-table thead th {
+  color: var(--legio-red-900, #651a1d);
+}
+
+.modal-header {
+  border-bottom-color:
+    var(--legio-border, #e7cfd1);
+}
+
+.modal-footer {
+  border-top-color:
+    var(--legio-border, #e7cfd1);
+}
+
+@media (max-width: 992px) {
+  .filters-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 576px) {
+  .listagem-usuarios-container {
+    padding: 14px;
+  }
+
+  .page-header {
+    flex-direction: column;
+  }
+
+  .filters-grid {
+    grid-template-columns: 1fr;
+  }
+}

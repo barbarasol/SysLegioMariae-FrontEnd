@@ -1,4 +1,4 @@
-<div class="novo-usuario-container">
+<div class="listagem-usuarios-container">
 
   <div class="page-header">
 
@@ -8,7 +8,7 @@
       </h2>
 
       <p>
-        Gerencie e acompanhe os usuários cadastrados na plataforma.
+        Gerencie usuários, perfil global e acessos por unidade.
       </p>
     </div>
 
@@ -17,10 +17,7 @@
       class="btn btn-primary"
       (click)="novoUsuario()"
     >
-      <i
-        class="bi bi-plus-circle"
-      ></i>
-
+      <i class="bi bi-plus-circle"></i>
       Novo Usuário
     </button>
 
@@ -104,10 +101,7 @@
         (click)="filtrar()"
         [disabled]="carregando"
       >
-        <i
-          class="bi bi-search"
-        ></i>
-
+        <i class="bi bi-search"></i>
         Filtrar
       </button>
 
@@ -117,10 +111,7 @@
         (click)="limparFiltros()"
         [disabled]="carregando"
       >
-        <i
-          class="bi bi-x-circle"
-        ></i>
-
+        <i class="bi bi-x-circle"></i>
         Limpar
       </button>
 
@@ -145,7 +136,7 @@
 
     <div class="table-responsive">
 
-      <table class="table">
+      <table class="table align-middle">
 
         <thead>
           <tr>
@@ -211,7 +202,7 @@
             </th>
 
             <th>
-              Perfil de Acesso
+              Perfil Global
             </th>
 
             <th>
@@ -270,9 +261,10 @@
 
                 <td>
                   <span
-                    class="badge text-bg-secondary"
+                    class="badge perfil-global-badge"
+                    [class.sem-perfil]="usuario.perfisGlobais.length === 0"
                   >
-                    {{ perfilUsuario(usuario) }}
+                    {{ perfilGlobalUsuario(usuario) }}
                   </span>
                 </td>
 
@@ -280,8 +272,9 @@
                   <span
                     class="status-badge"
                     [class.status-inativo]="usuario.status !== 'ATIVO'"
+                    [class.status-pendente]="usuario.status === 'PENDENTE_EMAIL'"
                   >
-                    {{ usuario.status }}
+                    {{ statusUsuario(usuario.status) }}
                   </span>
                 </td>
 
@@ -290,12 +283,10 @@
                   <button
                     type="button"
                     class="btn btn-sm btn-light me-2"
-                    title="Editar usuário"
+                    title="Editar usuário e acessos"
                     (click)="editarUsuario(usuario)"
                   >
-                    <i
-                      class="bi bi-pencil"
-                    ></i>
+                    <i class="bi bi-pencil"></i>
                   </button>
 
                   <button
@@ -318,9 +309,7 @@
 
                     } @else {
 
-                      <i
-                        class="bi bi-trash"
-                      ></i>
+                      <i class="bi bi-trash"></i>
 
                     }
 
@@ -364,7 +353,7 @@
     >
 
       <div
-        class="modal-dialog modal-lg modal-dialog-centered"
+        class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable"
         role="document"
       >
 
@@ -372,217 +361,608 @@
 
           <div class="modal-header">
 
-            <h5 class="modal-title">
-              Editar Usuário
-            </h5>
+            <div>
+              <h5 class="modal-title">
+                Editar Usuário
+              </h5>
+
+              <small class="text-muted">
+                {{ usuarioEdicao.email }}
+              </small>
+            </div>
 
             <button
               type="button"
               class="btn-close"
               aria-label="Fechar"
               (click)="cancelarEdicao()"
-              [disabled]="salvandoEdicao"
+              [disabled]="salvandoEdicao || salvandoAcesso"
             ></button>
 
           </div>
 
           <div class="modal-body">
 
-            @if (erroEdicao) {
-              <div
-                class="alert alert-danger"
-                role="alert"
-              >
-                {{ erroEdicao }}
-              </div>
-            }
+            <section class="edicao-section">
 
-            <div class="row g-3">
+              <div class="section-header">
+                <div>
+                  <h6>
+                    Dados da Conta e Perfil Global
+                  </h6>
 
-              <div class="col-12">
-
-                <label
-                  class="form-label"
-                >
-                  Nome Completo
-                </label>
-
-                <input
-                  type="text"
-                  class="form-control"
-                  name="edicaoNome"
-                  [(ngModel)]="usuarioEdicao.nome"
-                  [disabled]="salvandoEdicao"
-                  required
-                />
-
+                  <p>
+                    Perfis PLATFORM_* valem para toda a plataforma.
+                    Um usuário pode permanecer sem perfil global.
+                  </p>
+                </div>
               </div>
 
-              <div class="col-md-6">
-
-                <label
-                  class="form-label"
+              @if (erroEdicao) {
+                <div
+                  class="alert alert-danger"
+                  role="alert"
                 >
-                  Nome Preferido
-                </label>
+                  {{ erroEdicao }}
+                </div>
+              }
 
-                <input
-                  type="text"
-                  class="form-control"
-                  name="edicaoNomePreferido"
-                  [(ngModel)]="usuarioEdicao.nomePreferido"
-                  [disabled]="salvandoEdicao"
-                />
-
-              </div>
-
-              <div class="col-md-6">
-
-                <label
-                  class="form-label"
+              @if (sucessoEdicao) {
+                <div
+                  class="alert alert-success"
+                  role="status"
                 >
-                  CPF
-                </label>
+                  {{ sucessoEdicao }}
+                </div>
+              }
 
-                <input
-                  type="text"
-                  class="form-control"
-                  name="edicaoCpf"
-                  [(ngModel)]="usuarioEdicao.cpf"
-                  [disabled]="salvandoEdicao"
-                />
+              <div class="row g-3">
 
-              </div>
+                <div class="col-12">
 
-              <div class="col-md-6">
+                  <label class="form-label">
+                    Nome Completo
+                  </label>
 
-                <label
-                  class="form-label"
-                >
-                  Celular
-                </label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="edicaoNome"
+                    [(ngModel)]="usuarioEdicao.nome"
+                    [disabled]="salvandoEdicao"
+                    required
+                  />
 
-                <input
-                  type="text"
-                  class="form-control"
-                  name="edicaoCelular"
-                  [(ngModel)]="usuarioEdicao.celular"
-                  [disabled]="salvandoEdicao"
-                />
+                </div>
 
-              </div>
+                <div class="col-md-6">
 
-              <div class="col-md-6">
+                  <label class="form-label">
+                    Nome Preferido
+                  </label>
 
-                <label
-                  class="form-label"
-                >
-                  E-mail
-                </label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="edicaoNomePreferido"
+                    [(ngModel)]="usuarioEdicao.nomePreferido"
+                    [disabled]="salvandoEdicao"
+                  />
 
-                <input
-                  type="email"
-                  class="form-control"
-                  name="edicaoEmail"
-                  [(ngModel)]="usuarioEdicao.email"
-                  [disabled]="salvandoEdicao"
-                  required
-                />
+                </div>
 
-              </div>
+                <div class="col-md-6">
 
-              <div class="col-md-6">
+                  <label class="form-label">
+                    CPF
+                  </label>
 
-                <label
-                  class="form-label"
-                >
-                  Perfil de Acesso
-                </label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="edicaoCpf"
+                    [(ngModel)]="usuarioEdicao.cpf"
+                    [disabled]="salvandoEdicao"
+                  />
 
-                <select
-                  class="form-select"
-                  name="edicaoPerfil"
-                  [(ngModel)]="usuarioEdicao.perfilCodigo"
-                  [disabled]="salvandoEdicao || carregandoPerfis"
-                  required
-                >
+                </div>
 
-                  <option
-                    value=""
-                    disabled
+                <div class="col-md-6">
+
+                  <label class="form-label">
+                    Celular
+                  </label>
+
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="edicaoCelular"
+                    [(ngModel)]="usuarioEdicao.celular"
+                    [disabled]="salvandoEdicao"
+                  />
+
+                </div>
+
+                <div class="col-md-6">
+
+                  <label class="form-label">
+                    E-mail
+                  </label>
+
+                  <input
+                    type="email"
+                    class="form-control"
+                    name="edicaoEmail"
+                    [(ngModel)]="usuarioEdicao.email"
+                    [disabled]="salvandoEdicao"
+                    required
+                  />
+
+                </div>
+
+                <div class="col-md-6">
+
+                  <label class="form-label">
+                    Status
+                  </label>
+
+                  <select
+                    class="form-select"
+                    name="edicaoStatus"
+                    [(ngModel)]="usuarioEdicao.status"
+                    [disabled]="salvandoEdicao"
                   >
-                    Selecione o perfil
-                  </option>
 
-                  @for (
-                    perfil of perfisDisponiveis;
-                    track perfil.id
-                  ) {
-
-                    <option
-                      [value]="perfil.codigo"
-                    >
-                      {{ perfil.codigo }}
+                    <option value="PENDENTE_EMAIL">
+                      Pendente de autorização
                     </option>
+
+                    <option value="ATIVO">
+                      Ativo
+                    </option>
+
+                    <option value="BLOQUEADO">
+                      Bloqueado
+                    </option>
+
+                    <option value="INATIVO">
+                      Inativo
+                    </option>
+
+                  </select>
+
+                </div>
+
+                <div class="col-md-6">
+
+                  <label class="form-label">
+                    Perfil Global
+                  </label>
+
+                  <select
+                    class="form-select"
+                    name="edicaoPerfilGlobal"
+                    [(ngModel)]="usuarioEdicao.perfilCodigo"
+                    [disabled]="salvandoEdicao || carregandoCadastros"
+                  >
+
+                    <option value="">
+                      Sem perfil global
+                    </option>
+
+                    @for (
+                      perfil of perfisGlobais;
+                      track perfil.codigo
+                    ) {
+
+                      <option
+                        [value]="perfil.codigo"
+                      >
+                        {{ perfil.codigo }}
+                        @if (perfil.nome) {
+                          — {{ perfil.nome }}
+                        }
+                      </option>
+
+                    }
+
+                  </select>
+
+                  <div class="form-text">
+                    MEMBRO, CONSULTA, OPERADOR e ADMIN_UNIDADE
+                    são definidos abaixo, vinculados a uma unidade.
+                  </div>
+
+                </div>
+
+              </div>
+
+              <div class="section-actions">
+
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  (click)="salvarEdicao()"
+                  [disabled]="salvandoEdicao || carregandoCadastros"
+                >
+
+                  @if (salvandoEdicao) {
+
+                    <span
+                      class="spinner-border spinner-border-sm me-2"
+                      aria-hidden="true"
+                    ></span>
+
+                    Salvando...
+
+                  } @else {
+
+                    <i class="bi bi-check-circle me-1"></i>
+                    Salvar Dados do Usuário
 
                   }
 
-                </select>
+                </button>
 
-                @if (carregandoPerfis) {
-                  <div
-                    class="form-text"
-                  >
-                    Carregando perfis...
+              </div>
+
+            </section>
+
+            <section class="edicao-section acessos-section">
+
+              <div class="section-header">
+                <div>
+                  <h6>
+                    Acessos por Unidade
+                  </h6>
+
+                  <p>
+                    Cada vínculo abaixo grava em
+                    <strong>legio.usuario_unidade_perfil</strong>.
+                  </p>
+                </div>
+              </div>
+
+              @if (erroAcesso) {
+                <div
+                  class="alert alert-danger"
+                  role="alert"
+                >
+                  {{ erroAcesso }}
+                </div>
+              }
+
+              @if (sucessoAcesso) {
+                <div
+                  class="alert alert-success"
+                  role="status"
+                >
+                  {{ sucessoAcesso }}
+                </div>
+              }
+
+              <div class="access-form-card">
+
+                <div class="row g-3 align-items-end">
+
+                  <div class="col-lg-5">
+
+                    <label class="form-label">
+                      Unidade
+                    </label>
+
+                    <select
+                      class="form-select"
+                      name="acessoUnidade"
+                      [(ngModel)]="acessoFormulario.unidadeId"
+                      [disabled]="salvandoAcesso || carregandoCadastros"
+                    >
+
+                      <option value="">
+                        Selecione a unidade
+                      </option>
+
+                      @for (
+                        unidade of unidadesDisponiveis;
+                        track unidade.id
+                      ) {
+
+                        <option
+                          [value]="unidade.id"
+                          [disabled]="!unidadeAprovada(unidade)"
+                        >
+                          {{ unidade.tipoCodigo }}
+                          —
+                          {{ unidade.nome }}
+                          @if (!unidadeAprovada(unidade)) {
+                            ({{ unidade.statusAprovacao }})
+                          }
+                        </option>
+
+                      }
+
+                    </select>
+
+                    <div class="form-text">
+                      Novos acessos só podem ser concedidos
+                      a unidades ativas e aprovadas.
+                    </div>
+
                   </div>
+
+                  <div class="col-lg-4">
+
+                    <label class="form-label">
+                      Perfil na Unidade
+                    </label>
+
+                    <select
+                      class="form-select"
+                      name="acessoPerfil"
+                      [(ngModel)]="acessoFormulario.perfilCodigo"
+                      [disabled]="salvandoAcesso || carregandoCadastros"
+                    >
+
+                      <option value="">
+                        Selecione o perfil
+                      </option>
+
+                      @for (
+                        perfil of perfisUnidade;
+                        track perfil.codigo
+                      ) {
+
+                        <option
+                          [value]="perfil.codigo"
+                        >
+                          {{ perfil.codigo }}
+                          —
+                          {{ perfil.nome }}
+                        </option>
+
+                      }
+
+                    </select>
+
+                  </div>
+
+                  <div class="col-lg-3">
+
+                    <div class="d-flex gap-2">
+
+                      <button
+                        type="button"
+                        class="btn btn-primary flex-grow-1"
+                        (click)="salvarAcesso()"
+                        [disabled]="salvandoAcesso || carregandoCadastros"
+                      >
+
+                        @if (salvandoAcesso) {
+
+                          <span
+                            class="spinner-border spinner-border-sm me-2"
+                            aria-hidden="true"
+                          ></span>
+
+                        } @else {
+
+                          <i
+                            class="bi"
+                            [ngClass]="acessoEditando ? 'bi-check-circle' : 'bi-plus-circle'"
+                          ></i>
+
+                        }
+
+                        {{
+                          acessoEditando
+                            ? 'Salvar acesso'
+                            : 'Adicionar'
+                        }}
+
+                      </button>
+
+                      @if (acessoEditando) {
+
+                        <button
+                          type="button"
+                          class="btn btn-outline-secondary"
+                          title="Cancelar alteração do acesso"
+                          (click)="cancelarEdicaoAcesso()"
+                          [disabled]="salvandoAcesso"
+                        >
+                          <i class="bi bi-x-lg"></i>
+                        </button>
+
+                      }
+
+                    </div>
+
+                  </div>
+
+                  <div class="col-12">
+
+                    <label class="form-label">
+                      Observação
+                      <span class="text-muted">
+                        (opcional)
+                      </span>
+                    </label>
+
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="acessoObservacao"
+                      placeholder="Ex.: operador autorizado pelo administrador da unidade"
+                      [(ngModel)]="acessoFormulario.observacao"
+                      [disabled]="salvandoAcesso"
+                    />
+
+                  </div>
+
+                </div>
+
+                @if (perfilMembroSelecionado()) {
+
+                  <div class="alert alert-warning mt-3 mb-0">
+                    O perfil <strong>MEMBRO</strong> exige que
+                    esta pessoa já possua vínculo ativo como membro
+                    da unidade em <strong>legio.membro_unidade</strong>.
+                  </div>
+
                 }
 
               </div>
 
-              <div class="col-md-6">
+              <div class="table-responsive mt-3">
 
-                <label
-                  class="form-label"
-                >
-                  Status
-                </label>
+                <table class="table table-sm align-middle access-table">
 
-                <select
-                  class="form-select"
-                  name="edicaoStatus"
-                  [(ngModel)]="usuarioEdicao.status"
-                  [disabled]="salvandoEdicao"
-                >
+                  <thead>
+                    <tr>
+                      <th>
+                        Unidade
+                      </th>
 
-                  <option
-                    value="ATIVO"
-                  >
-                    Ativo
-                  </option>
+                      <th>
+                        Tipo
+                      </th>
 
-                  <option
-                    value="BLOQUEADO"
-                  >
-                    Bloqueado
-                  </option>
+                      <th>
+                        Perfil
+                      </th>
 
-                  <option
-                    value="INATIVO"
-                  >
-                    Inativo
-                  </option>
+                      <th>
+                        Situação da Unidade
+                      </th>
 
-                  <option
-                    value="PENDENTE_EMAIL"
-                  >
-                    Pendente de E-mail
-                  </option>
+                      <th class="text-center">
+                        Ações
+                      </th>
+                    </tr>
+                  </thead>
 
-                </select>
+                  <tbody>
+
+                    @if (carregandoAcessos) {
+
+                      <tr>
+                        <td
+                          colspan="5"
+                          class="text-center py-3"
+                        >
+                          <span
+                            class="spinner-border spinner-border-sm me-2"
+                            aria-hidden="true"
+                          ></span>
+
+                          Carregando acessos...
+                        </td>
+                      </tr>
+
+                    } @else {
+
+                      @for (
+                        acesso of acessosUnidade;
+                        track chaveAcesso(acesso)
+                      ) {
+
+                        <tr>
+
+                          <td>
+                            <strong>
+                              {{ acesso.unidadeNome }}
+                            </strong>
+
+                            @if (acesso.unidadeNomeReduzido) {
+                              <div class="text-muted small">
+                                {{ acesso.unidadeNomeReduzido }}
+                              </div>
+                            }
+                          </td>
+
+                          <td>
+                            {{ acesso.unidadeTipoCodigo }}
+                          </td>
+
+                          <td>
+                            <span class="badge perfil-unidade-badge">
+                              {{ acesso.perfilCodigo }}
+                            </span>
+
+                            <div class="text-muted small mt-1">
+                              {{ acesso.perfilNome }}
+                            </div>
+                          </td>
+
+                          <td>
+                            {{ acesso.unidadeStatusAprovacao }}
+                          </td>
+
+                          <td class="text-center">
+
+                            <button
+                              type="button"
+                              class="btn btn-sm btn-light me-2"
+                              title="Alterar acesso"
+                              (click)="editarAcesso(acesso)"
+                              [disabled]="salvandoAcesso"
+                            >
+                              <i class="bi bi-pencil"></i>
+                            </button>
+
+                            <button
+                              type="button"
+                              class="btn btn-sm btn-outline-danger"
+                              title="Remover acesso"
+                              (click)="removerAcesso(acesso)"
+                              [disabled]="removendoAcessoChave === chaveAcesso(acesso)"
+                            >
+
+                              @if (
+                                removendoAcessoChave ===
+                                chaveAcesso(acesso)
+                              ) {
+
+                                <span
+                                  class="spinner-border spinner-border-sm"
+                                  aria-hidden="true"
+                                ></span>
+
+                              } @else {
+
+                                <i class="bi bi-trash"></i>
+
+                              }
+
+                            </button>
+
+                          </td>
+
+                        </tr>
+
+                      } @empty {
+
+                        <tr>
+                          <td
+                            colspan="5"
+                            class="text-center py-4 text-muted"
+                          >
+                            Este usuário ainda não possui
+                            acesso vinculado a nenhuma unidade.
+                          </td>
+                        </tr>
+
+                      }
+
+                    }
+
+                  </tbody>
+
+                </table>
 
               </div>
 
-            </div>
+            </section>
 
           </div>
 
@@ -592,37 +972,9 @@
               type="button"
               class="btn btn-outline-secondary"
               (click)="cancelarEdicao()"
-              [disabled]="salvandoEdicao"
+              [disabled]="salvandoEdicao || salvandoAcesso"
             >
-              Cancelar
-            </button>
-
-            <button
-              type="button"
-              class="btn btn-primary"
-              (click)="salvarEdicao()"
-              [disabled]="salvandoEdicao || carregandoPerfis"
-            >
-
-              @if (salvandoEdicao) {
-
-                <span
-                  class="spinner-border spinner-border-sm me-2"
-                  aria-hidden="true"
-                ></span>
-
-                Salvando...
-
-              } @else {
-
-                <i
-                  class="bi bi-check-circle me-1"
-                ></i>
-
-                Salvar Alterações
-
-              }
-
+              Fechar
             </button>
 
           </div>
