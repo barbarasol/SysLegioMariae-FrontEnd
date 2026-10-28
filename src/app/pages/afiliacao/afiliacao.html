@@ -1,9 +1,8 @@
 <div class="afiliacao-container">
-  <!-- Cabeçalho -->
   <div class="page-header">
     <div>
       <h2>Conselhos-Praesidia</h2>
-      <p>Visualize a estrutura hierárquica e a afiliação das unidades da Legião de Maria.</p>
+      <p>Visualize e administre a estrutura hierárquica das unidades da Legião de Maria.</p>
     </div>
 
     <div class="header-actions">
@@ -19,189 +18,120 @@
     </div>
   </div>
 
-  <!-- Filtros -->
   <div class="filter-card">
     <div class="card-title">
       <i class="bi bi-funnel"></i>
       Selecionar unidade
     </div>
 
-    <div class="filters-grid">
-      <!-- Comitium -->
+    <div class="filters-grid filters-grid-unidades">
       <div class="filter-field">
-        <label for="comitium"> Comitium </label>
-
+        <label for="tipoUnidade">Tipo da unidade</label>
         <select
-          id="comitium"
+          id="tipoUnidade"
           class="form-select"
-          [(ngModel)]="comitiumSelecionado"
-          (ngModelChange)="selecionarComitium()"
+          [(ngModel)]="tipoSelecionado"
+          (ngModelChange)="aoTrocarTipo()"
         >
-          @for (comitium of comitiums; track comitium.id) {
-            <option [ngValue]="comitium.id">
-              {{ comitium.nome }}
-            </option>
+          <option value="">Todas as unidades</option>
+          @for (tipo of tiposFiltro; track tipo.codigo) {
+            <option [value]="tipo.codigo">{{ tipo.nome }}</option>
           }
         </select>
       </div>
 
-      <!-- Cúria -->
       <div class="filter-field">
-        <label for="curia"> Cúria </label>
-
+        <label for="unidadeFiltro">Unidade</label>
         <select
-          id="curia"
+          id="unidadeFiltro"
           class="form-select"
-          [(ngModel)]="curiaSelecionada"
-          (ngModelChange)="selecionarCuria()"
+          [(ngModel)]="unidadeFiltroId"
+          (ngModelChange)="aoTrocarUnidade()"
+          [disabled]="!tipoSelecionado"
         >
-          <option [ngValue]="null">Todas as Cúrias</option>
-
-          @for (curia of curiasDisponiveis; track curia.id) {
-            <option [ngValue]="curia.id">
-              {{ curia.nome }}
-            </option>
-          }
-        </select>
-      </div>
-
-      <!-- Praesidium -->
-      <div class="filter-field">
-        <label for="presidium"> Praesidium </label>
-
-        <select
-          id="presidium"
-          class="form-select"
-          [(ngModel)]="presidiumSelecionado"
-          (ngModelChange)="selecionarPresidium()"
-          [disabled]="!curiaSelecionada"
-        >
-          <option [ngValue]="null">Todos os Praesidia</option>
-
-          @for (presidium of presidiaDisponiveis; track presidium.id) {
-            <option [ngValue]="presidium.id">
-              {{ presidium.nome }}
-            </option>
+          <option value="">
+            @if (tipoSelecionado) {
+              Todas de {{ nomeTipo(tipoSelecionado) }}
+            } @else {
+              Selecione o tipo primeiro
+            }
+          </option>
+          @for (unidade of unidadesDoTipo; track unidade.id) {
+            <option [value]="unidade.id">{{ unidade.nome }}</option>
           }
         </select>
       </div>
     </div>
   </div>
 
-  <!-- Conteúdo principal -->
   <div class="content-grid">
-    <!-- Árvore -->
     <div class="structure-card">
       <div class="card-header">
         <div>
-          <h3>
-            <i class="bi bi-diagram-3"></i>
-            Estrutura
-          </h3>
-
-          <p>Relação hierárquica entre as unidades.</p>
+          <h3><i class="bi bi-diagram-3"></i> Estrutura</h3>
+          <p>Relação hierárquica entre as unidades cadastradas.</p>
         </div>
       </div>
 
-      <div class="tree">
-        <!-- Comitium -->
-        @if (comitiumAtual) {
-          <div class="tree-item">
-            <div class="tree-node comitium-node" (click)="visualizarComitium(comitiumAtual)">
-              <div class="node-icon">
-                <i class="bi bi-building"></i>
-              </div>
+      @if (carregando) {
+        <div class="empty-details"><p>Carregando estrutura...</p></div>
+      } @else if (estruturaVisivel.length === 0) {
+        <div class="empty-details"><p>Nenhuma unidade encontrada para o filtro selecionado.</p></div>
+      } @else {
+        <div class="tree tree-flat">
+          @for (unidade of estruturaVisivel; track unidade.id) {
+            <div
+              class="tree-node generic-node"
+              [class.selected]="unidadeSelecionada?.id === unidade.id"
+              [style.--nivel]="unidade.nivel"
+              (click)="selecionarUnidade(unidade)"
+            >
+              <div class="node-icon"><i class="bi bi-diagram-2"></i></div>
 
               <div class="node-content">
-                <strong>{{ comitiumAtual.nome }}</strong>
-                <span>{{ comitiumAtual.cidade }}</span>
+                <span class="node-type">{{ unidade.tipoNome }}</span>
+                <strong>{{ unidade.nome }}</strong>
+                <span>
+                  {{ unidade.cidade || '-' }}
+                  @if (unidade.estadoRegiao) { — {{ unidade.estadoRegiao }} }
+                </span>
               </div>
 
-              <i class="bi bi-chevron-right node-arrow"></i>
+              <span class="status-badge" [class.pending]="unidade.statusAprovacao === 'PENDENTE'">
+                {{ unidade.statusAprovacao }}
+              </span>
+
+              <div class="node-actions">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  title="Editar unidade"
+                  (click)="editar(unidade, $event)"
+                >
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
+                  title="Excluir unidade"
+                  (click)="excluir(unidade, $event)"
+                >
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
             </div>
-
-            <div class="tree-children">
-              @for (curia of comitiumAtual.curias; track curia.id) {
-                <div class="tree-item">
-                  <div
-                    class="tree-node curia-node"
-                    [class.selected]="curiaSelecionada === curia.id"
-                    (click)="curiaSelecionada = curia.id; selecionarCuria(); visualizarCuria(curia)"
-                  >
-                    <div class="node-icon">
-                      <i class="bi bi-house"></i>
-                    </div>
-
-                    <div class="node-content">
-                      <strong>{{ curia.nome }}</strong>
-                      <span> {{ curia.presidia.length }} Praesidia </span>
-                    </div>
-
-                    <i class="bi bi-chevron-right node-arrow"></i>
-                  </div>
-
-                  <div class="tree-children">
-                    @for (presidium of curia.presidia; track presidium.id) {
-                      <div
-                        class="tree-node presidium-node"
-                        [class.selected]="presidiumSelecionado === presidium.id"
-                        (click)="
-                          presidiumSelecionado = presidium.id; visualizarPresidium(presidium)
-                        "
-                      >
-                        <div class="node-icon">
-                          <i class="bi bi-people"></i>
-                        </div>
-
-                        <div class="node-content">
-                          <strong>
-                            {{ presidium.nome }}
-                          </strong>
-
-                          <span> {{ presidium.membros }} membros </span>
-                        </div>
-
-                        <span
-                          class="status-dot"
-                          [class.inactive]="presidium.status === 'Inativo'"
-                        ></span>
-                      </div>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-        }
-      </div>
+          }
+        </div>
+      }
     </div>
 
-    <!-- Detalhes -->
     <div class="details-card">
       @if (unidadeSelecionada) {
         <div class="details-header">
-          <div class="details-icon">
-            @if (unidadeSelecionadaEhComitium) {
-              <i class="bi bi-building"></i>
-            }
-
-            @if (unidadeSelecionadaEhCuria) {
-              <i class="bi bi-house"></i>
-            }
-
-            @if (unidadeSelecionadaEhPresidium) {
-              <i class="bi bi-people"></i>
-            }
-          </div>
-
+          <div class="details-icon"><i class="bi bi-diagram-3"></i></div>
           <div>
-            <span class="details-type">
-              {{ unidadeSelecionada.tipo }}
-            </span>
-
-            <h3>
-              {{ unidadeSelecionada.nome }}
-            </h3>
+            <span class="details-type">{{ unidadeSelecionada.tipoNome }}</span>
+            <h3>{{ unidadeSelecionada.nome }}</h3>
           </div>
         </div>
 
@@ -210,82 +140,35 @@
         <div class="details-info">
           <div class="info-item">
             <span>Unidade superior</span>
-
-            <strong>
-              {{ unidadeSelecionada.superior }}
-            </strong>
+            <strong>{{ unidadeSelecionada.unidadeSuperiorNome || 'Não se aplica' }}</strong>
           </div>
-
           <div class="info-item">
-            <span>Comitium</span>
-
-            <strong>
-              {{ unidadeSelecionada.comitium }}
-            </strong>
+            <span>Localidade</span>
+            <strong>{{ unidadeSelecionada.cidade || '-' }}</strong>
           </div>
-
           <div class="info-item">
-            <span>Membros</span>
-
-            <strong>
-              {{ unidadeSelecionada.membros }}
-            </strong>
+            <span>Divisão/UF</span>
+            <strong>{{ unidadeSelecionada.estadoRegiao || '-' }}</strong>
           </div>
-
           <div class="info-item">
             <span>Status</span>
-
-            <strong class="status" [class.inactive]="unidadeSelecionada.status === 'Inativo'">
-              <span class="status-dot"></span>
-              {{ unidadeSelecionada.status }}
-            </strong>
+            <strong>{{ unidadeSelecionada.statusAprovacao }}</strong>
           </div>
         </div>
 
-        <div class="hierarchy-preview">
-          <h4>
-            <i class="bi bi-diagram-2"></i>
-            Caminho de afiliação
-          </h4>
-
-          <div class="hierarchy-path">
-            <span>
-              <i class="bi bi-building"></i>
-              {{ unidadeSelecionada.comitium }}
-            </span>
-
-            <i class="bi bi-chevron-down"></i>
-
-            <span>
-              @if (unidadeSelecionadaEhPresidium) {
-                {{ unidadeSelecionada.superior }}
-              } @else {
-                {{ unidadeSelecionada.nome }}
-              }
-            </span>
-
-            @if (unidadeSelecionadaEhPresidium) {
-              <i class="bi bi-chevron-down"></i>
-
-              <span class="current">
-                <i class="bi bi-people"></i>
-                {{ unidadeSelecionada.nome }}
-              </span>
-            }
-          </div>
+        <div class="details-actions">
+          <button class="btn btn-primary" (click)="editar(unidadeSelecionada)">
+            <i class="bi bi-pencil"></i> Editar
+          </button>
+          <button class="btn btn-outline-danger" (click)="excluir(unidadeSelecionada)">
+            <i class="bi bi-trash"></i> Excluir
+          </button>
         </div>
       } @else {
         <div class="empty-details">
-          <div class="empty-icon">
-            <i class="bi bi-diagram-3"></i>
-          </div>
-
+          <div class="empty-icon"><i class="bi bi-diagram-3"></i></div>
           <h3>Selecione uma unidade</h3>
-
-          <p>
-            Clique em um Comitium, Cúria ou Praesidium para visualizar seus detalhes e sua
-            afiliação.
-          </p>
+          <p>Clique em qualquer unidade da estrutura para visualizar seus detalhes e administrar o cadastro.</p>
         </div>
       }
     </div>

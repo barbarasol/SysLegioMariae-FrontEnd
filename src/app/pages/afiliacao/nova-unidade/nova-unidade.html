@@ -1,17 +1,22 @@
 <div class="nova-unidade-container">
 
   <div class="page-header">
-    <h2>Nova Solicitação de Unidade</h2>
+    <h2>{{ tituloPagina }}</h2>
 
     <p>
-      Solicite a criação de uma nova unidade para aprovação hierárquica.
+      @if (modo === 'novo') { Solicite a criação de uma nova unidade para aprovação hierárquica. } @else if (modo === 'editar') { Altere os dados cadastrais da unidade selecionada. } @else { Confira os dados antes de confirmar a exclusão lógica da unidade. }
     </p>
   </div>
+
+  @if (modo === 'excluir') {
+    <div class="alert alert-danger mb-3">
+      <strong>Exclusão lógica:</strong> a unidade será marcada como inativa. A exclusão será bloqueada se houver unidades subordinadas ativas.
+    </div>
+  }
 
   <div class="wizard-card">
 
     <div class="wizard-steps">
-
       <div class="step" [class.active]="etapa === 1">
         <span>1</span>
         Dados da Unidade
@@ -31,15 +36,34 @@
         <span>4</span>
         Revisão
       </div>
-
     </div>
 
     <!-- ETAPA 1 -->
     @if (etapa === 1) {
-
       <div class="form-section">
+        <h4>Dados da Unidade e Localização</h4>
 
-        <h4>Dados da Unidade</h4>
+        <div class="regra-localizacao">
+          @if (ehBrasil) {
+            <i class="bi bi-lock"></i>
+            <div>
+              <strong>Brasil</strong>
+              <span>
+                UF, Município, Subdivisão Local e CEP são somente para consulta e seleção.
+                Não é permitido criar novos registros brasileiros neste fluxo.
+              </span>
+            </div>
+          } @else if (solicitacao.paisId) {
+            <i class="bi bi-globe-americas"></i>
+            <div>
+              <strong>Exterior</strong>
+              <span>
+                É permitido incluir Divisão Administrativa, Município/Localidade,
+                Subdivisão Local e Código Postal quando não existirem na base.
+              </span>
+            </div>
+          }
+        </div>
 
         <div class="form-grid">
 
@@ -50,9 +74,16 @@
               class="form-select"
               name="tipo"
               [(ngModel)]="solicitacao.tipo"
-              [disabled]="carregando"
+              (ngModelChange)="aoTrocarTipo()"
+              [disabled]="carregando || carregandoTipos"
             >
-              <option value="">Selecione</option>
+              <option value="">
+                @if (carregandoTipos) {
+                  Carregando...
+                } @else {
+                  Selecione
+                }
+              </option>
 
               @for (tipo of tipos; track tipo.codigo) {
                 <option [value]="tipo.codigo">
@@ -71,13 +102,827 @@
               name="nome"
               placeholder="Inserir aqui"
               autocomplete="off"
-              [(ngModel)]="solicitacao.nome"
+              [ngModel]="solicitacao.nome"
+              (ngModelChange)="solicitacao.nome = ($event || '').toUpperCase()"
               [disabled]="carregando"
             >
           </div>
 
           <div>
-            <label>Data Prevista de Fundação</label>
+            <label>Nome Reduzido</label>
+
+            <input
+              type="text"
+              class="form-control"
+              name="nomeReduzido"
+              placeholder="Ex.: PRAESIDIUM N. SRA. DAS GRAÇAS"
+              autocomplete="off"
+              [ngModel]="solicitacao.nomeReduzido"
+              (ngModelChange)="solicitacao.nomeReduzido = ($event || '').toUpperCase()"
+              [disabled]="carregando"
+            >
+
+            <small class="campo-ajuda">
+              Opcional. Será salvo em letras maiúsculas.
+            </small>
+          </div>
+
+          <!-- PAÍS -->
+          <div class="full-width">
+            <label>País</label>
+
+            <select
+              class="form-select"
+              name="paisId"
+              [(ngModel)]="solicitacao.paisId"
+              (ngModelChange)="aoTrocarPais()"
+              [disabled]="carregando || carregandoPaises"
+            >
+              <option value="">
+                @if (carregandoPaises) {
+                  Carregando...
+                } @else {
+                  Selecione o país
+                }
+              </option>
+
+              @for (pais of paises; track pais.id) {
+                <option [value]="pais.id">
+                  {{ pais.nome }}
+                  @if (pais.sigla) {
+                    ({{ pais.sigla }})
+                  }
+                </option>
+              }
+            </select>
+          </div>
+
+          <!-- CEP / CÓDIGO POSTAL -->
+          <div class="full-width">
+            <label>{{ rotuloCodigoPostal }}</label>
+
+            <div class="codigo-postal-row">
+              <input
+                type="text"
+                class="form-control"
+                name="codigoPostal"
+                [placeholder]="placeholderCodigoPostal"
+                [attr.maxlength]="ehBrasil ? 9 : 20"
+                autocomplete="postal-code"
+                [ngModel]="solicitacao.codigoPostal"
+                (ngModelChange)="aoAlterarCodigoPostal($event)"
+                [disabled]="carregando || !solicitacao.paisId || pesquisandoCodigoPostal"
+              >
+
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                (click)="pesquisarCodigoPostal()"
+                [disabled]="carregando || !solicitacao.paisId || !solicitacao.codigoPostal.trim() || pesquisandoCodigoPostal"
+              >
+                @if (pesquisandoCodigoPostal) {
+                  Pesquisando...
+                } @else {
+                  <i class="bi bi-search"></i>
+                  Pesquisar
+                }
+              </button>
+            </div>
+
+            <small class="campo-ajuda">
+              @if (ehBrasil) {
+                O CEP é pesquisado somente em legio.codigo_postal.
+                Se não existir, não será permitido incluí-lo.
+              } @else {
+                A pesquisa usa a base local. Se não existir, o Código Postal
+                poderá ser incluído ao salvar uma nova Igreja/Paróquia/Sede.
+              }
+            </small>
+          </div>
+
+          <!-- MÚLTIPLAS OCORRÊNCIAS DO CÓDIGO POSTAL -->
+          @if (codigoPostalResultados.length > 1) {
+            <div class="full-width codigo-postal-resultados">
+              <label>Ocorrências encontradas</label>
+
+              <select
+                class="form-select"
+                name="codigoPostalResultado"
+                [ngModel]="solicitacao.codigoPostalId"
+                (ngModelChange)="selecionarCodigoPostalResultado($event)"
+              >
+                <option value="">
+                  Selecione o endereço correto
+                </option>
+
+                @for (item of codigoPostalResultados; track item.id) {
+                  <option [value]="item.id">
+                    {{ item.codigoPostal }}
+                    —
+                    {{ item.logradouro || item.localidade || item.municipioNome || 'sem logradouro' }}
+                    @if (item.bairro) {
+                      — {{ item.bairro }}
+                    }
+                    @if (item.subdivisaoLocalNome) {
+                      — {{ item.subdivisaoLocalNome }}
+                    }
+                  </option>
+                }
+              </select>
+
+              <small class="campo-ajuda">
+                Um mesmo CEP pode possuir várias ocorrências. Escolha a que corresponde
+                ao endereço da Igreja/Paróquia/Sede.
+              </small>
+            </div>
+          }
+
+          <!-- DADOS DO CÓDIGO POSTAL SELECIONADO -->
+          @if (codigoPostalEncontrado) {
+            <div class="full-width codigo-postal-encontrado">
+              <div class="codigo-postal-encontrado-header">
+                <i class="bi bi-check-circle"></i>
+                <strong>{{ rotuloCodigoPostal }} selecionado</strong>
+              </div>
+
+              <div class="codigo-postal-dados">
+                <span>
+                  <strong>Código:</strong>
+                  {{ codigoPostalEncontrado.codigoPostal }}
+                </span>
+
+                <span>
+                  <strong>País:</strong>
+                  {{ codigoPostalEncontrado.paisNome }}
+                </span>
+
+                <span>
+                  <strong>{{ rotuloDivisaoAdministrativa }}:</strong>
+                  {{ codigoPostalEncontrado.ufNome || '-' }}
+                  @if (codigoPostalEncontrado.ufSigla) {
+                    ({{ codigoPostalEncontrado.ufSigla }})
+                  }
+                </span>
+
+                <span>
+                  <strong>Município / Localidade:</strong>
+                  {{ codigoPostalEncontrado.municipioNome || '-' }}
+                </span>
+
+                <span>
+                  <strong>Subdivisão Local:</strong>
+                  {{ codigoPostalEncontrado.subdivisaoLocalNome || '-' }}
+                </span>
+
+                <span>
+                  <strong>Logradouro:</strong>
+                  {{ codigoPostalEncontrado.logradouro || '-' }}
+                </span>
+
+                <span>
+                  <strong>Bairro / Distrito:</strong>
+                  {{ codigoPostalEncontrado.bairro || '-' }}
+                </span>
+
+                <span>
+                  <strong>Fonte:</strong>
+                  {{ codigoPostalEncontrado.fonte || '-' }}
+                </span>
+              </div>
+            </div>
+          }
+
+          @if (mensagemCodigoPostal) {
+            <div
+              class="full-width codigo-postal-aviso"
+              [class.codigo-postal-novo]="codigoPostalNovo"
+            >
+              <i class="bi bi-info-circle"></i>
+              {{ mensagemCodigoPostal }}
+            </div>
+          }
+
+          <!-- UF / DIVISÃO ADMINISTRATIVA -->
+          <div class="full-width">
+            <label>{{ rotuloDivisaoAdministrativa }}</label>
+
+            <div class="seletor-com-acao">
+              <select
+                class="form-select"
+                name="ufId"
+                [(ngModel)]="solicitacao.ufId"
+                (ngModelChange)="aoTrocarUf()"
+                [disabled]="carregando || !solicitacao.paisId || carregandoUfs"
+              >
+                <option value="">
+                  @if (!solicitacao.paisId) {
+                    Selecione o país primeiro
+                  } @else if (carregandoUfs) {
+                    Carregando...
+                  } @else {
+                    Selecione
+                  }
+                </option>
+
+                @for (uf of ufs; track uf.id) {
+                  <option [value]="uf.id">
+                    {{ uf.nome }}
+                    @if (uf.sigla) {
+                      ({{ uf.sigla }})
+                    }
+                  </option>
+                }
+              </select>
+
+              @if (permiteInclusaoGeografica) {
+                <button
+                  type="button"
+                  class="btn btn-outline-primary"
+                  (click)="abrirNovaUf()"
+                  [disabled]="carregando"
+                >
+                  <i class="bi bi-plus-circle"></i>
+                  Incluir Divisão
+                </button>
+              }
+            </div>
+          </div>
+
+          @if (exibirNovaUf && permiteInclusaoGeografica) {
+            <div class="full-width inclusao-localizacao-box">
+              <strong>Nova Divisão Administrativa</strong>
+
+              <div class="form-grid">
+                <div>
+                  <label>Nome</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="novaUfNome"
+                    [ngModel]="novaUf.nome"
+                    (ngModelChange)="novaUf.nome = ($event || '').toUpperCase()"
+                    [disabled]="salvandoUf"
+                  >
+                </div>
+
+                <div>
+                  <label>Sigla</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="novaUfSigla"
+                    [(ngModel)]="novaUf.sigla"
+                    [disabled]="salvandoUf"
+                    maxlength="20"
+                  >
+                </div>
+
+                <div>
+                  <label>Código ISO</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="novaUfCodigoIso"
+                    [(ngModel)]="novaUf.codigoIso"
+                    [disabled]="salvandoUf"
+                    maxlength="20"
+                  >
+                </div>
+              </div>
+
+              <div class="inclusao-localizacao-actions">
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  (click)="exibirNovaUf = false"
+                  [disabled]="salvandoUf"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  (click)="salvarNovaUf()"
+                  [disabled]="salvandoUf || !novaUf.nome.trim()"
+                >
+                  @if (salvandoUf) {
+                    Salvando...
+                  } @else {
+                    Salvar Divisão
+                  }
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- MUNICÍPIO / LOCALIDADE -->
+          <div class="full-width">
+            <label>Município / Localidade</label>
+
+            @if (solicitacao.ufId) {
+              <input
+                type="text"
+                class="form-control filtro-localizacao"
+                name="filtroMunicipio"
+                placeholder="Filtrar municípios/localidades..."
+                [(ngModel)]="filtroMunicipio"
+                [disabled]="carregandoMunicipios"
+              >
+            }
+
+            <div class="seletor-com-acao">
+              <select
+                class="form-select"
+                name="municipioId"
+                [(ngModel)]="solicitacao.municipioId"
+                (ngModelChange)="aoTrocarMunicipio()"
+                [disabled]="carregando || !solicitacao.ufId || carregandoMunicipios"
+              >
+                <option value="">
+                  @if (!solicitacao.ufId) {
+                    Selecione a UF/Divisão primeiro
+                  } @else if (carregandoMunicipios) {
+                    Carregando...
+                  } @else {
+                    Selecione
+                  }
+                </option>
+
+                @for (municipio of municipiosFiltrados; track municipio.id) {
+                  <option [value]="municipio.id">
+                    {{ municipio.nome }}
+                  </option>
+                }
+              </select>
+
+              @if (permiteInclusaoGeografica && solicitacao.ufId) {
+                <button
+                  type="button"
+                  class="btn btn-outline-primary"
+                  (click)="abrirNovoMunicipio()"
+                >
+                  <i class="bi bi-plus-circle"></i>
+                  Incluir Localidade
+                </button>
+              }
+            </div>
+          </div>
+
+          @if (exibirNovoMunicipio && permiteInclusaoGeografica) {
+            <div class="full-width inclusao-localizacao-box">
+              <strong>Novo Município / Localidade</strong>
+
+              <label>Nome</label>
+              <input
+                type="text"
+                class="form-control"
+                name="novoMunicipioNome"
+                [ngModel]="novoMunicipio.nome"
+                    (ngModelChange)="novoMunicipio.nome = ($event || '').toUpperCase()"
+                [disabled]="salvandoMunicipio"
+              >
+
+              <div class="inclusao-localizacao-actions">
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  (click)="exibirNovoMunicipio = false"
+                  [disabled]="salvandoMunicipio"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  (click)="salvarNovoMunicipio()"
+                  [disabled]="salvandoMunicipio || !novoMunicipio.nome.trim()"
+                >
+                  @if (salvandoMunicipio) {
+                    Salvando...
+                  } @else {
+                    Salvar Localidade
+                  }
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- SUBDIVISÃO LOCAL -->
+          <div class="full-width">
+            <label>Subdivisão Local</label>
+
+            @if (solicitacao.municipioId && subdivisoesLocais.length > 0) {
+              <input
+                type="text"
+                class="form-control filtro-localizacao"
+                name="filtroSubdivisao"
+                placeholder="Filtrar região administrativa, distrito, bairro administrativo..."
+                [(ngModel)]="filtroSubdivisao"
+                [disabled]="carregandoSubdivisoes"
+              >
+            }
+
+            <div class="seletor-com-acao">
+              <select
+                class="form-select"
+                name="subdivisaoLocalId"
+                [(ngModel)]="solicitacao.subdivisaoLocalId"
+                (ngModelChange)="aoTrocarSubdivisao()"
+                [disabled]="carregando || !solicitacao.municipioId || carregandoSubdivisoes"
+              >
+                <option value="">
+                  @if (!solicitacao.municipioId) {
+                    Selecione o Município/Localidade primeiro
+                  } @else if (carregandoSubdivisoes) {
+                    Carregando...
+                  } @else {
+                    Sem subdivisão / Não se aplica
+                  }
+                </option>
+
+                @for (subdivisao of subdivisoesFiltradas; track subdivisao.id) {
+                  <option [value]="subdivisao.id">
+                    {{ subdivisao.nome }}
+                    @if (subdivisao.codigo) {
+                      — {{ subdivisao.codigo }}
+                    }
+                    @if (subdivisao.tipo) {
+                      — {{ subdivisao.tipo }}
+                    }
+                  </option>
+                }
+              </select>
+
+              @if (permiteInclusaoGeografica && solicitacao.municipioId) {
+                <button
+                  type="button"
+                  class="btn btn-outline-primary"
+                  (click)="abrirNovaSubdivisao()"
+                >
+                  <i class="bi bi-plus-circle"></i>
+                  Incluir Subdivisão
+                </button>
+              }
+            </div>
+
+            @if (
+              ehBrasil &&
+              solicitacao.municipioId &&
+              subdivisoesLocais.length === 0 &&
+              !carregandoSubdivisoes
+            ) {
+              <small class="campo-ajuda">
+                Não há Subdivisões Locais cadastradas para este Município.
+                No Brasil este cadastro não pode ser criado por esta tela.
+              </small>
+            }
+          </div>
+
+          @if (exibirNovaSubdivisao && permiteInclusaoGeografica) {
+            <div class="full-width inclusao-localizacao-box">
+              <strong>Nova Subdivisão Local</strong>
+
+              <div class="form-grid">
+                <div>
+                  <label>Nome</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="novaSubdivisaoNome"
+                    [ngModel]="novaSubdivisao.nome"
+                    (ngModelChange)="novaSubdivisao.nome = ($event || '').toUpperCase()"
+                    [disabled]="salvandoSubdivisao"
+                  >
+                </div>
+
+                <div>
+                  <label>Tipo</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="novaSubdivisaoTipo"
+                    placeholder="Distrito, Região, Borough..."
+                    [(ngModel)]="novaSubdivisao.tipo"
+                    [disabled]="salvandoSubdivisao"
+                  >
+                </div>
+
+                <div>
+                  <label>Código</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="novaSubdivisaoCodigo"
+                    [(ngModel)]="novaSubdivisao.codigo"
+                    [disabled]="salvandoSubdivisao"
+                  >
+                </div>
+              </div>
+
+              <div class="inclusao-localizacao-actions">
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  (click)="exibirNovaSubdivisao = false"
+                  [disabled]="salvandoSubdivisao"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  (click)="salvarNovaSubdivisao()"
+                  [disabled]="salvandoSubdivisao || !novaSubdivisao.nome.trim()"
+                >
+                  @if (salvandoSubdivisao) {
+                    Salvando...
+                  } @else {
+                    Salvar Subdivisão
+                  }
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- IGREJA / PARÓQUIA -->
+          <div class="full-width">
+            <label>Igreja / Paróquia / Sede</label>
+
+            <div class="paroquia-select-row">
+              <select
+                class="form-select"
+                name="igrejaId"
+                [(ngModel)]="solicitacao.igrejaId"
+                (ngModelChange)="aoTrocarIgreja()"
+                [disabled]="carregando || !solicitacao.municipioId || carregandoIgrejas"
+              >
+                <option value="">
+                  @if (!solicitacao.municipioId) {
+                    Selecione o Município/Localidade primeiro
+                  } @else if (carregandoIgrejas) {
+                    Carregando...
+                  } @else {
+                    Selecione a Igreja/Paróquia/Sede
+                  }
+                </option>
+
+                @for (igreja of igrejas; track igreja.id) {
+                  <option [value]="igreja.id">
+                    {{ igreja.nome }}
+                  </option>
+                }
+              </select>
+
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                (click)="abrirCadastroParoquia()"
+                [disabled]="carregando || !solicitacao.municipioId"
+              >
+                <i class="bi bi-plus-circle"></i>
+                Incluir Igreja/Paróquia/Sede
+              </button>
+            </div>
+          </div>
+
+          @if (igrejaSelecionada) {
+            <div class="full-width endereco-herdado-box">
+              <div class="endereco-herdado-header">
+                <i class="bi bi-geo-alt"></i>
+
+                <div>
+                  <strong>Endereço da Unidade</strong>
+                  <small>
+                    Herdado automaticamente da Igreja/Paróquia/Sede selecionada.
+                    Uma cópia será gravada na Unidade no momento do cadastro.
+                  </small>
+                </div>
+              </div>
+
+              <div class="endereco-herdado-dados">
+                <span>
+                  <strong>{{ rotuloCodigoPostal }}:</strong>
+                  {{ igrejaSelecionada.codigoPostal || 'Não informado' }}
+                </span>
+
+                <span>
+                  <strong>Logradouro:</strong>
+                  {{ igrejaSelecionada.logradouro || 'Não informado' }}
+                </span>
+
+                <span>
+                  <strong>Número:</strong>
+                  {{ igrejaSelecionada.numeroLogradouro || 'Não informado' }}
+                </span>
+
+                <span>
+                  <strong>Complemento:</strong>
+                  {{ igrejaSelecionada.complemento || 'Não informado' }}
+                </span>
+
+                <span>
+                  <strong>Bairro / Distrito:</strong>
+                  {{ igrejaSelecionada.bairro || 'Não informado' }}
+                </span>
+
+                <span>
+                  <strong>Município / Localidade:</strong>
+                  {{ municipioSelecionado?.nome || '-' }}
+                </span>
+              </div>
+            </div>
+          }
+
+          <!-- CADASTRO RÁPIDO DE PARÓQUIA -->
+          @if (exibirCadastroParoquia) {
+            <div class="full-width nova-paroquia-box">
+              <div class="nova-paroquia-header">
+                <div>
+                  <strong>Nova Igreja / Paróquia / Sede</strong>
+                  <small>
+                    A Igreja/Paróquia/Sede será cadastrada como ATIVA e ficará disponível imediatamente.
+                    @if (codigoPostalNovo && solicitacao.codigoPostal && !ehBrasil) {
+                      O Código Postal informado também será incluído, pois o país selecionado não é Brasil.
+                    }
+                  </small>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="full-width">
+                  <label>Nome da Igreja / Paróquia / Sede</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="novaParoquiaNome"
+                    [(ngModel)]="novaParoquia.nome"
+                    [disabled]="salvandoParoquia"
+                    placeholder="Nome da Igreja/Paróquia/Sede"
+                  >
+                </div>
+
+                <div>
+                  <label>Padre / Responsável</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="novaParoquiaPadre"
+                    [(ngModel)]="novaParoquia.padre"
+                    [disabled]="salvandoParoquia"
+                    placeholder="Opcional"
+                  >
+                </div>
+
+                <div>
+                  <label>Subdivisão Local</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    [value]="subdivisaoSelecionada?.nome || 'Não informada'"
+                    disabled
+                  >
+                </div>
+
+                <div class="full-width">
+                  <label>Logradouro</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="novaParoquiaLogradouro"
+                    [(ngModel)]="solicitacao.logradouro"
+                    [disabled]="salvandoParoquia"
+                    placeholder="Rua, avenida, praça..."
+                  >
+                </div>
+
+                <div>
+                  <label>Bairro / Distrito</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="novaParoquiaBairro"
+                    [(ngModel)]="solicitacao.bairro"
+                    [disabled]="salvandoParoquia"
+                  >
+                </div>
+
+                <div>
+                  <label>Número</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="novaParoquiaNumero"
+                    [(ngModel)]="novaParoquia.numeroLogradouro"
+                    [disabled]="salvandoParoquia"
+                  >
+                </div>
+
+                <div class="full-width">
+                  <label>Complemento</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="novaParoquiaComplemento"
+                    [(ngModel)]="novaParoquia.complemento"
+                    [disabled]="salvandoParoquia"
+                    placeholder="Bloco, sala, lote, referência..."
+                  >
+                </div>
+
+                <div>
+                  <label>Celular</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="novaParoquiaCelular"
+                    [(ngModel)]="novaParoquia.celular"
+                    [disabled]="salvandoParoquia"
+                  >
+                </div>
+
+                <div>
+                  <label>Telefone</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="novaParoquiaTelefone"
+                    [(ngModel)]="novaParoquia.telefone"
+                    [disabled]="salvandoParoquia"
+                  >
+                </div>
+
+                <div>
+                  <label>E-mail</label>
+                  <input
+                    type="email"
+                    class="form-control"
+                    name="novaParoquiaEmail"
+                    [(ngModel)]="novaParoquia.email"
+                    [disabled]="salvandoParoquia"
+                    autocomplete="email"
+                    placeholder="Opcional"
+                  >
+                </div>
+
+                <div>
+                  <label>Site</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="novaParoquiaSite"
+                    [(ngModel)]="novaParoquia.site"
+                    [disabled]="salvandoParoquia"
+                    autocomplete="url"
+                    placeholder="Opcional"
+                  >
+                </div>
+              </div>
+
+              @if (
+                ehBrasil &&
+                solicitacao.codigoPostal.trim() &&
+                !solicitacao.codigoPostalId
+              ) {
+                <div class="codigo-postal-aviso">
+                  <i class="bi bi-exclamation-triangle"></i>
+                  O CEP informado não foi selecionado da base. No Brasil não é
+                  permitido criar CEP novo. Pesquise e selecione um CEP válido
+                  ou limpe o campo CEP.
+                </div>
+              }
+
+              <div class="nova-paroquia-actions">
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  (click)="fecharCadastroParoquia()"
+                  [disabled]="salvandoParoquia"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  (click)="salvarNovaParoquia()"
+                  [disabled]="salvandoParoquia || !novaParoquiaValida"
+                >
+                  @if (salvandoParoquia) {
+                    Salvando...
+                  } @else {
+                    Salvar Igreja/Paróquia/Sede
+                  }
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- DATA -->
+          <div>
+            <label>Data de Fundação / Constituição</label>
 
             <input
               type="date"
@@ -89,66 +934,25 @@
             >
           </div>
 
-          <div class="full-width">
-            <label>Paróquia</label>
-
-            <input
-              type="text"
-              class="form-control"
-              name="paroquia"
-              placeholder="Inserir aqui"
-              autocomplete="off"
-              [(ngModel)]="solicitacao.paroquia"
-              [disabled]="carregando"
-            >
-          </div>
-
-          <div>
-            <label>Cidade</label>
-
-            <input
-              type="text"
-              class="form-control"
-              name="cidade"
-              placeholder="Inserir aqui"
-              autocomplete="off"
-              [(ngModel)]="solicitacao.cidade"
-              [disabled]="carregando"
-            >
-          </div>
-
-          <div>
-            <label>UF</label>
-
-            <input
-              type="text"
-              class="form-control"
-              name="uf"
-              placeholder="Inserir aqui"
-              maxlength="2"
-              autocomplete="off"
-              [(ngModel)]="solicitacao.uf"
-              [disabled]="carregando"
-            >
+          <div class="status-cadastro-box">
+            <label>Status inicial da Unidade</label>
+            <div class="status-pendente">
+              <i class="bi bi-clock-history"></i>
+              PENDENTE — aguardando liberação do administrador
+            </div>
           </div>
 
         </div>
-
       </div>
-
     }
 
     <!-- ETAPA 2 -->
     @if (etapa === 2) {
-
       <div class="form-section">
-
         <h4>Estrutura Hierárquica</h4>
 
         @if (exigeSuperior) {
-
           <div class="form-grid">
-
             <div class="full-width">
               <label>Tipo da Unidade Superior</label>
 
@@ -169,18 +973,14 @@
               </select>
             </div>
 
-            <div>
+            <div class="full-width">
               <label>Unidade Superior</label>
 
               <select
                 class="form-select"
                 name="unidadeSuperiorId"
                 [(ngModel)]="solicitacao.unidadeSuperiorId"
-                [disabled]="
-                  carregando ||
-                  !solicitacao.tipoSuperior ||
-                  carregandoUnidades
-                "
+                [disabled]="carregando || !solicitacao.tipoSuperior || carregandoUnidades"
               >
                 <option value="">
                   @if (!solicitacao.tipoSuperior) {
@@ -190,10 +990,7 @@
                   }
                 </option>
 
-                @for (
-                  unidade of unidadesSuperiorDisponiveis;
-                  track unidade.id
-                ) {
+                @for (unidade of unidadesSuperiorDisponiveis; track unidade.id) {
                   <option [value]="unidade.id">
                     {{ unidade.nome }}
                     @if (unidade.cidade) {
@@ -204,9 +1001,7 @@
               </select>
 
               @if (carregandoUnidades) {
-                <small class="campo-ajuda">
-                  Carregando unidades...
-                </small>
+                <small class="campo-ajuda">Carregando unidades...</small>
               }
 
               @if (
@@ -215,63 +1010,288 @@
                 unidadesSuperiorDisponiveis.length === 0
               ) {
                 <small class="campo-ajuda campo-ajuda-alerta">
-                  Nenhuma unidade do tipo
-                  {{ nomeTipoSuperiorSelecionado }} cadastrada.
+                  Nenhuma unidade APROVADA do tipo
+                  {{ nomeTipoSuperiorSelecionado }} está disponível.
                 </small>
               }
             </div>
-
           </div>
-
         } @else {
-
           <div class="aviso-neutro">
             <i class="bi bi-info-circle"></i>
-
-            <strong>{{ nomeTipoSelecionado }}</strong> é o nível mais
-            alto da estrutura e não possui unidade superior.
+            <strong>{{ nomeTipoSelecionado }}</strong> é o nível mais alto da
+            estrutura e não possui unidade superior.
           </div>
-
         }
-
       </div>
-
     }
 
     <!-- ETAPA 3 -->
     @if (etapa === 3) {
-
       <div class="form-section">
+        <h4>Contato, Reunião e Justificativa</h4>
 
-        <h4>Justificativa</h4>
+        <div class="form-grid">
 
-        <label>Motivo da criação da unidade</label>
+          <div class="full-width detalhe-secao-titulo">
+            <strong>Contato da Unidade</strong>
+            <small>
+              Informe os contatos próprios da Unidade. Eles podem ser diferentes
+              dos contatos da Igreja/Paróquia/Sede.
+            </small>
+          </div>
 
-        <textarea
-          rows="6"
-          class="form-control"
-          name="justificativa"
-          placeholder="Descreva o motivo da criação desta unidade."
-          [(ngModel)]="solicitacao.justificativa"
-          [disabled]="carregando"
-        ></textarea>
+          <div>
+            <label>E-mail</label>
 
+            <input
+              type="email"
+              class="form-control"
+              name="emailUnidade"
+              maxlength="254"
+              autocomplete="email"
+              placeholder="exemplo@dominio.org"
+              [(ngModel)]="solicitacao.email"
+              [disabled]="carregando"
+            >
+          </div>
+
+          <div>
+            <label>Celular</label>
+
+            <input
+              type="text"
+              class="form-control"
+              name="celularUnidade"
+              maxlength="30"
+              autocomplete="tel"
+              [(ngModel)]="solicitacao.celular"
+              [disabled]="carregando"
+            >
+          </div>
+
+          <div>
+            <label>Telefone</label>
+
+            <input
+              type="text"
+              class="form-control"
+              name="telefoneUnidade"
+              maxlength="30"
+              autocomplete="tel"
+              [(ngModel)]="solicitacao.telefone"
+              [disabled]="carregando"
+            >
+          </div>
+
+          <div>
+            <label>Site</label>
+
+            <input
+              type="text"
+              class="form-control"
+              name="siteUnidade"
+              maxlength="255"
+              autocomplete="url"
+              placeholder="https://..."
+              [(ngModel)]="solicitacao.site"
+              [disabled]="carregando"
+            >
+          </div>
+
+          <div class="full-width detalhe-secao-titulo">
+            <strong>Reunião</strong>
+          </div>
+
+          <div class="full-width">
+            <label>Pesquisar Dia de Reunião</label>
+
+            <input
+              type="text"
+              class="form-control"
+              name="filtroDiaReuniao"
+              placeholder="Ex.: SEGUNDA, 1º DOMINGO, ÚLTIMA QUARTA..."
+              autocomplete="off"
+              [(ngModel)]="filtroDiaReuniao"
+              [disabled]="carregando || carregandoDiasReuniao"
+            >
+          </div>
+
+          <div class="full-width">
+            <label>Dia de Reunião</label>
+
+            <select
+              class="form-select"
+              name="diaReuniaoId"
+              [(ngModel)]="solicitacao.diaReuniaoId"
+              [disabled]="carregando || carregandoDiasReuniao"
+            >
+              <option value="">
+                @if (carregandoDiasReuniao) {
+                  Carregando...
+                } @else {
+                  Selecione, se aplicável
+                }
+              </option>
+
+              @for (dia of diasReuniaoFiltrados; track dia.id) {
+                <option [value]="dia.id">
+                  {{ dia.nome }}
+                </option>
+              }
+            </select>
+
+            <small class="campo-ajuda">
+              A lista é carregada da tabela de dias de reunião ativos.
+            </small>
+          </div>
+
+          <div>
+            <label>Horário de Início da Reunião</label>
+
+            <input
+              type="time"
+              class="form-control"
+              name="horarioInicioReuniao"
+              [(ngModel)]="solicitacao.horarioInicioReuniao"
+              [disabled]="carregando"
+            >
+          </div>
+
+          <div>
+            <label>Horário de Fim da Reunião</label>
+
+            <input
+              type="time"
+              class="form-control"
+              name="horarioFimReuniao"
+              [(ngModel)]="solicitacao.horarioFimReuniao"
+              [disabled]="carregando"
+            >
+          </div>
+
+          <div class="full-width">
+            <label>Pesquisar Fuso Horário</label>
+
+            <div class="seletor-com-acao">
+              <input
+                type="text"
+                class="form-control"
+                name="filtroFusoHorario"
+                placeholder="Ex.: Sao_Paulo, Dublin, London, UTC..."
+                autocomplete="off"
+                [(ngModel)]="filtroFusoHorario"
+                (ngModelChange)="aoAlterarFiltroFusoHorario($event)"
+                (keyup.enter)="carregarFusosHorarios()"
+                [disabled]="carregando"
+              >
+
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                (click)="carregarFusosHorarios()"
+                [disabled]="carregando"
+              >
+                @if (carregandoFusosHorarios) {
+                  Pesquisando...
+                } @else {
+                  Pesquisar
+                }
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                (click)="limparPesquisaFusoHorario()"
+                [disabled]="carregando || carregandoFusosHorarios"
+              >
+                Limpar
+              </button>
+            </div>
+
+            @if (
+              !carregandoFusosHorarios &&
+              filtroFusoHorario.trim() &&
+              fusosHorarios.length > 0
+            ) {
+              <small class="campo-ajuda">
+                {{ fusosHorarios.length }}
+                {{ fusosHorarios.length === 1 ? 'fuso encontrado' : 'fusos encontrados' }}.
+                @if (fusosHorarios.length === 1) {
+                  Selecionado automaticamente.
+                }
+              </small>
+            }
+
+            @if (
+              !carregandoFusosHorarios &&
+              filtroFusoHorario.trim() &&
+              fusosHorarios.length === 0
+            ) {
+              <small class="campo-ajuda campo-ajuda-alerta">
+                Nenhum fuso horário encontrado para essa pesquisa.
+              </small>
+            }
+          </div>
+
+          <div class="full-width">
+            <label>Fuso Horário</label>
+
+            <select
+              class="form-select"
+              name="fusoHorario"
+              [(ngModel)]="solicitacao.fusoHorario"
+              [disabled]="carregando || carregandoFusosHorarios"
+            >
+              <option value="">
+                @if (carregandoFusosHorarios) {
+                  Carregando...
+                } @else {
+                  Selecione, se aplicável
+                }
+              </option>
+
+              @for (fuso of fusosHorarios; track fuso.nome) {
+                <option [value]="fuso.nome">
+                  {{ fuso.nome }}
+                  @if (fuso.abreviacao) { — {{ fuso.abreviacao }} }
+                  @if (fuso.offsetUtc) { — UTC {{ fuso.offsetUtc }} }
+                </option>
+              }
+            </select>
+
+            <small class="campo-ajuda">
+              Lista oficial fornecida pelo PostgreSQL/IANA. No banco será gravado
+              somente o identificador, como America/Sao_Paulo ou Europe/Dublin.
+            </small>
+          </div>
+
+          <div class="full-width">
+            <label>Motivo da criação da unidade</label>
+
+            <textarea
+              rows="6"
+              class="form-control"
+              name="justificativa"
+              placeholder="Descreva o motivo da criação desta unidade."
+              [(ngModel)]="solicitacao.justificativa"
+              [disabled]="carregando"
+            ></textarea>
+          </div>
+
+        </div>
       </div>
-
     }
 
     <!-- ETAPA 4 -->
     @if (etapa === 4) {
-
       <div class="form-section">
-
         <h4>Revisão da Solicitação</h4>
 
         <div class="review-card">
-
           <p>
             <strong>Tipo:</strong>
-            {{ tipoSelecionado?.nome || '-' }}
+            {{ nomeTipoSelecionado }}
           </p>
 
           <p>
@@ -280,28 +1300,95 @@
           </p>
 
           <p>
-            <strong>Cidade:</strong>
-            {{ solicitacao.cidade || '-' }}
+            <strong>Nome reduzido:</strong>
+            {{ solicitacao.nomeReduzido || 'Não informado' }}
           </p>
 
           <p>
-            <strong>UF:</strong>
-            {{ solicitacao.uf || '-' }}
+            <strong>País:</strong>
+            {{ paisSelecionado?.nome || '-' }}
           </p>
 
           <p>
-            <strong>Paróquia:</strong>
-            {{ solicitacao.paroquia || '-' }}
+            <strong>{{ rotuloCodigoPostal }}:</strong>
+            {{ solicitacao.codigoPostal || '-' }}
           </p>
 
           <p>
-            <strong>Data prevista de fundação:</strong>
+            <strong>{{ rotuloDivisaoAdministrativa }}:</strong>
+            {{ ufSelecionada?.nome || '-' }}
+          </p>
+
+          <p>
+            <strong>Município / Localidade:</strong>
+            {{ municipioSelecionado?.nome || '-' }}
+          </p>
+
+          <p>
+            <strong>Subdivisão Local:</strong>
+            {{ subdivisaoSelecionada?.nome || 'Não informada' }}
+          </p>
+
+          <p>
+            <strong>Igreja / Paróquia / Sede:</strong>
+            {{ igrejaSelecionada?.nome || '-' }}
+          </p>
+
+          <p>
+            <strong>Endereço herdado:</strong>
+            {{ igrejaSelecionada?.codigoPostal || 'Sem código postal' }}
+            —
+            {{ enderecoIgrejaSelecionada }}
+          </p>
+
+          <p>
+            <strong>E-mail da Unidade:</strong>
+            {{ solicitacao.email || 'Não informado' }}
+          </p>
+
+          <p>
+            <strong>Celular da Unidade:</strong>
+            {{ solicitacao.celular || 'Não informado' }}
+          </p>
+
+          <p>
+            <strong>Telefone da Unidade:</strong>
+            {{ solicitacao.telefone || 'Não informado' }}
+          </p>
+
+          <p>
+            <strong>Site da Unidade:</strong>
+            {{ solicitacao.site || 'Não informado' }}
+          </p>
+
+          <p>
+            <strong>Data de fundação / constituição:</strong>
             {{ solicitacao.dataFundacao || '-' }}
           </p>
 
           <p>
-            <strong>Unidade superior:</strong>
+            <strong>Dia de reunião:</strong>
+            {{ diaReuniaoSelecionado?.nome || 'Não informado' }}
+          </p>
 
+          <p>
+            <strong>Horário da reunião:</strong>
+            @if (solicitacao.horarioInicioReuniao || solicitacao.horarioFimReuniao) {
+              {{ solicitacao.horarioInicioReuniao || '--:--' }}
+              até
+              {{ solicitacao.horarioFimReuniao || '--:--' }}
+            } @else {
+              Não informado
+            }
+          </p>
+
+          <p>
+            <strong>Fuso horário:</strong>
+            {{ solicitacao.fusoHorario || 'Não informado' }}
+          </p>
+
+          <p>
+            <strong>Unidade superior:</strong>
             @if (exigeSuperior) {
               {{ nomeUnidadeSuperiorSelecionada }}
             } @else {
@@ -314,14 +1401,15 @@
             {{ solicitacao.justificativa || '-' }}
           </p>
 
+          <p>
+            <strong>Status da solicitação:</strong>
+            <span class="badge-pendente">PENDENTE</span>
+          </p>
         </div>
-
       </div>
-
     }
 
     <div class="wizard-actions">
-
       @if (etapa > 1) {
         <button
           type="button"
@@ -338,29 +1426,64 @@
           type="button"
           class="btn btn-primary"
           (click)="proximaEtapa()"
-          [disabled]="!etapaValida"
+          [disabled]="!etapaValida || carregando"
         >
           Próximo
         </button>
       }
 
       @if (etapa === 4 && !sucesso) {
-        <button
-          type="button"
-          class="btn btn-success"
-          (click)="enviarSolicitacao()"
-          [disabled]="carregando"
-        >
-          @if (carregando) {
-            Enviando...
-          } @else {
-            Enviar Solicitação
-          }
-        </button>
-      }
+        @if (modo === 'excluir') {
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="cancelarEdicao()"
+            [disabled]="carregando"
+          >
+            Cancelar
+          </button>
 
+          <button
+            type="button"
+            class="btn btn-danger"
+            (click)="confirmarExclusao()"
+            [disabled]="carregando"
+          >
+            @if (carregando) {
+              Excluindo...
+            } @else {
+              Confirmar Exclusão
+            }
+          </button>
+        } @else {
+          @if (modo === 'editar') {
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              (click)="cancelarEdicao()"
+              [disabled]="carregando"
+            >
+              Cancelar
+            </button>
+          }
+
+          <button
+            type="button"
+            class="btn btn-success"
+            (click)="enviarSolicitacao()"
+            [disabled]="carregando || !etapaValida"
+          >
+            @if (carregando) {
+              Salvando...
+            } @else if (modo === 'editar') {
+              Salvar Alterações
+            } @else {
+              Enviar Solicitação
+            }
+          </button>
+        }
+      }
     </div>
 
   </div>
-
 </div>

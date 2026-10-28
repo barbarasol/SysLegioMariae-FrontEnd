@@ -1,0 +1,189 @@
+/*
+ * Acrescente este bloco ao final do nova-unidade.scss existente.
+ */
+
+.codigo-postal-row,
+.paroquia-select-row,
+.seletor-com-acao {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+
+  .form-control,
+  .form-select {
+    flex: 1 1 auto;
+  }
+
+  .btn {
+    white-space: nowrap;
+  }
+}
+
+.regra-localizacao {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+  padding: 13px 15px;
+  border: 1px solid #e4d5d6;
+  border-radius: 9px;
+  background: #fcf8f8;
+  color: #624a4c;
+
+  i {
+    margin-top: 2px;
+  }
+
+  strong,
+  span {
+    display: block;
+  }
+
+  span {
+    margin-top: 2px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+}
+
+.codigo-postal-resultados {
+  padding: 14px;
+  border: 1px solid #e4d5d6;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.codigo-postal-encontrado {
+  padding: 16px;
+  border: 1px solid #cfe2d6;
+  border-radius: 10px;
+  background: #f7fbf8;
+}
+
+.codigo-postal-encontrado-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.codigo-postal-dados {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 18px;
+  font-size: 13px;
+}
+
+.codigo-postal-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid #e7cfd1;
+  border-radius: 8px;
+  background: #fbf5f5;
+  color: #6b4a4c;
+  font-size: 13px;
+}
+
+.codigo-postal-aviso.codigo-postal-novo {
+  border-style: dashed;
+}
+
+.filtro-localizacao {
+  margin-bottom: 8px;
+}
+
+.inclusao-localizacao-box {
+  padding: 16px;
+  border: 1px dashed #d8babc;
+  border-radius: 9px;
+  background: #fdfafa;
+
+  > strong {
+    display: block;
+    margin-bottom: 12px;
+    color: #7a2024;
+  }
+}
+
+.inclusao-localizacao-actions,
+.nova-paroquia-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.nova-paroquia-box {
+  margin-top: 4px;
+  padding: 18px;
+  border: 1px solid #e7cfd1;
+  border-radius: 10px;
+  background: #fdf9f9;
+}
+
+.nova-paroquia-header {
+  margin-bottom: 16px;
+
+  strong {
+    display: block;
+    color: #7a2024;
+  }
+
+  small {
+    display: block;
+    margin-top: 4px;
+    color: #7e6668;
+    line-height: 1.45;
+  }
+}
+
+.status-cadastro-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.status-pendente {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #e7cfd1;
+  border-radius: 8px;
+  background: #fbf5f5;
+  color: #7a2024;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.badge-pendente {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #f5e5e6;
+  color: #7a2024;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .codigo-postal-row,
+  .paroquia-select-row,
+  .seletor-com-acao {
+    flex-direction: column;
+  }
+
+  .codigo-postal-dados {
+    grid-template-columns: 1fr;
+  }
+
+  .inclusao-localizacao-actions,
+  .nova-paroquia-actions {
+    flex-direction: column-reverse;
+  }
+}

@@ -1,219 +1,407 @@
-import { Component } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  OnInit
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import {
+  catchError,
+  finalize,
+  forkJoin,
+  of,
+  timeout
+} from 'rxjs';
 
-interface Presidium {
-  id: number;
-  nome: string;
-  membros: number;
-  status: 'Ativo' | 'Inativo';
-}
+import {
+  CadastroUnidadeService,
+  TipoUnidadeOpcao,
+  UnidadeEstrutura
+} from '../../services/cadastro-unidade.service';
+import { ToastService } from '../../services/toast.service';
 
-interface Curia {
-  id: number;
-  nome: string;
-  presidia: Presidium[];
-}
-
-interface Comitium {
-  id: number;
-  nome: string;
-  cidade: string;
-  curias: Curia[];
+interface UnidadeLinha extends UnidadeEstrutura {
+  nivel: number;
 }
 
 @Component({
   selector: 'app-afiliacao',
-  imports: [
-    FormsModule, 
-    RouterLink
-  ],
+  imports: [FormsModule, RouterLink],
   templateUrl: './afiliacao.html',
   styleUrl: './afiliacao.scss'
 })
-export class Afiliacao {
+export class Afiliacao implements OnInit {
+  tipos: TipoUnidadeOpcao[] = [];
+  tiposFiltro: TipoUnidadeOpcao[] = [];
 
-  comitiumSelecionado = 1;
-  curiaSelecionada: number | null = null;
-  presidiumSelecionado: number | null = null;
+  unidades: UnidadeEstrutura[] = [];
+  unidadesDoTipo: UnidadeEstrutura[] = [];
+  estruturaVisivel: UnidadeLinha[] = [];
 
-  unidadeSelecionada: {
-    tipo: 'Comitium' | 'Cúria' | 'Praesidium';
-    nome: string;
-    superior: string;
-    comitium: string;
-    membros: number;
-    status: 'Ativo' | 'Inativo';
-  } | null = null;
+  tipoSelecionado = '';
+  unidadeFiltroId = '';
+  unidadeSelecionada: UnidadeEstrutura | null = null;
 
-  comitiums: Comitium[] = [
-    {
-      id: 1,
-      nome: 'Comitium de Brasília',
-      cidade: 'Brasília - DF',
-      curias: [
-        {
-          id: 1,
-          nome: 'Cúria Nossa Senhora Aparecida',
-          presidia: [
-            {
-              id: 1,
-              nome: 'Praesidium Rainha da Paz',
-              membros: 32,
-              status: 'Ativo'
-            },
-            {
-              id: 2,
-              nome: 'Praesidium São José',
-              membros: 27,
-              status: 'Ativo'
-            }
-          ]
-        },
-        {
-          id: 2,
-          nome: 'Cúria Nossa Senhora de Fátima',
-          presidia: [
-            {
-              id: 3,
-              nome: 'Praesidium Mãe da Igreja',
-              membros: 24,
-              status: 'Ativo'
-            },
-            {
-              id: 4,
-              nome: 'Praesidium Imaculada Conceição',
-              membros: 19,
-              status: 'Ativo'
-            }
-          ]
-        }
-      ]
-    },
-    {
-      id: 2,
-      nome: 'Comitium de Goiânia',
-      cidade: 'Goiânia - GO',
-      curias: [
-        {
-          id: 3,
-          nome: 'Cúria Nossa Senhora das Graças',
-          presidia: [
-            {
-              id: 5,
-              nome: 'Praesidium Imaculada Conceição',
-              membros: 28,
-              status: 'Ativo'
-            },
-            {
-              id: 6,
-              nome: 'Praesidium Nossa Senhora de Lourdes',
-              membros: 21,
-              status: 'Ativo'
-            }
-          ]
-        }
-      ]
-    }
+  carregando = false;
+  erroCarregamento = '';
+
+  private unidadePorId = new Map<string, UnidadeEstrutura>();
+  private filhosPorPai = new Map<string, UnidadeEstrutura[]>();
+  private unidadesPorTipo = new Map<string, UnidadeEstrutura[]>();
+
+  readonly ordemTipos = [
+    'CONCILIUM',
+    'SENATUS',
+    'REGIA',
+    'COMITIUM',
+    'CURIA',
+    'PRAESIDIUM',
+    'VELITE',
+    'PATRICIOS'
   ];
 
-  get comitiumAtual(): Comitium | undefined {
-    return this.comitiums.find(
-      comitium => comitium.id === this.comitiumSelecionado
-    );
+  constructor(
+    private cadastroUnidadeService: CadastroUnidadeService,
+    private router: Router,
+    private toastService: ToastService,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.carregar();
   }
 
-  get curiasDisponiveis(): Curia[] {
-    return this.comitiumAtual?.curias ?? [];
+  carregar(): void {
+    this.carregando = true;
+    this.erroCarregamento = '';
+
+    forkJoin({
+      tipos: this.cadastroUnidadeService
+        .listarTipos()
+        .pipe(
+          timeout(15000),
+          catchError(() => of([] as TipoUnidadeOpcao[]))
+        ),
+
+      unidades: this.cadastroUnidadeService
+        .listarEstrutura()
+        .pipe(
+          timeout(15000),
+          catchError((erro) => {
+            console.error(
+              'Erro ao carregar estrutura de unidades:',
+              erro
+            );
+
+            this.erroCarregamento =
+              'Não foi possível carregar a estrutura das unidades.';
+
+            return of([] as UnidadeEstrutura[]);
+          })
+        )
+    })
+      .pipe(
+        finalize(() => {
+          this.carregando = false;
+
+          // O projeto pode trabalhar sem Zone.js. Força a atualização
+          // do template depois que as requisições HTTP terminarem.
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: ({ tipos, unidades }) => {
+          this.tipos = tipos;
+          this.tiposFiltro = this.ordenarTipos(tipos);
+
+          this.unidades = unidades;
+          this.reconstruirIndices();
+          this.recalcularFiltroEestrutura();
+
+          if (this.erroCarregamento) {
+            this.toastService.erro(this.erroCarregamento);
+          }
+
+          this.cdr.detectChanges();
+        },
+        error: (erro) => {
+          // Como cada chamada já possui catchError, este bloco é apenas
+          // uma última proteção contra erro inesperado do forkJoin.
+          console.error('Erro inesperado ao carregar afiliação:', erro);
+
+          this.unidades = [];
+          this.tipos = [];
+          this.tiposFiltro = [];
+          this.unidadesDoTipo = [];
+          this.estruturaVisivel = [];
+          this.erroCarregamento =
+            'Não foi possível carregar a estrutura das unidades.';
+
+          this.toastService.erro(this.erroCarregamento);
+          this.cdr.detectChanges();
+        }
+      });
   }
 
-  get curiaAtual(): Curia | undefined {
-    return this.curiasDisponiveis.find(
-      curia => curia.id === this.curiaSelecionada
-    );
-  }
-
-  get presidiaDisponiveis(): Presidium[] {
-    return this.curiaAtual?.presidia ?? [];
-  }
-
-  selecionarComitium(): void {
-    this.curiaSelecionada = null;
-    this.presidiumSelecionado = null;
+  aoTrocarTipo(): void {
+    this.unidadeFiltroId = '';
     this.unidadeSelecionada = null;
+    this.recalcularFiltroEestrutura();
   }
 
-  selecionarCuria(): void {
-    this.presidiumSelecionado = null;
-    this.unidadeSelecionada = null;
+  aoTrocarUnidade(): void {
+    this.unidadeSelecionada = this.unidadeFiltroId
+      ? this.unidadePorId.get(this.unidadeFiltroId) ?? null
+      : null;
+
+    this.recalcularEstrutura();
   }
 
-  selecionarPresidium(): void {
-    this.unidadeSelecionada = null;
+  selecionarUnidade(unidade: UnidadeEstrutura): void {
+    this.unidadeSelecionada = unidade;
   }
 
-  visualizarComitium(comitium: Comitium): void {
-    this.unidadeSelecionada = {
-      tipo: 'Comitium',
-      nome: comitium.nome,
-      superior: 'Região superior',
-      comitium: comitium.nome,
-      membros: this.contarMembrosComitium(comitium),
-      status: 'Ativo'
-    };
+  editar(unidade: UnidadeEstrutura, event?: Event): void {
+    event?.stopPropagation();
+
+    this.router.navigate(['/nova-unidade'], {
+      queryParams: {
+        id: unidade.id,
+        modo: 'editar'
+      }
+    });
   }
 
-  visualizarCuria(curia: Curia): void {
-    const comitium = this.comitiumAtual;
+  excluir(unidade: UnidadeEstrutura, event?: Event): void {
+    event?.stopPropagation();
 
-    this.unidadeSelecionada = {
-      tipo: 'Cúria',
-      nome: curia.nome,
-      superior: comitium?.nome ?? '-',
-      comitium: comitium?.nome ?? '-',
-      membros: this.contarMembrosCuria(curia),
-      status: 'Ativo'
-    };
+    this.router.navigate(['/nova-unidade'], {
+      queryParams: {
+        id: unidade.id,
+        modo: 'excluir'
+      }
+    });
   }
 
-  visualizarPresidium(presidium: Presidium): void {
-    const curia = this.curiaAtual;
-    const comitium = this.comitiumAtual;
-
-    this.unidadeSelecionada = {
-      tipo: 'Praesidium',
-      nome: presidium.nome,
-      superior: curia?.nome ?? '-',
-      comitium: comitium?.nome ?? '-',
-      membros: presidium.membros,
-      status: presidium.status
-    };
+  nomeTipo(codigo: string): string {
+    return this.tipos.find(
+      (tipo) => tipo.codigo === codigo
+    )?.nome ?? codigo;
   }
 
-  get unidadeSelecionadaEhComitium(): boolean {
-    return this.unidadeSelecionada?.tipo === 'Comitium';
+  private ordenarTipos(
+    tipos: TipoUnidadeOpcao[]
+  ): TipoUnidadeOpcao[] {
+    return [...tipos].sort((a, b) => {
+      const ia = this.indiceTipo(a.codigo);
+      const ib = this.indiceTipo(b.codigo);
+
+      if (ia !== ib) {
+        return ia - ib;
+      }
+
+      return a.nome.localeCompare(b.nome, 'pt-BR');
+    });
   }
 
-  get unidadeSelecionadaEhCuria(): boolean {
-    return this.unidadeSelecionada?.tipo === 'Cúria';
+  private reconstruirIndices(): void {
+    this.unidadePorId.clear();
+    this.filhosPorPai.clear();
+    this.unidadesPorTipo.clear();
+
+    for (const unidade of this.unidades) {
+      this.unidadePorId.set(unidade.id, unidade);
+
+      const tipo = unidade.tipo;
+      const porTipo = this.unidadesPorTipo.get(tipo) ?? [];
+      porTipo.push(unidade);
+      this.unidadesPorTipo.set(tipo, porTipo);
+
+      if (unidade.unidadeSuperiorId) {
+        const filhos =
+          this.filhosPorPai.get(unidade.unidadeSuperiorId) ?? [];
+
+        filhos.push(unidade);
+        this.filhosPorPai.set(
+          unidade.unidadeSuperiorId,
+          filhos
+        );
+      }
+    }
+
+    for (const lista of this.unidadesPorTipo.values()) {
+      lista.sort((a, b) =>
+        a.nome.localeCompare(b.nome, 'pt-BR')
+      );
+    }
+
+    for (const lista of this.filhosPorPai.values()) {
+      lista.sort((a, b) => this.compararEstrutura(a, b));
+    }
   }
 
-  get unidadeSelecionadaEhPresidium(): boolean {
-    return this.unidadeSelecionada?.tipo === 'Praesidium';
+  private recalcularFiltroEestrutura(): void {
+    this.unidadesDoTipo = this.tipoSelecionado
+      ? [...(
+          this.unidadesPorTipo.get(this.tipoSelecionado) ?? []
+        )]
+      : [];
+
+    this.recalcularEstrutura();
   }
 
-  private contarMembrosComitium(comitium: Comitium): number {
-    return comitium.curias.reduce(
-      (total, curia) => total + this.contarMembrosCuria(curia),
-      0
+  private recalcularEstrutura(): void {
+    if (this.unidadeFiltroId) {
+      this.estruturaVisivel =
+        this.achatarSubarvore(this.unidadeFiltroId);
+      return;
+    }
+
+    if (this.tipoSelecionado) {
+      const idsRaizes = new Set(
+        this.unidadesDoTipo.map((item) => item.id)
+      );
+
+      const linhas: UnidadeLinha[] = [];
+      const visitados = new Set<string>();
+
+      for (const unidade of this.unidadesDoTipo) {
+        if (visitados.has(unidade.id)) {
+          continue;
+        }
+
+        visitados.add(unidade.id);
+        linhas.push({ ...unidade, nivel: 0 });
+
+        this.adicionarDescendentes(
+          unidade.id,
+          1,
+          linhas,
+          visitados,
+          idsRaizes
+        );
+      }
+
+      this.estruturaVisivel = linhas;
+      return;
+    }
+
+    const raizes = this.unidades
+      .filter(
+        (item) =>
+          !item.unidadeSuperiorId ||
+          !this.unidadePorId.has(item.unidadeSuperiorId)
+      )
+      .sort((a, b) => this.compararEstrutura(a, b));
+
+    const linhas: UnidadeLinha[] = [];
+    const visitados = new Set<string>();
+
+    for (const raiz of raizes) {
+      if (visitados.has(raiz.id)) {
+        continue;
+      }
+
+      visitados.add(raiz.id);
+      linhas.push({ ...raiz, nivel: 0 });
+
+      this.adicionarDescendentes(
+        raiz.id,
+        1,
+        linhas,
+        visitados
+      );
+    }
+
+    // Segurança para qualquer unidade que tenha ficado fora da árvore.
+    for (const item of this.unidades) {
+      if (visitados.has(item.id)) {
+        continue;
+      }
+
+      visitados.add(item.id);
+      linhas.push({ ...item, nivel: 0 });
+
+      this.adicionarDescendentes(
+        item.id,
+        1,
+        linhas,
+        visitados
+      );
+    }
+
+    this.estruturaVisivel = linhas;
+  }
+
+  private achatarSubarvore(id: string): UnidadeLinha[] {
+    const raiz = this.unidadePorId.get(id);
+
+    if (!raiz) {
+      return [];
+    }
+
+    const linhas: UnidadeLinha[] = [
+      { ...raiz, nivel: 0 }
+    ];
+
+    const visitados = new Set<string>([raiz.id]);
+
+    this.adicionarDescendentes(
+      raiz.id,
+      1,
+      linhas,
+      visitados
     );
+
+    return linhas;
   }
 
-  private contarMembrosCuria(curia: Curia): number {
-    return curia.presidia.reduce(
-      (total, presidium) => total + presidium.membros,
-      0
-    );
+  private adicionarDescendentes(
+    paiId: string,
+    nivel: number,
+    destino: UnidadeLinha[],
+    visitados: Set<string>,
+    ignorarRaizes?: Set<string>
+  ): void {
+    const filhos = this.filhosPorPai.get(paiId) ?? [];
+
+    for (const filho of filhos) {
+      if (
+        visitados.has(filho.id) ||
+        ignorarRaizes?.has(filho.id)
+      ) {
+        continue;
+      }
+
+      visitados.add(filho.id);
+      destino.push({ ...filho, nivel });
+
+      this.adicionarDescendentes(
+        filho.id,
+        nivel + 1,
+        destino,
+        visitados,
+        ignorarRaizes
+      );
+    }
+  }
+
+  private compararEstrutura(
+    a: UnidadeEstrutura,
+    b: UnidadeEstrutura
+  ): number {
+    const ia = this.indiceTipo(a.tipo);
+    const ib = this.indiceTipo(b.tipo);
+
+    if (ia !== ib) {
+      return ia - ib;
+    }
+
+    return a.nome.localeCompare(b.nome, 'pt-BR');
+  }
+
+  private indiceTipo(codigo: string): number {
+    const indice = this.ordemTipos.indexOf(codigo);
+    return indice < 0 ? 999 : indice;
   }
 }
-

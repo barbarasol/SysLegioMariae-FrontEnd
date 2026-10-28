@@ -1,114 +1,595 @@
+/* ============================================================
+   SYSLEGIOMARIAE
+   NOVA UNIDADE
+   Arquivo SCSS completo
+   ============================================================ */
+
 .nova-unidade-container {
-  padding: 40px;
-  background: #f5f6fa;
-  min-height: 100vh;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px;
 }
 
 .page-header {
-  margin-bottom: 25px;
+  margin-bottom: 22px;
 
   h2 {
-    color: #14265c;
+    margin: 0 0 6px;
+    color: #6f1d22;
+    font-size: 26px;
     font-weight: 700;
-    margin-bottom: 5px;
   }
 
   p {
-    color: #666;
     margin: 0;
+    color: #6f6667;
+    font-size: 14px;
   }
 }
 
 .wizard-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 30px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+  border: 1px solid #eadfe0;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 3px 14px rgba(80, 28, 32, 0.06);
+  overflow: hidden;
 }
 
 .wizard-steps {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 40px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-bottom: 1px solid #eadfe0;
+  background: #fbf8f8;
 }
 
 .step {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: #999;
+  justify-content: center;
+  gap: 9px;
+  min-height: 64px;
+  padding: 12px 16px;
+  color: #806f70;
+  font-size: 13px;
   font-weight: 600;
+  text-align: center;
 
   span {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #e9ecef;
-
-    display: flex;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    border: 1px solid #d9c8ca;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #7a2024;
+    font-size: 12px;
+    font-weight: 700;
+    flex: 0 0 auto;
   }
 
   &.active {
-    color: #14265c;
+    color: #6f1d22;
+    background: #ffffff;
 
     span {
-      background: #14265c;
-      color: white;
+      border-color: #7a2024;
+      background: #7a2024;
+      color: #ffffff;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 18%;
+      right: 18%;
+      bottom: 0;
+      height: 3px;
+      border-radius: 3px 3px 0 0;
+      background: #7a2024;
     }
   }
 }
 
-.form-section h4 {
-  color: #14265c;
-  margin-bottom: 25px;
+.form-section {
+  padding: 26px;
+
+  h4 {
+    margin: 0 0 18px;
+    color: #562326;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 6px;
+    color: #493c3d;
+    font-size: 13px;
+    font-weight: 600;
+  }
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2,1fr);
-  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 20px;
 }
 
-label {
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 8px;
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-control,
+.form-select {
+  min-height: 42px;
+  border-color: #dfd1d2;
+  border-radius: 8px;
+
+  &:focus {
+    border-color: #9a5e62;
+    box-shadow: 0 0 0 0.18rem rgba(122, 32, 36, 0.12);
+  }
+
+  &:disabled {
+    background: #f7f4f4;
+    color: #827777;
+  }
+}
+
+textarea.form-control {
+  min-height: 128px;
+  resize: vertical;
+}
+
+.campo-ajuda {
   display: block;
+  margin-top: 6px;
+  color: #817374;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
-.upload-area {
-  margin-top: 25px;
-  border: 2px dashed #d8deef;
-  border-radius: 12px;
-  padding: 40px;
-  text-align: center;
+.campo-ajuda-alerta {
+  color: #9a4c22;
+}
 
-  i {
-    font-size: 45px;
-    color: #14265c;
-  }
+.aviso-neutro {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 14px 16px;
+  border: 1px solid #e3d7d8;
+  border-radius: 9px;
+  background: #faf7f7;
+  color: #665859;
+  font-size: 13px;
+  line-height: 1.45;
 
-  h5 {
-    margin-top: 15px;
-    color: #14265c;
-  }
-
-  p {
-    color: #777;
+  strong {
+    color: #562326;
   }
 }
 
 .review-card {
-  background: #f8f9fc;
-  padding: 25px;
-  border-radius: 12px;
+  padding: 18px 20px;
+  border: 1px solid #eadfe0;
+  border-radius: 10px;
+  background: #fcfafa;
+
+  p {
+    margin: 0;
+    padding: 9px 0;
+    border-bottom: 1px solid #efe6e7;
+    color: #5f5354;
+    font-size: 13px;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    strong {
+      color: #3d3334;
+    }
+  }
 }
 
 .wizard-actions {
-  margin-top: 30px;
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 10px;
+  padding: 18px 26px;
+  border-top: 1px solid #eadfe0;
+  background: #fcfafa;
+}
+
+.regra-localizacao {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+  padding: 13px 15px;
+  border: 1px solid #e4d5d6;
+  border-radius: 9px;
+  background: #fcf8f8;
+  color: #624a4c;
+
+  i {
+    margin-top: 2px;
+    color: #7a2024;
+  }
+
+  strong,
+  span {
+    display: block;
+  }
+
+  strong {
+    color: #562326;
+  }
+
+  span {
+    margin-top: 2px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+}
+
+.codigo-postal-row,
+.paroquia-select-row,
+.seletor-com-acao {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+
+  .form-control,
+  .form-select {
+    flex: 1 1 auto;
+  }
+
+  .btn {
+    white-space: nowrap;
+  }
+}
+
+.codigo-postal-resultados {
+  padding: 14px;
+  border: 1px solid #e4d5d6;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.codigo-postal-encontrado {
+  padding: 16px;
+  border: 1px solid #cfe2d6;
+  border-radius: 10px;
+  background: #f7fbf8;
+}
+
+.codigo-postal-encontrado-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #2d6643;
+  font-size: 14px;
+}
+
+.codigo-postal-dados {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 18px;
+  color: #5c5354;
+  font-size: 13px;
+
+  span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.codigo-postal-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid #e7cfd1;
+  border-radius: 8px;
+  background: #fbf5f5;
+  color: #6b4a4c;
+  font-size: 13px;
+  line-height: 1.45;
+
+  i {
+    margin-top: 1px;
+    color: #8a3136;
+  }
+}
+
+.codigo-postal-aviso.codigo-postal-novo {
+  border-style: dashed;
+}
+
+.filtro-localizacao {
+  margin-bottom: 8px;
+}
+
+.inclusao-localizacao-box {
+  padding: 16px;
+  border: 1px dashed #d8babc;
+  border-radius: 9px;
+  background: #fdfafa;
+
+  > strong {
+    display: block;
+    margin-bottom: 12px;
+    color: #7a2024;
+  }
+}
+
+.inclusao-localizacao-actions,
+.nova-paroquia-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.nova-paroquia-box {
+  margin-top: 4px;
+  padding: 18px;
+  border: 1px solid #e7cfd1;
+  border-radius: 10px;
+  background: #fdf9f9;
+}
+
+.nova-paroquia-header {
+  margin-bottom: 16px;
+
+  strong {
+    display: block;
+    color: #7a2024;
+  }
+
+  small {
+    display: block;
+    margin-top: 4px;
+    color: #7e6668;
+    line-height: 1.45;
+  }
+}
+
+.status-cadastro-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.status-pendente {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #e7cfd1;
+  border-radius: 8px;
+  background: #fbf5f5;
+  color: #7a2024;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.badge-pendente {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #f5e5e6;
+  color: #7a2024;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: #7a2024;
+  --bs-btn-border-color: #9b6669;
+  --bs-btn-hover-bg: #7a2024;
+  --bs-btn-hover-border-color: #7a2024;
+  --bs-btn-active-bg: #68191d;
+  --bs-btn-active-border-color: #68191d;
+}
+
+.btn-primary {
+  --bs-btn-bg: #7a2024;
+  --bs-btn-border-color: #7a2024;
+  --bs-btn-hover-bg: #68191d;
+  --bs-btn-hover-border-color: #68191d;
+  --bs-btn-active-bg: #571418;
+  --bs-btn-active-border-color: #571418;
+}
+
+.btn-success {
+  --bs-btn-bg: #356846;
+  --bs-btn-border-color: #356846;
+  --bs-btn-hover-bg: #2a5739;
+  --bs-btn-hover-border-color: #2a5739;
+}
+
+@media (max-width: 920px) {
+  .nova-unidade-container {
+    padding: 18px;
+  }
+
+  .wizard-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .step {
+    border-bottom: 1px solid #eee5e6;
+
+    &.active::after {
+      left: 10%;
+      right: 10%;
+    }
+  }
+}
+
+@media (max-width: 760px) {
+  .nova-unidade-container {
+    padding: 12px;
+  }
+
+  .page-header h2 {
+    font-size: 22px;
+  }
+
+  .form-section {
+    padding: 18px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .full-width {
+    grid-column: auto;
+  }
+
+  .codigo-postal-row,
+  .paroquia-select-row,
+  .seletor-com-acao {
+    flex-direction: column;
+  }
+
+  .codigo-postal-dados {
+    grid-template-columns: 1fr;
+  }
+
+  .inclusao-localizacao-actions,
+  .nova-paroquia-actions {
+    flex-direction: column-reverse;
+  }
+
+  .wizard-actions {
+    padding: 14px 18px;
+    flex-wrap: wrap;
+
+    .btn {
+      flex: 1 1 140px;
+    }
+  }
+}
+
+@media (max-width: 520px) {
+  .wizard-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .step {
+    justify-content: flex-start;
+    min-height: 52px;
+
+    &.active::after {
+      left: 0;
+      right: auto;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      height: auto;
+      border-radius: 0 3px 3px 0;
+    }
+  }
+
+  .review-card {
+    padding: 14px;
+  }
+}
+
+
+/* Campos cuja persistência é padronizada em UPPERCASE. */
+input[name="nome"],
+input[name="novaUfNome"],
+input[name="novoMunicipioNome"],
+input[name="novaSubdivisaoNome"] {
+  text-transform: uppercase;
+}
+
+
+/* ============================================================
+   ENDEREÇO HERDADO / SEÇÕES DE DETALHES
+   ============================================================ */
+
+.endereco-herdado-box {
+  padding: 16px;
+  border: 1px solid #d9e1d8;
+  border-radius: 10px;
+  background: #f8fbf8;
+}
+
+.endereco-herdado-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+
+  i {
+    margin-top: 2px;
+    color: #356846;
+  }
+
+  strong,
+  small {
+    display: block;
+  }
+
+  strong {
+    color: #2f5d3d;
+  }
+
+  small {
+    margin-top: 3px;
+    color: #667067;
+    line-height: 1.4;
+  }
+}
+
+.endereco-herdado-dados {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 18px;
+  color: #5c625d;
+  font-size: 13px;
+
+  span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.detalhe-secao-titulo {
+  margin-top: 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ece4e5;
+
+  strong {
+    display: block;
+    color: #562326;
+    font-size: 15px;
+  }
+
+  small {
+    display: block;
+    margin-top: 3px;
+    color: #817374;
+    line-height: 1.4;
+  }
+}
+
+@media (max-width: 760px) {
+  .endereco-herdado-dados {
+    grid-template-columns: 1fr;
+  }
 }
