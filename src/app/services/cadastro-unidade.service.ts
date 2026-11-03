@@ -62,7 +62,6 @@ export interface UnidadeDetalhe {
   paisId: string;
   ufId: string;
   subdivisaoLocalId: string | null;
-  codigoPostalId: string | null;
   codigoPostal: string | null;
   dataConstituicao: string | null;
   diaReuniaoId: string | null;
@@ -135,7 +134,6 @@ export interface IgrejaOpcao {
   nome: string;
   padre: string | null;
   status: string;
-  codigoPostalId: string | null;
   subdivisaoLocalId: string | null;
   codigoPostal: string | null;
   logradouro: string | null;
@@ -163,23 +161,12 @@ export interface CriarSubdivisaoLocalRequest {
   codigo?: string | null;
 }
 
-export interface CriarCodigoPostalRequest {
-  paisId: string;
-  municipioId: string;
-  subdivisaoLocalId?: string | null;
-  codigoPostal: string;
-  tipoLogradouro?: string | null;
-  logradouro?: string | null;
-  bairro?: string | null;
-  localidade?: string | null;
-}
 
 export interface CriarIgrejaRequest {
   nome: string;
   padre?: string | null;
   municipioId: string;
   subdivisaoLocalId?: string | null;
-  codigoPostalId?: string | null;
   codigoPostal?: string | null;
   tipoLogradouro?: string | null;
   logradouro?: string | null;
@@ -386,16 +373,11 @@ export class CadastroUnidadeService {
 
   buscarCodigosPostais(
     paisId: string,
-    codigoPostal: string,
-    municipioId?: string
+    codigoPostal: string
   ): Observable<BuscarCodigoPostalResponse> {
-    let params = new HttpParams()
+    const params = new HttpParams()
       .set('paisId', paisId)
       .set('codigoPostal', codigoPostal);
-
-    if (municipioId) {
-      params = params.set('municipioId', municipioId);
-    }
 
     return this.http.get<BuscarCodigoPostalResponse>(
       `${this.baseUrl}/codigos-postais`,
@@ -403,16 +385,6 @@ export class CadastroUnidadeService {
         params,
         withCredentials: true
       }
-    );
-  }
-
-  criarCodigoPostal(
-    payload: CriarCodigoPostalRequest
-  ): Observable<CodigoPostalOpcao> {
-    return this.http.post<CodigoPostalOpcao>(
-      `${this.baseUrl}/codigos-postais`,
-      payload,
-      { withCredentials: true }
     );
   }
 

@@ -31,6 +31,8 @@ export class NovaUnidade implements OnInit {
   etapa = 1;
   modo: 'novo' | 'editar' | 'excluir' = 'novo';
   unidadeId: string | null = null;
+  // Status real retornado pelo backend ao editar/excluir uma unidade.
+  statusAprovacao: string | null = null;
   carregandoUnidade = false;
 
   tipos: TipoUnidadeOpcao[] = [];
@@ -46,12 +48,14 @@ export class NovaUnidade implements OnInit {
   private todasUnidades: UnidadeResumoCadastro[] = [];
   private fusoPesquisaTimer: ReturnType<typeof setTimeout> | null = null;
   private fusoPesquisaSeq = 0;
+  private igrejasConsultaSeq = 0;
 
   solicitacao = this.novaSolicitacao();
   novaParoquia = this.novaParoquiaVazia();
 
   filtroMunicipio = '';
   filtroSubdivisao = '';
+  filtroIgreja = '';
   filtroDiaReuniao = '';
   filtroFusoHorario = '';
 
@@ -149,7 +153,7 @@ export class NovaUnidade implements OnInit {
       site: '',
       paisId: '',
       codigoPostal: '',
-      codigoPostalId: '',
+      codigoPostalSelecaoId: '',
       ufId: '',
       municipioId: '',
       subdivisaoLocalId: '',
@@ -287,6 +291,20 @@ export class NovaUnidade implements OnInit {
     );
   }
 
+  get igrejasFiltradas(): IgrejaOpcao[] {
+    const filtro = this.filtroIgreja.trim().toLocaleLowerCase('pt-BR');
+    if (!filtro) {
+      return this.igrejas;
+    }
+
+    return this.igrejas.filter((igreja) =>
+      igreja.nome.toLocaleLowerCase('pt-BR').includes(filtro) ||
+      igreja.id.includes(filtro) ||
+      // Não retirar do select a opção atualmente escolhida enquanto se pesquisa.
+      igreja.id === this.solicitacao.igrejaId
+    );
+  }
+
   get enderecoIgrejaSelecionada(): string {
     const igreja = this.igrejaSelecionada;
 
@@ -370,7 +388,7 @@ export class NovaUnidade implements OnInit {
       return true;
     }
 
-    return !!this.solicitacao.codigoPostalId;
+    return !!this.solicitacao.codigoPostalSelecaoId;
   }
 
   get novaParoquiaValida(): boolean {
@@ -419,7 +437,7 @@ export class NovaUnidade implements OnInit {
 
   aoTrocarPais(): void {
     this.solicitacao.codigoPostal = '';
-    this.solicitacao.codigoPostalId = '';
+    this.solicitacao.codigoPostalSelecaoId = '';
     this.solicitacao.ufId = '';
     this.solicitacao.municipioId = '';
     this.solicitacao.subdivisaoLocalId = '';
@@ -433,9 +451,11 @@ export class NovaUnidade implements OnInit {
     this.municipios = [];
     this.subdivisoesLocais = [];
     this.igrejas = [];
+    this.igrejasConsultaSeq++;
 
     this.filtroMunicipio = '';
     this.filtroSubdivisao = '';
+    this.filtroIgreja = '';
     this.filtroDiaReuniao = '';
 
     this.fecharCadastrosGeograficos();
@@ -455,9 +475,11 @@ export class NovaUnidade implements OnInit {
     this.municipios = [];
     this.subdivisoesLocais = [];
     this.igrejas = [];
+    this.igrejasConsultaSeq++;
 
     this.filtroMunicipio = '';
     this.filtroSubdivisao = '';
+    this.filtroIgreja = '';
     this.filtroDiaReuniao = '';
 
     this.invalidarCodigoPostalVinculado();
@@ -476,7 +498,9 @@ export class NovaUnidade implements OnInit {
 
     this.subdivisoesLocais = [];
     this.igrejas = [];
+    this.igrejasConsultaSeq++;
     this.filtroSubdivisao = '';
+    this.filtroIgreja = '';
 
     this.invalidarCodigoPostalVinculado();
     this.fecharCadastroParoquia();
@@ -489,8 +513,16 @@ export class NovaUnidade implements OnInit {
   }
 
   aoTrocarSubdivisao(): void {
-    this.solicitacao.igrejaId = '';
-    this.igrejas = [];
+    // A lista das Igrejas é municipal, não restrita à Região Administrativa.
+    // Uma Igreja antiga pode ter subdivisao_local_id NULL.
+    const igreja = this.igrejaSelecionada;
+    if (
+      igreja?.subdivisaoLocalId &&
+      this.solicitacao.subdivisaoLocalId &&
+      igreja.subdivisaoLocalId !== this.solicitacao.subdivisaoLocalId
+    ) {
+      this.solicitacao.igrejaId = '';
+    }
     this.fecharCadastroParoquia();
 
     if (this.solicitacao.municipioId) {
@@ -510,15 +542,13 @@ export class NovaUnidade implements OnInit {
         igreja.subdivisaoLocalId;
     }
 
-    if (igreja.codigoPostalId && igreja.codigoPostal) {
-      this.solicitacao.codigoPostalId =
-        igreja.codigoPostalId;
-      this.solicitacao.codigoPostal =
-        igreja.codigoPostal;
-      this.solicitacao.logradouro =
-        igreja.logradouro ?? '';
-      this.solicitacao.bairro =
-        igreja.bairro ?? '';
+    if (igreja.codigoPostal) {
+      // Chave apenas de estado do frontend. O CEP não possui mais ID em
+      // legio.codigo_postal, pois essa tabela deixou de ser utilizada.
+      this.solicitacao.codigoPostalSelecaoId = `IGREJA:${igreja.id}`;
+      this.solicitacao.codigoPostal = igreja.codigoPostal;
+      this.solicitacao.logradouro = igreja.logradouro ?? '';
+      this.solicitacao.bairro = igreja.bairro ?? '';
 
       this.codigoPostalNovo = false;
       this.codigoPostalResultados = [];
@@ -565,6 +595,15 @@ export class NovaUnidade implements OnInit {
         this.toastService.erro('Informe um CEP com 8 dígitos.');
         return;
       }
+    } else {
+      // Não mantemos catálogo de códigos postais estrangeiros. O valor é
+      // armazenado diretamente no endereço da Igreja/Paróquia/Sede.
+      this.codigoPostalEncontrado = null;
+      this.codigoPostalResultados = [];
+      this.codigoPostalNovo = true;
+      this.mensagemCodigoPostal =
+        'Para países estrangeiros, o Código Postal é informado manualmente e será armazenado diretamente na Igreja/Paróquia/Sede.';
+      return;
     }
 
     this.pesquisandoCodigoPostal = true;
@@ -592,18 +631,10 @@ export class NovaUnidade implements OnInit {
 
           if (!resultado.encontrado || encontrados.length === 0) {
             this.codigoPostalEncontrado = null;
-            this.solicitacao.codigoPostalId = '';
-
-            if (this.ehBrasil) {
-              this.codigoPostalNovo = false;
-              this.mensagemCodigoPostal =
-                'CEP não encontrado na base importada. No Brasil não é permitido cadastrar novo CEP neste fluxo.';
-            } else {
-              this.codigoPostalNovo = true;
-              this.mensagemCodigoPostal =
-                'Código Postal não encontrado. Como o país não é Brasil, ele poderá ser cadastrado ao salvar uma nova Igreja/Paróquia/Sede.';
-            }
-
+            this.solicitacao.codigoPostalSelecaoId = '';
+            this.codigoPostalNovo = false;
+            this.mensagemCodigoPostal =
+              'CEP não encontrado nos serviços públicos consultados. No Brasil não é permitido cadastrar CEP manualmente neste fluxo.';
             return;
           }
 
@@ -615,7 +646,7 @@ export class NovaUnidade implements OnInit {
           }
 
           this.codigoPostalEncontrado = null;
-          this.solicitacao.codigoPostalId = '';
+          this.solicitacao.codigoPostalSelecaoId = '';
           this.mensagemCodigoPostal =
             `${encontrados.length} ocorrências encontradas. Selecione abaixo o endereço correspondente.`;
         },
@@ -630,9 +661,9 @@ export class NovaUnidade implements OnInit {
       });
   }
 
-  selecionarCodigoPostalResultado(codigoPostalId: string): void {
+  selecionarCodigoPostalResultado(codigoPostalSelecaoId: string): void {
     const item = this.codigoPostalResultados.find(
-      (codigo) => codigo.id === codigoPostalId
+      (codigo) => codigo.id === codigoPostalSelecaoId
     );
 
     if (item) {
@@ -862,13 +893,20 @@ export class NovaUnidade implements OnInit {
     if (
       this.ehBrasil &&
       this.solicitacao.codigoPostal.trim() &&
-      !this.solicitacao.codigoPostalId
+      !this.solicitacao.codigoPostalSelecaoId
     ) {
       this.toastService.erro(
-        'Pesquise e selecione um CEP existente antes de cadastrar a Igreja/Paróquia/Sede, ou limpe o campo CEP.'
+        'Pesquise e valide o CEP pela API antes de cadastrar a Igreja/Paróquia/Sede, ou limpe o campo CEP.'
       );
       return;
     }
+
+    // O endereço pode vir da BrasilAPI/ViaCEP em caixa mista.
+    // Ao abrir o cadastro da Igreja, mostrar os campos em MAIÚSCULAS.
+    this.solicitacao.logradouro =
+      this.solicitacao.logradouro.toLocaleUpperCase('pt-BR');
+    this.solicitacao.bairro =
+      this.solicitacao.bairro.toLocaleUpperCase('pt-BR');
 
     this.novaParoquia = this.novaParoquiaVazia();
     this.exibirCadastroParoquia = true;
@@ -887,10 +925,10 @@ export class NovaUnidade implements OnInit {
     if (
       this.ehBrasil &&
       this.solicitacao.codigoPostal.trim() &&
-      !this.solicitacao.codigoPostalId
+      !this.solicitacao.codigoPostalSelecaoId
     ) {
       this.toastService.erro(
-        'No Brasil, o CEP deve existir na base e ser selecionado antes de salvar a Igreja/Paróquia/Sede.'
+        'No Brasil, o CEP deve ser localizado e validado pela API antes de salvar a Igreja/Paróquia/Sede.'
       );
       return;
     }
@@ -899,27 +937,25 @@ export class NovaUnidade implements OnInit {
 
     this.cadastroUnidadeService
       .criarIgreja({
-        nome: this.novaParoquia.nome.trim(),
-        padre: this.novaParoquia.padre.trim() || null,
+        nome: this.novaParoquia.nome.trim().toLocaleUpperCase('pt-BR'),
+        padre: this.novaParoquia.padre.trim().toLocaleUpperCase('pt-BR') || null,
         municipioId: this.solicitacao.municipioId,
         subdivisaoLocalId:
           this.solicitacao.subdivisaoLocalId || null,
-        codigoPostalId:
-          this.solicitacao.codigoPostalId || null,
         codigoPostal:
           this.solicitacao.codigoPostal.trim() || null,
         tipoLogradouro:
           this.solicitacao.tipoLogradouro.trim() || null,
         logradouro:
-          this.solicitacao.logradouro.trim() || null,
+          this.solicitacao.logradouro.trim().toLocaleUpperCase('pt-BR') || null,
         bairro:
-          this.solicitacao.bairro.trim() || null,
+          this.solicitacao.bairro.trim().toLocaleUpperCase('pt-BR') || null,
         localidade:
           this.solicitacao.localidade.trim() || null,
         numeroLogradouro:
-          this.novaParoquia.numeroLogradouro.trim() || null,
+          this.novaParoquia.numeroLogradouro.trim().toLocaleUpperCase('pt-BR') || null,
         complemento:
-          this.novaParoquia.complemento.trim() || null,
+          this.novaParoquia.complemento.trim().toLocaleUpperCase('pt-BR') || null,
         celular:
           this.novaParoquia.celular.trim() || null,
         telefone:
@@ -945,9 +981,13 @@ export class NovaUnidade implements OnInit {
           ].sort((a, b) => a.nome.localeCompare(b.nome));
 
           this.solicitacao.igrejaId = igreja.id;
+          this.filtroIgreja = '';
 
-          if (igreja.codigoPostalId) {
-            this.solicitacao.codigoPostalId = igreja.codigoPostalId;
+          if (igreja.codigoPostal) {
+            this.solicitacao.codigoPostalSelecaoId = `IGREJA:${igreja.id}`;
+            this.solicitacao.codigoPostal = igreja.codigoPostal;
+            this.solicitacao.logradouro = igreja.logradouro ?? '';
+            this.solicitacao.bairro = igreja.bairro ?? '';
           }
 
           if (igreja.subdivisaoLocalId) {
@@ -1172,7 +1212,8 @@ export class NovaUnidade implements OnInit {
             if (existe) {
               this.solicitacao.subdivisaoLocalId =
                 subdivisaoSelecionar;
-              this.carregarIgrejas();
+              // A lista de Igrejas já é carregada pelo município.
+              // Não repetir uma requisição filtrada pela subdivisão.
             }
           }
         },
@@ -1189,28 +1230,55 @@ export class NovaUnidade implements OnInit {
   }
 
   carregarIgrejas(): void {
-    if (!this.solicitacao.municipioId) {
+    const municipioId = this.solicitacao.municipioId;
+    const sequencia = ++this.igrejasConsultaSeq;
+
+    if (!municipioId) {
+      this.igrejas = [];
+      this.carregandoIgrejas = false;
       return;
     }
 
     this.carregandoIgrejas = true;
 
+    // Buscar TODAS as Igrejas ativas do município, inclusive as que
+    // ainda não têm subdivisão local (RA) informada. O filtro por RA
+    // poderia ocultar uma Igreja já cadastrada ao pesquisar o CEP.
     this.cadastroUnidadeService
-      .listarIgrejas(
-        this.solicitacao.municipioId,
-        this.solicitacao.subdivisaoLocalId || undefined
-      )
+      .listarIgrejas(municipioId)
       .pipe(
         finalize(() => {
-          this.carregandoIgrejas = false;
-          this.cdr.detectChanges();
+          if (sequencia === this.igrejasConsultaSeq) {
+            this.carregandoIgrejas = false;
+            this.cdr.detectChanges();
+          }
         })
       )
       .subscribe({
         next: (igrejas) => {
-          this.igrejas = igrejas;
+          if (
+            sequencia !== this.igrejasConsultaSeq ||
+            municipioId !== this.solicitacao.municipioId
+          ) {
+            return;
+          }
+
+          this.igrejas = igrejas ?? [];
+
+          // Na edição, preservar a Igreja já vinculada à unidade.
+          // Se o vínculo não existir mais na lista ativa, não mantê-lo
+          // silenciosamente como opção inválida.
+          if (
+            this.solicitacao.igrejaId &&
+            !this.igrejas.some((item) => item.id === this.solicitacao.igrejaId)
+          ) {
+            this.solicitacao.igrejaId = '';
+          }
         },
         error: (error: HttpErrorResponse) => {
+          if (sequencia !== this.igrejasConsultaSeq) {
+            return;
+          }
           this.igrejas = [];
           this.toastService.erro(
             mensagemDeErro(
@@ -1476,6 +1544,7 @@ export class NovaUnidade implements OnInit {
       )
       .subscribe({
         next: (unidade: UnidadeDetalhe) => {
+          this.statusAprovacao = unidade.statusAprovacao;
           this.solicitacao.tipo = unidade.tipoCodigo;
           this.solicitacao.nome = unidade.nome;
           this.solicitacao.nomeReduzido = unidade.nomeReduzido ?? '';
@@ -1488,8 +1557,10 @@ export class NovaUnidade implements OnInit {
           this.solicitacao.municipioId = unidade.municipioId;
           this.solicitacao.subdivisaoLocalId = unidade.subdivisaoLocalId ?? '';
           this.solicitacao.igrejaId = unidade.igrejaId;
-          this.solicitacao.codigoPostalId = unidade.codigoPostalId ?? '';
           this.solicitacao.codigoPostal = unidade.codigoPostal ?? '';
+          this.solicitacao.codigoPostalSelecaoId = unidade.codigoPostal
+            ? `UNIDADE:${unidade.id}`
+            : '';
           this.solicitacao.dataFundacao = unidade.dataConstituicao ?? '';
           this.solicitacao.diaReuniaoId = unidade.diaReuniaoId ?? '';
           this.solicitacao.horarioInicioReuniao = unidade.horarioInicioReuniao ?? '';
@@ -1578,7 +1649,7 @@ export class NovaUnidade implements OnInit {
     this.mensagemCodigoPostal = '';
     this.codigoPostalResultados = [];
 
-    this.solicitacao.codigoPostalId = codigoPostal.id;
+    this.solicitacao.codigoPostalSelecaoId = codigoPostal.id;
     this.solicitacao.codigoPostal =
       codigoPostal.codigoPostal;
     this.solicitacao.tipoLogradouro =
@@ -1591,15 +1662,27 @@ export class NovaUnidade implements OnInit {
       codigoPostal.localidade ?? '';
 
     if (codigoPostal.ufId) {
+      const mesmoMunicipio =
+        codigoPostal.ufId === this.solicitacao.ufId &&
+        !!codigoPostal.municipioId &&
+        codigoPostal.municipioId === this.solicitacao.municipioId;
+      const igrejaAnterior = mesmoMunicipio
+        ? this.solicitacao.igrejaId
+        : '';
+
       this.solicitacao.ufId = codigoPostal.ufId;
       this.solicitacao.municipioId = '';
       this.solicitacao.subdivisaoLocalId = '';
-      this.solicitacao.igrejaId = '';
+      this.solicitacao.igrejaId = igrejaAnterior;
+      this.filtroIgreja = '';
 
       this.municipios = [];
       this.subdivisoesLocais = [];
       this.igrejas = [];
+      this.igrejasConsultaSeq++;
 
+      // Após identificar o município, carregar as Igrejas já existentes
+      // independentemente da RA sugerida pelo CEP.
       this.carregarMunicipios(
         codigoPostal.municipioId ?? undefined,
         codigoPostal.subdivisaoLocalId ?? undefined
@@ -1607,7 +1690,7 @@ export class NovaUnidade implements OnInit {
     }
 
     this.toastService.sucesso(
-      `${this.rotuloCodigoPostal} localizado na base de dados.`
+      `${this.rotuloCodigoPostal} localizado com sucesso.`
     );
   }
 
@@ -1616,23 +1699,23 @@ export class NovaUnidade implements OnInit {
       return;
     }
 
-    this.solicitacao.codigoPostalId = '';
+    this.solicitacao.codigoPostalSelecaoId = '';
     this.codigoPostalEncontrado = null;
     this.codigoPostalResultados = [];
 
     if (this.ehBrasil) {
       this.codigoPostalNovo = false;
       this.mensagemCodigoPostal =
-        'A localização foi alterada. No Brasil, pesquise novamente e selecione um CEP existente.';
+        'A localização foi alterada. No Brasil, pesquise novamente o CEP na API.';
     } else {
       this.codigoPostalNovo = true;
       this.mensagemCodigoPostal =
-        'A localização foi alterada. Pesquise novamente o Código Postal; se não existir, poderá ser incluído para o país estrangeiro.';
+        'A localização foi alterada. Para país estrangeiro, informe novamente o Código Postal manualmente.';
     }
   }
 
   private limparEstadoCodigoPostal(): void {
-    this.solicitacao.codigoPostalId = '';
+    this.solicitacao.codigoPostalSelecaoId = '';
     this.codigoPostalEncontrado = null;
     this.codigoPostalResultados = [];
     this.codigoPostalNovo = false;
@@ -1669,6 +1752,7 @@ export class NovaUnidade implements OnInit {
 
     this.filtroMunicipio = '';
     this.filtroSubdivisao = '';
+    this.filtroIgreja = '';
     this.filtroDiaReuniao = '';
     this.filtroFusoHorario = '';
 
