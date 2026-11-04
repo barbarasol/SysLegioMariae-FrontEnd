@@ -64,6 +64,7 @@ export interface UnidadeDetalhe {
   subdivisaoLocalId: string | null;
   codigoPostal: string | null;
   dataConstituicao: string | null;
+  dataElevacao: string | null;
   diaReuniaoId: string | null;
   horarioInicioReuniao: string | null;
   horarioFimReuniao: string | null;
@@ -192,6 +193,7 @@ export interface CriarUnidadeRequest {
   municipioId: string;
   igrejaId: string;
   dataConstituicao: string;
+  dataElevacao?: string | null;
   diaReuniaoId?: string | null;
   horarioInicioReuniao?: string | null;
   horarioFimReuniao?: string | null;

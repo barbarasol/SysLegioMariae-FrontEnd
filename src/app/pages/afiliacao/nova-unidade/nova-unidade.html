@@ -983,6 +983,16 @@
             >
           </div>
 
+          @if (exigeDataElevacao) {
+            <div>
+              <label>Data de Elevação <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" name="dataElevacao"
+                     lang="pt-BR" [(ngModel)]="solicitacao.dataElevacao"
+                     [disabled]="carregando" required>
+              <small class="campo-ajuda">Obrigatória para Comitium, Regia e Senatus.</small>
+            </div>
+          }
+
           <div class="status-cadastro-box">
             <label>
               {{ modo === 'novo' ? 'Status inicial da Unidade' : 'Status atual da Unidade' }}
@@ -1435,8 +1445,14 @@
 
           <p>
             <strong>Data de fundação / constituição:</strong>
-            {{ solicitacao.dataFundacao || '-' }}
+            {{ formatarDataBR(solicitacao.dataFundacao) }}
           </p>
+
+          @if (exigeDataElevacao) {
+            <p><strong>Data de Elevação:</strong>
+              {{ formatarDataBR(solicitacao.dataElevacao) }}
+            </p>
+          }
 
           <p>
             <strong>Dia de reunião:</strong>

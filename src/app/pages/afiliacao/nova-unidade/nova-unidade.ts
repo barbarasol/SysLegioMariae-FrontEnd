@@ -163,6 +163,7 @@ export class NovaUnidade implements OnInit {
       bairro: '',
       localidade: '',
       dataFundacao: '',
+      dataElevacao: '',
       diaReuniaoId: '',
       horarioInicioReuniao: '',
       horarioFimReuniao: '',
@@ -399,6 +400,20 @@ export class NovaUnidade implements OnInit {
     );
   }
 
+  /** A elevação se aplica a Comitium (Comitia), Regia e Senatus. */
+  get exigeDataElevacao(): boolean {
+    return ['COMITIUM', 'COMITIA', 'REGIA', 'SENATUS'].includes(
+      String(this.solicitacao.tipo ?? '').trim().toUpperCase()
+    );
+  }
+
+  /** Datas são salvas em ISO (AAAA-MM-DD); só a apresentação é brasileira. */
+  formatarDataBR(valor: string | null | undefined): string {
+    if (!valor) return '-';
+    const r = /^(\d{4})-(\d{2})-(\d{2})/.exec(valor);
+    return r ? `${r[3]}/${r[2]}/${r[1]}` : '-';
+  }
+
   get etapaValida(): boolean {
     if (this.etapa === 1) {
       return (
@@ -409,6 +424,7 @@ export class NovaUnidade implements OnInit {
         !!this.solicitacao.municipioId &&
         !!this.solicitacao.igrejaId &&
         !!this.solicitacao.dataFundacao &&
+        (!this.exigeDataElevacao || !!this.solicitacao.dataElevacao) &&
         this.codigoPostalBrasilValido
       );
     }
@@ -427,6 +443,7 @@ export class NovaUnidade implements OnInit {
   }
 
   aoTrocarTipo(): void {
+    if (!this.exigeDataElevacao) this.solicitacao.dataElevacao = '';
     this.solicitacao.tipoSuperior = '';
     this.solicitacao.unidadeSuperiorId = '';
   }
@@ -1443,6 +1460,7 @@ export class NovaUnidade implements OnInit {
         municipioId: this.solicitacao.municipioId,
         igrejaId: this.solicitacao.igrejaId,
         dataConstituicao: this.solicitacao.dataFundacao,
+        dataElevacao: this.exigeDataElevacao ? this.solicitacao.dataElevacao : null,
         diaReuniaoId:
           this.solicitacao.diaReuniaoId || null,
         horarioInicioReuniao:
@@ -1562,6 +1580,7 @@ export class NovaUnidade implements OnInit {
             ? `UNIDADE:${unidade.id}`
             : '';
           this.solicitacao.dataFundacao = unidade.dataConstituicao ?? '';
+          this.solicitacao.dataElevacao = unidade.dataElevacao?.slice(0, 10) ?? '';
           this.solicitacao.diaReuniaoId = unidade.diaReuniaoId ?? '';
           this.solicitacao.horarioInicioReuniao = unidade.horarioInicioReuniao ?? '';
           this.solicitacao.horarioFimReuniao = unidade.horarioFimReuniao ?? '';

@@ -702,3 +702,141 @@
   }
 }
 
+/* ============================================================
+   SYSLEGIOMARIAE — ÁRVORE HIERÁRQUICA COMPACTA (CORRIGIDA)
+   Compatível com afiliacao.html: .tree.tree-flat > .tree-node.generic-node
+   Recuo preservado por --nivel e pelo margin-left de .generic-node.
+   ============================================================ */
+
+/* Sem intervalos entre cartões: cada unidade vira uma linha da árvore. */
+.structure-card .tree.tree-flat {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 12px 16px;
+}
+
+.structure-card .tree.tree-flat > .tree-node.generic-node {
+  min-height: 44px;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: 6px 8px;
+  border: 0;
+  border-bottom: 1px solid #eadada;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+  gap: 8px;
+  /* Não alterar margin-left: ele expressa o nível hierárquico. */
+}
+
+.structure-card .tree.tree-flat > .tree-node.generic-node:hover {
+  background: #fff8f8;
+  border-color: #eadada;
+  transform: none;
+}
+
+.structure-card .tree.tree-flat > .tree-node.generic-node.selected {
+  background: #fff1f1;
+  border-bottom-color: #d7a7a9;
+  box-shadow: inset 3px 0 0 #a13b40;
+}
+
+/* Ícone menor, compatível com linhas mais baixas. */
+.structure-card .tree.tree-flat .generic-node .node-icon {
+  width: 24px;
+  height: 24px;
+  font-size: 14px;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* Tipo na primeira coluna; nome e município/UF empilhados na segunda. */
+.structure-card .tree.tree-flat .generic-node .node-content {
+  display: grid;
+  grid-template-columns: minmax(67px, 90px) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 1px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.structure-card .tree.tree-flat .generic-node .node-content .node-type {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  align-self: center;
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.15;
+}
+
+.structure-card .tree.tree-flat .generic-node .node-content strong {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  line-height: 1.25;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.structure-card .tree.tree-flat .generic-node .node-content > span:not(.node-type) {
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.structure-card .tree.tree-flat .generic-node .status-badge {
+  flex-shrink: 0;
+  font-size: 9px;
+  padding: 3px 6px;
+}
+
+.structure-card .tree.tree-flat .generic-node .node-actions {
+  width: auto;
+  flex-shrink: 0;
+  margin-left: 4px;
+  gap: 4px;
+}
+
+.structure-card .tree.tree-flat .generic-node .node-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 29px;
+  height: 29px;
+  min-height: 29px;
+  padding: 0;
+  border-radius: 5px;
+}
+
+@media (max-width: 760px) {
+  .structure-card .tree.tree-flat > .tree-node.generic-node {
+    margin-left: calc(var(--nivel, 0) * 12px);
+    flex-wrap: wrap;
+  }
+
+  .structure-card .tree.tree-flat .generic-node .node-content {
+    grid-template-columns: minmax(58px, 73px) minmax(0, 1fr);
+    flex: 1 1 140px;
+  }
+
+  .structure-card .tree.tree-flat .generic-node .node-actions {
+    width: auto;
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .structure-card .tree.tree-flat {
+    padding: 8px;
+  }
+
+  .structure-card .tree.tree-flat > .tree-node.generic-node {
+    margin-left: calc(var(--nivel, 0) * 8px);
+    gap: 5px;
+  }
+}

@@ -1,0 +1,62 @@
+/* SYSLEGIOMARIAE_V314: nós compactos sem cartões; recuo original da árvore preservado. */
+.structure-card .tree .tree-item,
+.structure-card .tree .unit-item,
+.structure-card .tree .unidade-item {
+  margin-block: 0 !important;
+  box-shadow: none !important;
+}
+.structure-card .tree .tree-children {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  /* Não modificar padding-left ou margin-left: representam a hierarquia. */
+}
+.structure-card .tree .tree-node,
+.structure-card .tree .unit-node,
+.structure-card .tree .unidade-node,
+.structure-card .tree .node-card,
+.structure-card .tree .unit-card,
+.structure-card .tree .unidade-card {
+  min-height: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding: 7px 10px !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(128, 70, 67, .24) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.structure-card .tree .tree-node:hover,
+.structure-card .tree .unit-node:hover,
+.structure-card .tree .unidade-node:hover,
+.structure-card .tree .node-card:hover,
+.structure-card .tree .unit-card:hover,
+.structure-card .tree .unidade-card:hover {
+  background: rgba(139, 47, 47, .04) !important;
+}
+.structure-card .tree .node-content { gap: 1px !important; }
+.structure-card .tree .node-content strong { line-height: 1.25; }
+.structure-card .tree .node-content span { line-height: 1.2; }
+@media (max-width: 575px) {
+  .structure-card .tree .tree-node,
+  .structure-card .tree .unit-node,
+  .structure-card .tree .unidade-node,
+  .structure-card .tree .node-card,
+  .structure-card .tree .unit-card,
+  .structure-card .tree .unidade-card { padding: 7px 5px !important; }
+}
+
+/* Compatibilidade com versões que nomeiam a árvore como estrutura ou hierarquia. */
+.structure-card :is(.hierarchy-tree, .structure-tree, .estrutura-tree, .structure-list, .hierarchy-list)
+  :is(.hierarchy-node, .hierarchy-item, .structure-node, .structure-item, .estrutura-node,
+      .estrutura-item, .unidade-card, .unit-card) {
+  min-height: 0 !important;
+  padding-block: 8px !important;
+  margin-block: 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(128, 70, 67, .24) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+/* Recuos horizontais e níveis NÃO são alterados. */
