@@ -49,8 +49,9 @@
             <div>
               <strong>Brasil</strong>
               <span>
-                UF, Município, Subdivisão Local e CEP são somente para consulta e seleção.
-                Não é permitido criar novos registros brasileiros neste fluxo.
+                UF e Município são selecionados da base local. O CEP é consultado diretamente
+                em BrasilAPI/ViaCEP; para Brasília, a Região Administrativa é obtida em
+                codigo_postal_subdivisao quando houver mapeamento.
               </span>
             </div>
           } @else if (solicitacao.paisId) {
@@ -58,8 +59,9 @@
             <div>
               <strong>Exterior</strong>
               <span>
-                É permitido incluir Divisão Administrativa, Município/Localidade,
-                Subdivisão Local e Código Postal quando não existirem na base.
+                É permitido incluir Divisão Administrativa, Município/Localidade e
+                Subdivisão Local. O Código Postal é armazenado diretamente no endereço
+                da Igreja/Paróquia/Sede, sem catálogo local de códigos postais.
               </span>
             </div>
           }
@@ -191,11 +193,12 @@
 
             <small class="campo-ajuda">
               @if (ehBrasil) {
-                O CEP é pesquisado somente em legio.codigo_postal.
-                Se não existir, não será permitido incluí-lo.
+                O backend consulta o CEP diretamente na BrasilAPI e usa ViaCEP como fallback.
+                Nenhum CEP é salvo em tabela catálogo. Em Brasília/DF, consultamos apenas
+                codigo_postal_subdivisao para identificar a Região Administrativa.
               } @else {
-                A pesquisa usa a base local. Se não existir, o Código Postal
-                poderá ser incluído ao salvar uma nova Igreja/Paróquia/Sede.
+                Para o exterior não há catálogo local de códigos postais. Informe o Código Postal
+                e ele será armazenado diretamente na Igreja/Paróquia/Sede.
               }
             </small>
           </div>
@@ -208,7 +211,7 @@
               <select
                 class="form-select"
                 name="codigoPostalResultado"
-                [ngModel]="solicitacao.codigoPostalId"
+                [ngModel]="solicitacao.codigoPostalSelecaoId"
                 (ngModelChange)="selecionarCodigoPostalResultado($event)"
               >
                 <option value="">
@@ -231,8 +234,8 @@
               </select>
 
               <small class="campo-ajuda">
-                Um mesmo CEP pode possuir várias ocorrências. Escolha a que corresponde
-                ao endereço da Igreja/Paróquia/Sede.
+                No Distrito Federal, um CEP pode estar associado a mais de uma Região Administrativa.
+                Escolha a subdivisão que corresponde ao endereço da Igreja/Paróquia/Sede.
               </small>
             </div>
           }
@@ -651,6 +654,27 @@
           <div class="full-width">
             <label>Igreja / Paróquia / Sede</label>
 
+            <div class="paroquia-select-row mb-2">
+              <input
+                type="text"
+                class="form-control"
+                name="filtroIgreja"
+                [(ngModel)]="filtroIgreja"
+                placeholder="Pesquisar Igreja/Paróquia/Sede por nome ou ID..."
+                [disabled]="carregando || !solicitacao.municipioId"
+              />
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                (click)="carregarIgrejas()"
+                [disabled]="carregando || !solicitacao.municipioId || carregandoIgrejas"
+                title="Atualizar a lista de Igrejas/Paróquias/Sedes cadastradas"
+              >
+                <i class="bi bi-arrow-clockwise"></i>
+                Atualizar
+              </button>
+            </div>
+
             <div class="paroquia-select-row">
               <select
                 class="form-select"
@@ -669,7 +693,7 @@
                   }
                 </option>
 
-                @for (igreja of igrejas; track igreja.id) {
+                @for (igreja of igrejasFiltradas; track igreja.id) {
                   <option [value]="igreja.id">
                     {{ igreja.nome }}
                   </option>
@@ -686,6 +710,19 @@
                 Incluir Igreja/Paróquia/Sede
               </button>
             </div>
+
+            @if (!carregandoIgrejas && solicitacao.municipioId && igrejas.length === 0) {
+              <small class="campo-ajuda">
+                Nenhuma Igreja/Paróquia/Sede ativa encontrada neste município.
+                Confira o vínculo do município no cadastro existente ou utilize
+                “Incluir Igreja/Paróquia/Sede” para cadastrar uma nova.
+              </small>
+            } @else if (!carregandoIgrejas && filtroIgreja && igrejasFiltradas.length === 0) {
+              <small class="campo-ajuda">
+                Nenhuma Igreja/Paróquia/Sede corresponde à pesquisa. Limpe o filtro
+                ou clique em Atualizar para consultar novamente.
+              </small>
+            }
           </div>
 
           @if (igrejaSelecionada) {
@@ -745,7 +782,7 @@
                   <small>
                     A Igreja/Paróquia/Sede será cadastrada como ATIVA e ficará disponível imediatamente.
                     @if (codigoPostalNovo && solicitacao.codigoPostal && !ehBrasil) {
-                      O Código Postal informado também será incluído, pois o país selecionado não é Brasil.
+                      O Código Postal informado será armazenado diretamente no endereço da Igreja/Paróquia/Sede.
                     }
                   </small>
                 </div>
@@ -758,7 +795,9 @@
                     type="text"
                     class="form-control"
                     name="novaParoquiaNome"
-                    [(ngModel)]="novaParoquia.nome"
+                    [ngModel]="novaParoquia.nome"
+                    (ngModelChange)="novaParoquia.nome = ($event || '').toLocaleUpperCase('pt-BR')"
+                    style="text-transform: uppercase"
                     [disabled]="salvandoParoquia"
                     placeholder="Nome da Igreja/Paróquia/Sede"
                   >
@@ -770,7 +809,9 @@
                     type="text"
                     class="form-control"
                     name="novaParoquiaPadre"
-                    [(ngModel)]="novaParoquia.padre"
+                    [ngModel]="novaParoquia.padre"
+                    (ngModelChange)="novaParoquia.padre = ($event || '').toLocaleUpperCase('pt-BR')"
+                    style="text-transform: uppercase"
                     [disabled]="salvandoParoquia"
                     placeholder="Opcional"
                   >
@@ -792,7 +833,9 @@
                     type="text"
                     class="form-control"
                     name="novaParoquiaLogradouro"
-                    [(ngModel)]="solicitacao.logradouro"
+                    [ngModel]="solicitacao.logradouro"
+                    (ngModelChange)="solicitacao.logradouro = ($event || '').toLocaleUpperCase('pt-BR')"
+                    style="text-transform: uppercase"
                     [disabled]="salvandoParoquia"
                     placeholder="Rua, avenida, praça..."
                   >
@@ -804,7 +847,9 @@
                     type="text"
                     class="form-control"
                     name="novaParoquiaBairro"
-                    [(ngModel)]="solicitacao.bairro"
+                    [ngModel]="solicitacao.bairro"
+                    (ngModelChange)="solicitacao.bairro = ($event || '').toLocaleUpperCase('pt-BR')"
+                    style="text-transform: uppercase"
                     [disabled]="salvandoParoquia"
                   >
                 </div>
@@ -815,7 +860,9 @@
                     type="text"
                     class="form-control"
                     name="novaParoquiaNumero"
-                    [(ngModel)]="novaParoquia.numeroLogradouro"
+                    [ngModel]="novaParoquia.numeroLogradouro"
+                    (ngModelChange)="novaParoquia.numeroLogradouro = ($event || '').toLocaleUpperCase('pt-BR')"
+                    style="text-transform: uppercase"
                     [disabled]="salvandoParoquia"
                   >
                 </div>
@@ -826,7 +873,9 @@
                     type="text"
                     class="form-control"
                     name="novaParoquiaComplemento"
-                    [(ngModel)]="novaParoquia.complemento"
+                    [ngModel]="novaParoquia.complemento"
+                    (ngModelChange)="novaParoquia.complemento = ($event || '').toLocaleUpperCase('pt-BR')"
+                    style="text-transform: uppercase"
                     [disabled]="salvandoParoquia"
                     placeholder="Bloco, sala, lote, referência..."
                   >
@@ -884,12 +933,12 @@
               @if (
                 ehBrasil &&
                 solicitacao.codigoPostal.trim() &&
-                !solicitacao.codigoPostalId
+                !solicitacao.codigoPostalSelecaoId
               ) {
                 <div class="codigo-postal-aviso">
                   <i class="bi bi-exclamation-triangle"></i>
-                  O CEP informado não foi selecionado da base. No Brasil não é
-                  permitido criar CEP novo. Pesquise e selecione um CEP válido
+                  O CEP informado ainda não foi validado pela API. Pesquise o CEP
+                  e selecione o resultado válido antes de salvar a Igreja/Paróquia/Sede,
                   ou limpe o campo CEP.
                 </div>
               }
@@ -934,12 +983,45 @@
             >
           </div>
 
-          <div class="status-cadastro-box">
-            <label>Status inicial da Unidade</label>
-            <div class="status-pendente">
-              <i class="bi bi-clock-history"></i>
-              PENDENTE — aguardando liberação do administrador
+          @if (exigeDataElevacao) {
+            <div>
+              <label>Data de Elevação <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" name="dataElevacao"
+                     lang="pt-BR" [(ngModel)]="solicitacao.dataElevacao"
+                     [disabled]="carregando" required>
+              <small class="campo-ajuda">Obrigatória para Comitium, Regia e Senatus.</small>
             </div>
+          }
+
+          <div class="status-cadastro-box">
+            <label>
+              {{ modo === 'novo' ? 'Status inicial da Unidade' : 'Status atual da Unidade' }}
+            </label>
+
+            @if (modo === 'novo') {
+              <div class="status-pendente">
+                <i class="bi bi-clock-history"></i>
+                PENDENTE — aguardando liberação do administrador
+              </div>
+            } @else if (carregandoUnidade || !statusAprovacao) {
+              <div class="alert alert-secondary mb-0 py-2" aria-live="polite">
+                Carregando status da unidade...
+              </div>
+            } @else if (statusAprovacao === 'APROVADA') {
+              <div class="alert alert-success mb-0 py-2" aria-live="polite">
+                <i class="bi bi-check-circle"></i>
+                APROVADA
+              </div>
+            } @else if (statusAprovacao === 'PENDENTE') {
+              <div class="status-pendente" aria-live="polite">
+                <i class="bi bi-clock-history"></i>
+                PENDENTE — aguardando liberação do administrador
+              </div>
+            } @else {
+              <div class="alert alert-secondary mb-0 py-2" aria-live="polite">
+                {{ statusAprovacao }}
+              </div>
+            }
           </div>
 
         </div>
@@ -1363,8 +1445,14 @@
 
           <p>
             <strong>Data de fundação / constituição:</strong>
-            {{ solicitacao.dataFundacao || '-' }}
+            {{ formatarDataBR(solicitacao.dataFundacao) }}
           </p>
+
+          @if (exigeDataElevacao) {
+            <p><strong>Data de Elevação:</strong>
+              {{ formatarDataBR(solicitacao.dataElevacao) }}
+            </p>
+          }
 
           <p>
             <strong>Dia de reunião:</strong>
@@ -1402,8 +1490,16 @@
           </p>
 
           <p>
-            <strong>Status da solicitação:</strong>
-            <span class="badge-pendente">PENDENTE</span>
+            <strong>{{ modo === 'novo' ? 'Status da solicitação:' : 'Status atual da unidade:' }}</strong>
+            @if (modo === 'novo' || statusAprovacao === 'PENDENTE') {
+              <span class="badge-pendente">PENDENTE</span>
+            } @else if (carregandoUnidade || !statusAprovacao) {
+              <span class="badge bg-secondary">Carregando...</span>
+            } @else if (statusAprovacao === 'APROVADA') {
+              <span class="badge bg-success">APROVADA</span>
+            } @else {
+              <span class="badge bg-secondary">{{ statusAprovacao }}</span>
+            }
           </p>
         </div>
       </div>

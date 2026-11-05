@@ -1,178 +1,107 @@
 <div class="detalhe-container">
-
   <div class="page-header">
-
     <div>
-      <h2>Solicitação de Nova Unidade</h2>
-
-      <p>
-        Analise as informações enviadas antes de aprovar ou rejeitar a solicitação.
-      </p>
+      <h2>{{ solicitacao?.cadastroAnterior ? 'Dados da Unidade Legionária' : 'Dados da Solicitação de Unidade' }}</h2>
+      <p>{{ solicitacao?.cadastroAnterior ? 'Cadastro anterior sem solicitação formal vinculada.' : 'Informações registradas para aprovação da Unidade Legionária.' }}</p>
     </div>
-
-    <span class="status-badge pendente">
-      Pendente
-    </span>
-
+    @if (solicitacao) {
+      <span class="badge rounded-pill" [class.bg-success]="solicitacao.status === 'APROVADA'"
+        [class.bg-warning]="solicitacao.status === 'PENDENTE'"
+        [class.bg-danger]="solicitacao.status === 'REJEITADA'"
+        [class.bg-secondary]="solicitacao.status === 'CANCELADA'">
+        {{ solicitacao.status }}
+      </span>
+    }
   </div>
 
-  <!-- Dados da Unidade -->
-  <div class="section-card">
-
-    <h4>Dados da Unidade</h4>
-
-    <div class="info-grid">
-
-      <div>
-        <label>Tipo</label>
-        <span>Praesidium</span>
+  @if (carregando) {
+    <div class="alert alert-info">Carregando solicitação...</div>
+  } @else if (erro) {
+    <div class="alert alert-danger">{{ erro }}</div>
+  } @else if (solicitacao; as s) {
+    <div class="section-card">
+      <h4>Dados da Unidade Legionária</h4>
+      <div class="info-grid">
+        <div><label>Unidade</label><span>{{ s.unidadeNome }}</span></div>
+        @if (s.nomeReduzido) { <div><label>Nome reduzido</label><span>{{ s.nomeReduzido }}</span></div> }
+        <div><label>Tipo</label><span>{{ s.unidadeTipo }}</span></div>
+        <div><label>Status da Unidade</label><span>{{ s.statusUnidade }}</span></div>
+        <div><label>Data de Fundação / Constituição</label><span>{{ dataBR(s.dataFundacao) }}</span></div>
+        @if (mostrarDataElevacao) {
+          <div><label>Data de Elevação</label><span>{{ dataBR(s.dataElevacao) }}</span></div>
+        }
+        @if (s.unidadeSuperior) {
+          <div><label>Unidade superior</label><span>{{ s.unidadeSuperior }}</span></div>
+        }
       </div>
-
-      <div>
-        <label>Nome</label>
-        <span>Praesidium Rainha da Paz</span>
-      </div>
-
-      <div>
-        <label>Responsável</label>
-        <span>Maria Oliveira</span>
-      </div>
-
-      <div>
-        <label>Data da Solicitação</label>
-        <span>20/09/2026</span>
-      </div>
-
     </div>
 
-  </div>
+    <div class="section-card">
+      <h4>Localização e Igreja / Paróquia / Sede</h4>
+      <div class="info-grid">
+        @if (s.paisNome) { <div><label>País</label><span>{{ s.paisNome }}</span></div> }
+        @if (s.ufNome) { <div><label>UF / Divisão Administrativa</label><span>{{ s.ufNome }}</span></div> }
+        @if (s.municipioNome) { <div><label>Município / Localidade</label><span>{{ s.municipioNome }}</span></div> }
+        @if (s.subdivisaoNome) { <div><label>Subdivisão local</label><span>{{ s.subdivisaoNome }}</span></div> }
+        @if (s.igrejaNome) { <div><label>Igreja / Paróquia / Sede</label><span>{{ s.igrejaNome }}</span></div> }
+        @if (s.codigoPostal) { <div><label>Código postal</label><span>{{ s.codigoPostal }}</span></div> }
+        @if (s.logradouro) { <div><label>Logradouro</label><span>{{ s.logradouro }}</span></div> }
+        @if (s.numeroLogradouro) { <div><label>Número</label><span>{{ s.numeroLogradouro }}</span></div> }
+        @if (s.complemento) { <div><label>Complemento</label><span>{{ s.complemento }}</span></div> }
+        @if (s.bairro) { <div><label>Bairro</label><span>{{ s.bairro }}</span></div> }
+      </div>
+    </div>
 
-  <!-- Estrutura -->
-  <div class="section-card">
-
-    <h4>Estrutura Hierárquica</h4>
-
-    <div class="hierarchy">
-
-      <div class="hierarchy-item">
-        <i class="bi bi-building"></i>
-
-        <div>
-          <strong>Comitium</strong>
-          <span>Comitium de Brasília</span>
+    @if (s.email || s.celular || s.telefone || s.site || s.diaReuniaoNome || s.horarioInicio || s.fusoHorario) {
+      <div class="section-card">
+        <h4>Contatos e Reuniões</h4>
+        <div class="info-grid">
+          @if (s.email) { <div><label>E-mail</label><span>{{ s.email }}</span></div> }
+          @if (s.celular) { <div><label>Celular</label><span>{{ s.celular }}</span></div> }
+          @if (s.telefone) { <div><label>Telefone</label><span>{{ s.telefone }}</span></div> }
+          @if (s.site) { <div><label>Site</label><span>{{ s.site }}</span></div> }
+          @if (s.diaReuniaoNome) { <div><label>Dia da reunião</label><span>{{ s.diaReuniaoNome }}</span></div> }
+          @if (s.horarioInicio || s.horarioFim) {
+            <div><label>Horário da reunião</label><span>{{ s.horarioInicio?.slice(0,5) || '-' }} às {{ s.horarioFim?.slice(0,5) || '-' }}</span></div>
+          }
+          @if (s.fusoHorario) { <div><label>Fuso horário</label><span>{{ s.fusoHorario }}</span></div> }
         </div>
       </div>
+    }
 
-      <i class="bi bi-arrow-down hierarchy-arrow"></i>
+    @if (!s.cadastroAnterior) {
+    <div class="section-card">
+      <h4>Solicitação e Análise</h4>
+      <div class="info-grid">
+        <div><label>Solicitante</label><span>{{ s.solicitanteNome || 'Não informado' }}</span></div>
+        <div><label>Solicitado em</label><span>{{ dataBR(s.solicitadoEm) }}</span></div>
+        @if (s.analisadoEm) { <div><label>Analisado em</label><span>{{ dataBR(s.analisadoEm) }}</span></div> }
+        @if (s.analisadorNome) { <div><label>Analisado por</label><span>{{ s.analisadorNome }}</span></div> }
+      </div>
+      @if (s.justificativa) { <p><strong>Justificativa:</strong> {{ s.justificativa }}</p> }
+      @if (s.resposta) { <p><strong>Parecer:</strong> {{ s.resposta }}</p> }
+    </div>
+    }
 
-      <div class="hierarchy-item">
-        <i class="bi bi-diagram-3"></i>
-
-        <div>
-          <strong>Cúria</strong>
-          <span>Cúria Nossa Senhora Aparecida</span>
+    @if (s.anexos?.length) {
+      <div class="section-card">
+        <h4>Documentos Anexados</h4>
+        <div class="document-list">
+          @for (anexo of s.anexos; track anexo.id) {
+            <div class="document-item">
+              <i class="bi bi-paperclip"></i>
+              <span>{{ anexo.nome }}</span>
+              <a class="btn btn-sm btn-outline-primary" [href]="anexo.url" target="_blank" rel="noopener noreferrer">
+                Abrir documento
+              </a>
+            </div>
+          }
         </div>
       </div>
+    }
+  }
 
-      <i class="bi bi-arrow-down hierarchy-arrow"></i>
-
-      <div class="hierarchy-item active">
-        <i class="bi bi-house-heart"></i>
-
-        <div>
-          <strong>Nova Unidade</strong>
-          <span>Praesidium Rainha da Paz</span>
-        </div>
-      </div>
-
-    </div>
-
-  </div>
-
-  <!-- Justificativa -->
-  <div class="section-card">
-
-    <h4>Justificativa</h4>
-
-    <p class="justificativa">
-      Solicitação de criação de nova unidade devido ao crescimento do número de membros da região e necessidade de melhor organização das atividades legionárias.
-    </p>
-
-  </div>
-
-  <!-- Documentos -->
-  <div class="section-card">
-
-    <h4>Documentos Anexados</h4>
-
-    <div class="document-list">
-
-      <div class="document-item">
-        <i class="bi bi-file-earmark-pdf-fill"></i>
-
-        <span>Ata de Fundação.pdf</span>
-
-        <button class="btn btn-sm btn-outline-primary">
-          <i class="bi bi-download"></i>
-        </button>
-      </div>
-
-      <div class="document-item">
-        <i class="bi bi-file-earmark-pdf-fill"></i>
-
-        <span>Termo de Aprovação.pdf</span>
-
-        <button class="btn btn-sm btn-outline-primary">
-          <i class="bi bi-download"></i>
-        </button>
-      </div>
-
-    </div>
-
-  </div>
-
-  <!-- Parecer -->
-  <div class="section-card">
-
-    <h4>Parecer da Aprovação</h4>
-
-    <textarea
-      rows="5"
-      class="form-control"
-      placeholder="Informe o parecer da análise..."
-    ></textarea>
-
-  </div>
-
-  <!-- Ações -->
   <div class="actions">
-
-    <button class="btn btn-outline-secondary" (click)="voltarParaSolicitacao()">
-      Voltar
-    </button>
-
-    <button class="btn btn-danger">
-      <i class="bi bi-x-circle"></i>
-      Rejeitar
-    </button>
-
-    <button class="btn btn-success" (click)="abrirModalAprovacao()">
-      <i class="bi bi-check-circle"></i>
-      Aprovar
-    </button>
-
+    <button class="btn btn-outline-secondary" type="button" (click)="voltarParaSolicitacao()">Voltar</button>
   </div>
-
 </div>
-
-<!-- Modal Aprovação -->
-<app-modal-confirmacao
-  [aberto]="modalAprovacao"
-  titulo="Confirmar Aprovação"
-  mensagem="Deseja aprovar a criação da unidade Praesidium Rainha da Paz?"
-  textoConfirmar="Aprovar"
-  textoCancelar="Cancelar"
-  tipo="success"
-  (confirmar)="confirmarAprovacao()"
-  (cancelar)="cancelarModal()"
-></app-modal-confirmacao>

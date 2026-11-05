@@ -1,0 +1,14 @@
+/* SYSLEGIOMARIAE_V314: volta e lista densa, um separador por registro. */
+.solicitacoes-atalhos { display: flex; justify-content: flex-start; margin: 0 0 14px; }
+.solicitacoes-atalhos .btn { display: inline-flex; align-items: center; gap: 7px; }
+.requests-list .request-card {
+  margin: 0 !important;
+  padding: 10px 12px !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(128, 70, 67, .22) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+.requests-list .request-card:hover { background: rgba(139, 47, 47, .025) !important; }
+.requests-list .request-info { row-gap: 5px !important; }
