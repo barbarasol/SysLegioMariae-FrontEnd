@@ -6,23 +6,23 @@
       <h1>Portal Sys Legio Mariae</h1>
     </div>
 
-    <div class="user-profile">
+    <a class="user-profile" routerLink="/perfil" title="Abrir Meu Perfil">
 
       <i class="bi bi-person-circle"></i>
 
       <div class="user-info">
         <span class="user-name">
-          {{ usuario.nome }}
+          @if (carregando) { Carregando... } @else { {{ nomeAbreviado || 'Usuário não identificado' }} }
         </span>
 
         <span class="user-role">
-          {{ usuario.funcao }}
+          {{ perfilGlobal }}
         </span>
       </div>
 
       <i class="bi bi-chevron-down"></i>
 
-    </div>
+    </a>
 
   </header>
 
@@ -32,12 +32,22 @@
 
       <div>
         <span class="welcome-label">
-          BEM-VINDA AO PORTAL SYS LEGIO MARIAE - Sistema de Automação da Legião de Maria
+          BOAS-VINDAS AO PORTAL SYS LEGIO MARIAE - Sistema de Automação da Legião de Maria
         </span>
 
         <h2>
-          Olá, {{ usuario.nome }}! 👋
+          @if (carregando) {
+            Carregando...
+          } @else if (nomeAbreviado) {
+            Olá, {{ nomeAbreviado }}! 👋
+          } @else {
+            Olá! 👋
+          }
         </h2>
+
+        @if (erro) {
+          <p role="alert">{{ erro }}</p>
+        }
 
         <p>
           Que bom ter você conosco.

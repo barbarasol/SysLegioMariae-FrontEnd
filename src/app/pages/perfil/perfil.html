@@ -1,187 +1,214 @@
 <div class="config-container">
-  <!-- Cabeçalho -->
   <div class="page-header">
-    <h2>Configurações</h2>
-
-    <p>Gerencie seu perfil, segurança e preferências.</p>
+    <h2>Meu Perfil</h2>
+    <p>Atualize seus dados de acesso, senha e preferências pessoais.</p>
   </div>
 
   <div class="config-layout">
-    <!-- MENU LATERAL -->
-
     <aside class="config-menu">
-      <button
-        class="menu-option"
+      <button type="button" class="menu-option"
         [class.active]="abaSelecionada === 'perfil'"
-        (click)="abaSelecionada = 'perfil'"
-      >
-        <i class="bi bi-person-fill"></i>
-        Perfil
+        (click)="selecionarAba('perfil')">
+        <i class="bi bi-person-fill"></i> Perfil
       </button>
-
-      <button
-        class="menu-option"
+      <button type="button" class="menu-option"
         [class.active]="abaSelecionada === 'seguranca'"
-        (click)="abaSelecionada = 'seguranca'"
-      >
-        <i class="bi bi-shield-lock-fill"></i>
-        Segurança
+        (click)="selecionarAba('seguranca')">
+        <i class="bi bi-shield-lock-fill"></i> Segurança
       </button>
-
-      <button
-        class="menu-option"
+      <button type="button" class="menu-option"
         [class.active]="abaSelecionada === 'preferencias'"
-        (click)="abaSelecionada = 'preferencias'"
-      >
-        <i class="bi bi-gear-fill"></i>
-        Preferências
+        (click)="selecionarAba('preferencias')">
+        <i class="bi bi-gear-fill"></i> Preferências
       </button>
     </aside>
 
-    <!-- CONTEÚDO -->
-
     <section class="config-content">
-      <!-- PERFIL -->
-
       @if (abaSelecionada === 'perfil') {
-        <div class="config-card">
-          <div class="profile-header">
-            <i class="bi bi-person-circle profile-avatar"></i>
+        @if (carregando) {
+          <div class="config-card" role="status">Carregando dados do usuário...</div>
+        } @else if (erro) {
+          <div class="config-card">
+            <p role="alert" class="perfil-erro">{{ erro }}</p>
+            <button type="button" class="btn btn-outline-primary" (click)="carregarUsuarioAtual()">
+              Tentar novamente
+            </button>
+          </div>
+        } @else if (contexto) {
+          <div class="config-card">
+            <div class="profile-header">
+              <i class="bi bi-person-circle profile-avatar"></i>
+              <div>
+                <h3>{{ nomeAbreviado || contexto.pessoa.nome }}</h3>
+                <span>{{ perfisGlobais }}</span>
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="full-width">
+                <label for="perfilNome">Nome completo</label>
+                <input id="perfilNome" class="form-control" type="text"
+                  [value]="contexto.pessoa.nome" readonly />
+              </div>
+              <div>
+                <label for="perfilNomePreferido">Nome preferido</label>
+                <input id="perfilNomePreferido" class="form-control" type="text"
+                  [(ngModel)]="nomePreferido" maxlength="150" [disabled]="salvandoPerfil" />
+              </div>
+              <div>
+                <label for="perfilCpf">CPF</label>
+                <input id="perfilCpf" class="form-control" type="text"
+                  [value]="contexto.pessoa.cpf || 'Não informado'" readonly />
+              </div>
+              <div>
+                <label for="perfilEmail">E-mail de acesso</label>
+                <input id="perfilEmail" class="form-control" type="email"
+                  [(ngModel)]="email" maxlength="254" [disabled]="salvandoPerfil" />
+              </div>
+              <div>
+                <label for="perfilCelular">Celular com DDD</label>
+                <input id="perfilCelular" class="form-control" type="tel"
+                  [(ngModel)]="celular" maxlength="25" [disabled]="salvandoPerfil" />
+              </div>
+              @if (emailFoiAlterado) {
+                <div class="full-width">
+                  <label for="senhaTrocarEmail">Senha atual (necessária para trocar o e-mail)</label>
+                  <input id="senhaTrocarEmail" class="form-control" type="password"
+                    autocomplete="current-password" [(ngModel)]="senhaAtualEmail"
+                    [disabled]="salvandoPerfil" />
+                </div>
+              }
+              <div>
+                <label for="perfilStatus">Situação</label>
+                <input id="perfilStatus" class="form-control" type="text"
+                  [value]="statusUsuario(contexto.usuario.status)" readonly />
+              </div>
+              <div>
+                <label for="perfilPerfilGlobal">Perfil global</label>
+                <input id="perfilPerfilGlobal" class="form-control" type="text"
+                  [value]="perfisGlobais" readonly />
+              </div>
+            </div>
 
-            <div>
-              <h3>Bárbara Sol</h3>
-
-              <span> Administradora do Portal </span>
+            @if (contexto.unidades && contexto.unidades.length > 0) {
+              <div class="security-info">
+                <strong>Vínculos de acesso às unidades</strong>
+                @for (unidade of contexto.unidades; track unidade.id) {
+                  <div class="info-item">
+                    <strong>{{ unidade.nome }}</strong> —
+                    {{ unidade.perfis.join(', ') || 'Sem perfil de unidade' }}
+                  </div>
+                }
+              </div>
+            }
+            @if (erroPerfil) { <p class="perfil-erro" role="alert">{{ erroPerfil }}</p> }
+            @if (sucessoPerfil) { <p class="perfil-sucesso" role="status">{{ sucessoPerfil }}</p> }
+            <div class="actions">
+              <button type="button" class="btn btn-primary"
+                [disabled]="salvandoPerfil" (click)="salvarPerfil()">
+                {{ salvandoPerfil ? 'Salvando...' : 'Salvar Alterações' }}
+              </button>
             </div>
           </div>
-
-          <div class="form-grid">
-            <div>
-              <label>Nome Completo</label>
-
-              <input type="text" class="form-control" value="Bárbara Sol" />
-            </div>
-
-            <div>
-              <label>E-mail</label>
-
-              <input type="email" class="form-control" value="barbara@email.com" />
-            </div>
-
-            <div>
-              <label>Telefone</label>
-
-              <input type="text" class="form-control" />
-            </div>
-
-            <div>
-              <label>Função</label>
-
-              <input type="text" class="form-control" value="Administradora" />
-            </div>
-          </div>
-
-          <div class="actions">
-            <button class="btn btn-primary">Salvar Alterações</button>
-          </div>
-        </div>
+        }
       }
-
-      <!-- SEGURANÇA -->
 
       @if (abaSelecionada === 'seguranca') {
         <div class="config-card">
-          <h3>Segurança</h3>
-
-          <p class="section-description">Altere sua senha de acesso.</p>
-
+          <h3>Alterar senha</h3>
+          <p class="section-description">
+            Informe a senha atual e uma nova senha com pelo menos oito caracteres.
+          </p>
           <div class="form-grid">
             <div class="full-width">
-              <label>Senha Atual</label>
-
-              <input type="password" class="form-control" />
+              <label for="senhaAtual">Senha atual</label>
+              <input id="senhaAtual" class="form-control" type="password"
+                autocomplete="current-password" [(ngModel)]="senhaAtual"
+                [disabled]="salvandoSenha" />
             </div>
-
             <div>
-              <label>Nova Senha</label>
-
-              <input type="password" class="form-control" />
+              <label for="senhaNova">Nova senha</label>
+              <input id="senhaNova" class="form-control" type="password"
+                autocomplete="new-password" [(ngModel)]="novaSenha"
+                [disabled]="salvandoSenha" />
             </div>
-
             <div>
-              <label>Confirmar Nova Senha</label>
-
-              <input type="password" class="form-control" />
+              <label for="senhaConfirmar">Confirmar nova senha</label>
+              <input id="senhaConfirmar" class="form-control" type="password"
+                autocomplete="new-password" [(ngModel)]="confirmarNovaSenha"
+                [disabled]="salvandoSenha" />
             </div>
           </div>
-
-          <div class="security-info">
-            <div class="info-item">
-              <strong>Último acesso:</strong>
-              21/09/2026 20:15
-            </div>
-
-            <div class="info-item">
-              <strong>Última alteração de senha:</strong>
-              10/08/2026
-            </div>
-          </div>
-
+          @if (erroSenha) { <p class="perfil-erro" role="alert">{{ erroSenha }}</p> }
+          @if (sucessoSenha) { <p class="perfil-sucesso" role="status">{{ sucessoSenha }}</p> }
           <div class="actions">
-            <button class="btn btn-primary">Alterar Senha</button>
+            <button type="button" class="btn btn-primary"
+              [disabled]="salvandoSenha" (click)="salvarSenha()">
+              {{ salvandoSenha ? 'Salvando...' : 'Alterar Senha' }}
+            </button>
           </div>
         </div>
       }
-
-      <!-- PREFERÊNCIAS -->
 
       @if (abaSelecionada === 'preferencias') {
         <div class="config-card">
           <h3>Preferências</h3>
-
-          <p class="section-description">Personalize sua experiência no portal.</p>
-
-          <div class="preferences-list">
-            <div class="preference-item">
-              <div>
-                <strong> Receber notificações por e-mail </strong>
-
-                <p>Receber comunicados importantes.</p>
+          <p class="section-description">As configurações são vinculadas à sua conta.</p>
+          @if (carregandoPreferencias) {
+            <p role="status">Carregando preferências...</p>
+          } @else if (!preferenciasCarregadas) {
+            <p class="perfil-erro" role="alert">{{ erroPreferencias }}</p>
+            <button type="button" class="btn btn-outline-primary"
+              (click)="carregarPreferencias()">Tentar novamente</button>
+          } @else {
+            <div class="preferences-list">
+              <div class="preference-item">
+                <div>
+                  <strong>Notificações por e-mail</strong>
+                  <p>Preferência para receber comunicados por e-mail.</p>
+                </div>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox"
+                    aria-label="Notificações por e-mail"
+                    [(ngModel)]="preferencias.notificacoesEmail" />
+                </div>
               </div>
-
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" checked />
+              <div class="preference-item">
+                <div>
+                  <strong>Notificações do sistema</strong>
+                  <p>Preferência para receber avisos no portal.</p>
+                </div>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox"
+                    aria-label="Notificações do sistema"
+                    [(ngModel)]="preferencias.notificacoesSistema" />
+                </div>
+              </div>
+              <div class="preference-item">
+                <div>
+                  <strong>Modo escuro</strong>
+                  <p>Guardar a preferência pelo tema escuro.</p>
+                </div>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox"
+                    aria-label="Modo escuro" [(ngModel)]="preferencias.modoEscuro" />
+                </div>
               </div>
             </div>
-
-            <div class="preference-item">
-              <div>
-                <strong> Receber notificações do sistema </strong>
-
-                <p>Exibir alertas dentro do portal.</p>
-              </div>
-
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" checked />
-              </div>
+            @if (erroPreferencias) { <p class="perfil-erro" role="alert">{{ erroPreferencias }}</p> }
+            @if (sucessoPreferencias) {
+              <p class="perfil-sucesso" role="status">{{ sucessoPreferencias }}</p>
+            }
+            <p class="section-description preferencia-observacao">
+              As preferências ficam registradas. A aplicação visual do tema e o envio
+              de notificações dependem dos módulos correspondentes do portal.
+            </p>
+            <div class="actions">
+              <button type="button" class="btn btn-primary"
+                [disabled]="salvandoPreferencias" (click)="salvarPreferencias()">
+                {{ salvandoPreferencias ? 'Salvando...' : 'Salvar Preferências' }}
+              </button>
             </div>
-
-            <div class="preference-item">
-              <div>
-                <strong> Modo Escuro </strong>
-
-                <p>Utilizar tema escuro.</p>
-              </div>
-
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" />
-              </div>
-            </div>
-          </div>
-
-          <div class="actions">
-            <button class="btn btn-primary">Salvar Preferências</button>
-          </div>
+          }
         </div>
       }
     </section>

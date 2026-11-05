@@ -417,3 +417,29 @@
     padding: 14px;
   }
 }
+/* v3.1.9 — feedback acessível após gravações */
+.config-container .perfil-erro,
+.config-container .perfil-sucesso {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.config-container .perfil-erro {
+  color: #82242a;
+  background: #fff1f1;
+  border: 1px solid #eec2c4;
+}
+.config-container .perfil-sucesso {
+  color: #176143;
+  background: #eefaf3;
+  border: 1px solid #b6dfc4;
+}
+.config-container .preferencia-observacao {
+  margin-top: 20px;
+  margin-bottom: 0;
+}
+.config-container input[readonly] {
+  background: #f3f3f5;
+  cursor: default;
+}

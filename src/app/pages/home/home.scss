@@ -299,3 +299,13 @@
 .info-card p {
   color: var(--legio-text-muted);
 }
+
+/* Perfil superior: link para /perfil, sem aparência de link padrão. */
+a.user-profile {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+a.user-profile:hover .user-name {
+  text-decoration: underline;
+}

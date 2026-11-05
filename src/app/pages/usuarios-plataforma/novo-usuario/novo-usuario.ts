@@ -240,8 +240,15 @@ export class NovoUsuario {
            * Cadastro iniciado por administrador:
            * permanece na tela atual.
            */
+          const pessoaReutilizada =
+            'pessoaReutilizada' in resultado &&
+            resultado.pessoaReutilizada === true;
+
           this.sucesso =
             `Usuário ${resultado.usuario.email} criado com sucesso. ` +
+            (pessoaReutilizada
+              ? 'Vinculado à pessoa já cadastrada, sem modificar os dados do legionário. '
+              : '') +
             'O cadastro ficará pendente até a definição das permissões.';
 
           this.etapa = 1;
