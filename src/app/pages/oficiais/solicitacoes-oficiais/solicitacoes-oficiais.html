@@ -1,0 +1,281 @@
+<div class="solicitacoes-container">
+  <app-breadcrumb [itens]="itens" />
+  
+  <div class="page-header">
+    <div>
+      <h2>Solicita&ccedil;&otilde;es de Oficiais</h2>
+      <p>
+        Analise propostas de novo oficial. Aprovadas entram na lista
+        de oficiais.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="btn btn-primary"
+      routerLink="/novo-oficial"
+    >
+      <i class="bi bi-plus-circle"></i>
+      Novo Oficial
+    </button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <i class="bi bi-hourglass-split"></i>
+      <div>
+        <h3>{{ resumo.pendentes }}</h3>
+        <span>Pendentes</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <i class="bi bi-check-circle"></i>
+      <div>
+        <h3>{{ resumo.aprovadas }}</h3>
+        <span>Aprovadas</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <i class="bi bi-x-circle"></i>
+      <div>
+        <h3>{{ resumo.rejeitadas }}</h3>
+        <span>Rejeitadas</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-card">
+    <div class="filters-grid">
+
+      <div class="filter-field">
+        <label for="status">Status</label>
+        <select
+          id="status"
+          class="form-select"
+          [(ngModel)]="filtros.status"
+        >
+          <option value="">Todos</option>
+          <option value="PENDENTE">Pendente</option>
+          <option value="APROVADA">Aprovada</option>
+          <option value="REJEITADA">Rejeitada</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="unidade">Unidade</label>
+        <select
+          id="unidade"
+          class="form-select"
+          [(ngModel)]="filtros.unidadeId"
+        >
+          <option value="">Todas</option>
+
+          @for (unidade of unidades; track unidade.id) {
+            <option [value]="unidade.id">
+              {{ unidade.tipo }} - {{ unidade.nome }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="busca">Buscar</label>
+        <input
+          id="busca"
+          type="text"
+          class="form-control"
+          placeholder="Nome, CPF ou unidade"
+          [(ngModel)]="filtros.busca"
+        />
+      </div>
+
+    </div>
+
+    <div class="filter-actions">
+      <button type="button" class="btn btn-primary" (click)="filtrar()">
+        Filtrar
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        (click)="limparFiltros()"
+      >
+        Limpar
+      </button>
+    </div>
+  </div>
+
+  @if (!carregando && solicitacoes.length === 0) {
+    <div class="empty-state">
+      <i class="bi bi-inbox"></i>
+      <p>Nenhuma solicita&ccedil;&atilde;o encontrada com esses filtros.</p>
+    </div>
+  }
+
+  <div class="requests-list">
+    @for (solicitacao of solicitacoes; track solicitacao.id) {
+
+      <div class="request-card">
+        <div class="request-header">
+          <div>
+            <span
+              class="badge-status"
+              [class]="classeStatus(solicitacao.status)"
+            >
+              {{ rotuloStatus[solicitacao.status] }}
+            </span>
+
+            <h4>{{ solicitacao.nome }}</h4>
+
+            <span class="origem">
+              {{ origemTexto(solicitacao) }}
+            </span>
+          </div>
+
+          <span class="request-date">
+            {{ dataCurta(solicitacao.solicitadoEm) }}
+          </span>
+        </div>
+
+        <div class="request-info">
+          <div>
+            <strong>Cargo:</strong>
+            {{ solicitacao.cargoNome }}
+          </div>
+
+          <div>
+            <strong>Unidade:</strong>
+            {{ solicitacao.unidadeTipo }} - {{ solicitacao.unidadeNome }}
+          </div>
+
+          <div>
+            <strong>Mandato:</strong>
+            desde {{ dataCurta(solicitacao.dataInicio) }}
+          </div>
+
+          <div>
+            <strong>Contato:</strong>
+            {{ contato(solicitacao) }}
+          </div>
+
+          <div>
+            <strong>Solicitado por:</strong>
+            {{ solicitacao.solicitanteNome || '-' }}
+          </div>
+        </div>
+
+        @if (solicitacao.justificativa) {
+          <div class="justificativa">
+            <i class="bi bi-chat-left-text"></i>
+            {{ solicitacao.justificativa }}
+          </div>
+        }
+
+        @if (solicitacao.resposta) {
+          <div class="resposta">
+            <i class="bi bi-reply"></i>
+            {{ solicitacao.resposta }}
+          </div>
+        }
+
+        <div class="request-actions">
+          @if (solicitacao.status === 'PENDENTE') {
+
+            <button
+              type="button"
+              class="btn btn-success"
+              (click)="abrirAnalise(solicitacao, 'APROVAR')"
+            >
+              <i class="bi bi-check-lg"></i>
+              Aprovar
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-danger"
+              (click)="abrirAnalise(solicitacao, 'REJEITAR')"
+            >
+              <i class="bi bi-x-lg"></i>
+              Rejeitar
+            </button>
+
+          } @else {
+            <span class="analisado-por">
+              Analisado por
+              <strong>{{ solicitacao.analisadorNome || '-' }}</strong>
+              em {{ dataCurta(solicitacao.analisadoEm) }}
+            </span>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+@if (modalAberto) {
+  <div class="modal-fundo" (click)="fecharModal()">
+    <div class="modal-caixa" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <i
+          class="bi"
+          [class.bi-check-circle]="tipoAnalise === 'APROVAR'"
+          [class.bi-x-circle]="tipoAnalise === 'REJEITAR'"
+        ></i>
+
+        <h3>
+          {{ tipoAnalise === 'APROVAR' ? 'Aprovar' : 'Rejeitar' }}
+          proposta
+        </h3>
+      </div>
+
+      <p class="modal-texto">
+        @if (tipoAnalise === 'APROVAR') {
+          Ao aprovar, <strong>{{ solicitacaoEmAnalise?.nome }}</strong>
+          passa a constar como oficial na lista.
+        } @else {
+          A proposta de
+          <strong>{{ solicitacaoEmAnalise?.nome }}</strong>
+          ser&aacute; rejeitada e n&atilde;o entrar&aacute; na lista de oficiais.
+        }
+      </p>
+
+      <label>Observa&ccedil;&atilde;o (opcional)</label>
+      <textarea
+        rows="3"
+        class="form-control"
+        [(ngModel)]="resposta"
+        placeholder="Registre o motivo ou uma observa&ccedil;&atilde;o."
+      ></textarea>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          (click)="fecharModal()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="btn"
+          [class.btn-success]="tipoAnalise === 'APROVAR'"
+          [class.btn-danger]="tipoAnalise === 'REJEITAR'"
+          (click)="confirmarAnalise()"
+          [disabled]="enviandoAnalise"
+        >
+          @if (enviandoAnalise) {
+            Enviando...
+          } @else {
+            Confirmar
+          }
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

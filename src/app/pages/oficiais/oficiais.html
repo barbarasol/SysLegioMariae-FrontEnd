@@ -1,0 +1,544 @@
+
+<div class="oficiais-container">
+  <app-breadcrumb [itens]="itens" />
+
+  <div class="page-header">
+    <div>
+      <h2>Oficiais</h2>
+      <p>
+        Relação dos oficiais da Legião de Maria, com dados de
+        contato e mandato.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn-solicitacoes"
+        routerLink="/solicitacoes-oficiais"
+      >
+        <i class="bi bi-clock-history"></i>
+        Solicitações
+      </button>
+
+      <button
+        type="button"
+        class="btn-novo-oficial"
+        routerLink="/novo-oficial"
+      >
+        <i class="bi bi-person-add"></i>
+        Novo Oficial
+      </button>
+    </div>
+  </div>
+
+  <!-- Abas -->
+  <div class="abas">
+    <button
+      type="button"
+      class="aba"
+      [class.ativa]="aba === 'oficiais'"
+      (click)="trocarAba('oficiais')"
+    >
+      <i class="bi bi-people"></i>
+      Oficiais
+      <span class="aba-contador">{{ resumo.total }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="aba"
+      [class.ativa]="aba === 'calendario'"
+      (click)="trocarAba('calendario')"
+    >
+      <i class="bi bi-calendar-heart"></i>
+      Calendário
+      <span class="aba-contador">{{ resumo.aniversariantesMes }}</span>
+    </button>
+  </div>
+
+  <!-- ================= ABA OFICIAIS ================= -->
+  @if (aba === 'oficiais') {
+
+    <!-- Cards Resumo -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <i class="bi bi-person-badge"></i>
+        <div>
+          <h3>{{ resumo.total }}</h3>
+          <span>Oficiais em exercício</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <i class="bi bi-calendar-heart"></i>
+        <div>
+          <h3>{{ resumo.aniversariantesMes }}</h3>
+          <span>Aniversariantes do mês</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cargos -->
+    @if (resumo.porCargo.length > 0) {
+      <div class="cargos-card">
+        @for (item of resumo.porCargo; track item.cargo) {
+          <div class="cargo-chip">
+            <strong>{{ item.total }}</strong>
+            {{ item.cargoNome }}
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Filtros -->
+    <div class="filter-card">
+      <div class="filters-grid">
+
+        <div class="filter-field">
+          <label for="busca">Buscar</label>
+          <input
+            id="busca"
+            type="text"
+            class="form-control"
+            placeholder="Nome, CPF ou celular"
+            [(ngModel)]="filtros.busca"
+            (keyup.enter)="filtrar()"
+          />
+        </div>
+
+        <div class="filter-field">
+          <label for="cargo">Cargo</label>
+          <select
+            id="cargo"
+            class="form-select"
+            [(ngModel)]="filtros.cargo"
+          >
+            <option value="">Todos</option>
+            @for (cargo of cargos; track cargo.codigo) {
+              <option [value]="cargo.codigo">
+                {{ cargo.nome }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-field filter-checkbox">
+          <label class="checkbox-item">
+            <input
+              type="checkbox"
+              [(ngModel)]="filtros.somenteVigentes"
+            />
+            Somente mandatos vigentes
+          </label>
+        </div>
+
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn btn-primary" (click)="filtrar()">
+          Filtrar
+        </button>
+
+        <button
+          class="btn btn-outline-secondary"
+          (click)="limparFiltros()"
+        >
+          Limpar
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="table-card">
+      <div class="card-title">
+        Relação de Oficiais
+
+        @if (!carregando) {
+          <span class="contador">({{ oficiais.length }})</span>
+        }
+      </div>
+
+      @if (carregando) {
+        <div class="empty-state">
+          <i class="bi bi-hourglass-split"></i>
+          <p>Carregando oficiais...</p>
+        </div>
+      }
+
+      @if (!carregando && oficiais.length === 0) {
+        <div class="empty-state">
+          <i class="bi bi-inbox"></i>
+          <p>Nenhum oficial encontrado.</p>
+        </div>
+      }
+
+      @if (!carregando && oficiais.length > 0) {
+        <div class="tabela-scroll">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Cargo</th>
+                <th>Unidade</th>
+                <th>Contato</th>
+                <th>Aniversário</th>
+                <th>Mandato</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (oficial of oficiais; track oficial.id) {
+                <tr>
+                  <td>
+                    <strong>
+                      {{ oficial.nomePreferido || oficial.nome }}
+                    </strong>
+
+                    @if (oficial.nomePreferido) {
+                      <span class="nome-completo">
+                        {{ oficial.nome }}
+                      </span>
+                    }
+
+                    @if (oficial.cpf) {
+                      <span class="nome-completo">
+                        CPF: {{ oficial.cpf }}
+                      </span>
+                    }
+                  </td>
+
+                  <td>
+                    {{ oficial.cargoNome }}
+
+                    @if (oficial.numeroMandato) {
+                      <span class="badge-extra">
+                        {{ oficial.numeroMandato }}º mandato
+                      </span>
+                    }
+                  </td>
+
+                  <td>
+                    {{ oficial.unidadeNome }}
+                    <span class="unidade-meta">
+                      {{ oficial.unidadeTipo }}
+
+                      @if (oficial.cidade) {
+                        — {{ oficial.cidade }}
+                      }
+                    </span>
+                  </td>
+
+                  <td class="col-contato">
+                    @if (oficial.celular) {
+                      <span>
+                        <i class="bi bi-phone"></i>
+                        {{ oficial.celular }}
+                      </span>
+                    }
+
+                    @if (oficial.telefone) {
+                      <span>
+                        <i class="bi bi-telephone"></i>
+                        {{ oficial.telefone }}
+                      </span>
+                    }
+
+                    @if (oficial.email) {
+                      <span>
+                        <i class="bi bi-envelope"></i>
+                        {{ oficial.email }}
+                      </span>
+                    }
+
+                    @if (
+                      !oficial.celular &&
+                      !oficial.telefone &&
+                      !oficial.email
+                    ) {
+                      <span class="sem-valor">—</span>
+                    }
+                  </td>
+
+                  <td class="col-data">
+                    {{ aniversario(oficial) }}
+
+                    @if (oficial.idade) {
+                      <span class="unidade-meta">
+                        {{ oficial.idade }} anos
+                      </span>
+                    }
+                  </td>
+
+                  <td class="col-mandato">
+                    <span class="mandato-tempo">
+                      {{ tempoMandato(oficial) }}
+                    </span>
+
+                    <span class="unidade-meta">
+                      {{ oficial.dataInicio }}
+
+                      @if (oficial.dataFim) {
+                        até {{ oficial.dataFim }}
+                      }
+                    </span>
+
+                    @if (oficial.mandatoVigente) {
+                      <span class="badge-vigente">Vigente</span>
+                    } @else {
+                      <span class="badge-encerrado">Encerrado</span>
+                    }
+                  </td>
+
+                  <td>
+                    <span
+                      class="status-badge"
+                      [class.inativo]="oficial.status === 'INATIVO'"
+                    >
+                      {{ oficial.status }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+  }
+
+  <!-- ================= ABA CALENDÁRIO ================= -->
+  @if (aba === 'calendario') {
+
+    <div class="filter-card">
+      <div class="filters-grid">
+
+        <div class="filter-field">
+          <label for="mes">Mês</label>
+
+          <select
+            id="mes"
+            class="form-select"
+            [ngModel]="mesSelecionado"
+            (ngModelChange)="trocarMes($event)"
+          >
+            @for (mes of meses; track mes; let i = $index) {
+              <option [value]="i + 1">
+                {{ mes }}
+              </option>
+            }
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="calendario-grid">
+
+      <!-- Grade do mês -->
+      <div class="calendar-card">
+        <div class="card-title">
+          {{ nomeMesSelecionado }}
+        </div>
+
+        <div class="mes-grade">
+          <div class="dia-semana">Dom</div>
+          <div class="dia-semana">Seg</div>
+          <div class="dia-semana">Ter</div>
+          <div class="dia-semana">Qua</div>
+          <div class="dia-semana">Qui</div>
+          <div class="dia-semana">Sex</div>
+          <div class="dia-semana">Sáb</div>
+
+          @for (semana of gradeDoMes; track $index) {
+            @for (dia of semana; track $index) {
+              @if (dia === null) {
+                <div class="dia-celula vazia"></div>
+              } @else {
+                <div
+                  class="dia-celula"
+                  [class.com-aniversario]="diasComAniversario.has(dia)"
+                  [class.hoje]="ehHoje(dia)"
+                >
+                  <span class="dia-numero">{{ dia }}</span>
+
+                  @if (diasComAniversario.has(dia)) {
+                    <span class="dia-marca"></span>
+                  }
+                </div>
+              }
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Lista -->
+      <div class="lista-card">
+        <div class="card-title">
+          Aniversariantes de {{ nomeMesSelecionado }}
+
+          @if (!carregandoAniversariantes) {
+            <span class="contador">
+              ({{ aniversariantes.length }})
+            </span>
+          }
+        </div>
+
+        @if (carregandoAniversariantes) {
+          <div class="empty-state">
+            <i class="bi bi-hourglass-split"></i>
+            <p>Carregando...</p>
+          </div>
+        }
+
+        @if (
+          !carregandoAniversariantes &&
+          aniversariantes.length === 0
+        ) {
+          <div class="empty-state">
+            <i class="bi bi-calendar-x"></i>
+            <p>Nenhum oficial faz aniversário neste mês.</p>
+          </div>
+        }
+
+        <!-- Aniversariantes agrupados por dia -->
+        @if (!carregandoAniversariantes) {
+          @for (bloco of aniversariantesPorDia; track bloco.dia) {
+            <div class="aniversario-bloco">
+
+              <div class="aniversario-dia">
+                <span class="aniversario-numero">
+                  {{ bloco.dia }}
+                </span>
+
+                <span class="aniversario-mes">
+                  {{ nomeMesSelecionado }}
+                </span>
+              </div>
+
+              <div class="aniversario-pessoas">
+                @for (pessoa of bloco.pessoas; track pessoa.oficialId) {
+                  <div class="aniversario-pessoa">
+                    <strong>
+                      {{ pessoa.nomePreferido || pessoa.nome }}
+                    </strong>
+
+                    <span class="unidade-meta">
+                      {{ pessoa.cargoNome }}
+                      — {{ pessoa.unidadeTipo }}
+                      {{ pessoa.unidadeNome }}
+                    </span>
+
+                    <span class="aniversario-contato">
+                      @if (pessoa.celular) {
+                        <i class="bi bi-phone"></i>
+                        {{ pessoa.celular }}
+                      } @else if (pessoa.telefone) {
+                        <i class="bi bi-telephone"></i>
+                        {{ pessoa.telefone }}
+                      } @else if (pessoa.email) {
+                        <i class="bi bi-envelope"></i>
+                        {{ pessoa.email }}
+                      } @else {
+                        Sem contato cadastrado
+                      }
+
+                      <span class="aniversario-idade">
+                        {{ pessoa.idadeCompleta }} anos
+                      </span>
+                    </span>
+
+                    @if (
+                      (pessoa.celular || pessoa.telefone) &&
+                      ehAniversarioHoje(pessoa)
+                    ) {
+                      <button
+                        type="button"
+                        class="btn-whatsapp"
+                        title="Enviar parabéns pelo WhatsApp"
+                        (click)="abrirWhatsapp(pessoa)"
+                      >
+                        <i class="bi bi-whatsapp"></i>
+                        Enviar parabéns
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+
+            </div>
+          }
+        }
+
+        <!-- Template da mensagem: somente após o carregamento -->
+        @if (!carregandoAniversariantes && aniversarianteDeHoje) {
+          <div class="template-card">
+            <div class="template-header">
+              <i class="bi bi-chat-heart"></i>
+
+              <div>
+                <h4>Mensagem de parabéns</h4>
+
+                <p>
+                  @if (editandoTemplate) {
+                    Use as variáveis abaixo. Elas são trocadas
+                    pelos dados de cada oficial no momento do envio.
+                  } @else {
+                    Esta é a mensagem que será enviada, já
+                    com os dados de cada oficial.
+                  }
+                </p>
+              </div>
+
+              @if (editandoTemplate) {
+                <button
+                  type="button"
+                  class="btn-restaurar"
+                  (click)="restaurarTemplate()"
+                >
+                  Restaurar padrão
+                </button>
+
+                <button
+                  type="button"
+                  class="btn-concluir"
+                  (click)="salvarTemplate()"
+                >
+                  <i class="bi bi-check-lg"></i>
+                  Concluir
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="btn-editar-template"
+                  (click)="editarTemplate()"
+                >
+                  <i class="bi bi-pencil"></i>
+                  Editar
+                </button>
+              }
+            </div>
+
+            @if (!editandoTemplate) {
+              <div class="template-preview">
+                {{ previaMensagem(aniversarianteDeHoje) }}
+              </div>
+            } @else {
+              <textarea
+                class="template-textarea"
+                rows="5"
+                [(ngModel)]="templateMensagem"
+              ></textarea>
+            }
+          </div>
+        }
+
+      </div>
+
+    </div>
+
+  }
+
+</div>

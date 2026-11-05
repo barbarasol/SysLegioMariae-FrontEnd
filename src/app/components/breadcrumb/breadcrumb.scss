@@ -1,0 +1,93 @@
+$legio-red-600: #a13b40;
+$legio-red-700: #8f2b2f;
+$legio-red-800: #7a2024;
+$legio-white: #ffffff;
+$legio-rose-100: #fff3f3;
+$legio-rose-050: #fff8f8;
+$legio-border: #eadfe0;
+$legio-text: #343a40;
+$legio-text-muted: #6c757d;
+$legio-success: #198754;
+$legio-success-bg: #e8f5ec;
+$legio-neutral-bg: #f1f3f5;
+$legio-birthday: #b7791f;
+$legio-birthday-bg: #fff8e3;
+
+.breadcrumb-nav {
+  margin-bottom: 18px;
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  color: $legio-text-muted;
+
+  + .breadcrumb-item::before {
+    content: '/';
+    margin: 0 10px;
+    color: $legio-border;
+    font-weight: 600;
+  }
+
+  &.active {
+    color: $legio-text;
+    font-weight: 600;
+  }
+}
+
+.breadcrumb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: $legio-text-muted;
+  text-decoration: none;
+  transition: color 0.2s ease;
+
+  i {
+    font-size: 14px;
+  }
+
+  &:hover {
+    color: $legio-red-600;
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba(161, 59, 64, 0.2);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+.breadcrumb-atual {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: $legio-text;
+
+  i {
+    font-size: 14px;
+    color: $legio-red-600;
+  }
+}
+
+@media (max-width: 600px) {
+  .breadcrumb {
+    font-size: 12px;
+  }
+
+  .breadcrumb-item + .breadcrumb-item::before {
+    margin: 0 6px;
+  }
+}

@@ -1,0 +1,452 @@
+<div class="novo-oficial-container">
+  <app-breadcrumb [itens]="itens" />
+
+  <div class="page-header">
+    <div>
+      <h2>Novo Oficial</h2>
+      <p>
+        A proposta vai para an&aacute;lise e s&oacute; entra na lista de oficiais
+        depois de aprovada.
+      </p>
+    </div>
+  </div>
+
+  <div class="wizard-card">
+
+    <div class="stepper">
+      <div class="step" [class.active]="etapa >= 1">
+        <div class="step-circle">1</div>
+        <span>Quem &eacute; o oficial</span>
+      </div>
+
+      <div class="step-line"></div>
+
+      <div class="step" [class.active]="etapa >= 2">
+        <div class="step-circle">2</div>
+        <span>Cargo e unidade</span>
+      </div>
+
+      <div class="step-line"></div>
+
+      <div class="step" [class.active]="etapa >= 3">
+        <div class="step-circle">3</div>
+        <span>Revis&atilde;o</span>
+      </div>
+    </div>
+
+    <!-- ETAPA 1 -->
+    @if (etapa === 1) {
+
+      <div class="form-section">
+        <h4>Como identificar o oficial</h4>
+
+        <div class="origem-grid">
+
+          <button
+            type="button"
+            class="origem-card"
+            [class.selecionado]="origem === 'PESSOA_NOVA'"
+            (click)="trocarOrigem('PESSOA_NOVA')"
+          >
+            <i class="bi bi-person-plus"></i>
+            <strong>Pessoa nova</strong>
+            <span>
+              Cadastra os dados agora. A pessoa e o membro s&atilde;o criados
+              na aprova&ccedil;&atilde;o.
+            </span>
+          </button>
+
+          <button
+            type="button"
+            class="origem-card"
+            [class.selecionado]="origem === 'MEMBRO_EXISTENTE'"
+            (click)="trocarOrigem('MEMBRO_EXISTENTE')"
+          >
+            <i class="bi bi-search"></i>
+            <strong>Membro j&aacute; cadastrado</strong>
+            <span>
+              Procura na base e vincula o cargo a um membro existente.
+            </span>
+          </button>
+
+        </div>
+      </div>
+
+      @if (origem === 'MEMBRO_EXISTENTE') {
+
+        <div class="form-section">
+          <h4>Buscar membro</h4>
+
+          @if (!membroSelecionado) {
+
+            <div class="busca-campo">
+              <i class="bi bi-search"></i>
+
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Nome, CPF ou e-mail (m&iacute;nimo 3 letras)"
+                [(ngModel)]="termoBusca"
+                (ngModelChange)="aoDigitarBusca()"
+              />
+
+              @if (buscando) {
+                <span class="busca-status">Buscando...</span>
+              }
+            </div>
+
+            @if (membros.length > 0) {
+              <div class="busca-resultados">
+                @for (membro of membros; track membro.membroId) {
+                  <button
+                    type="button"
+                    class="busca-item"
+                    (click)="selecionarMembro(membro)"
+                  >
+                    <div class="busca-nome">
+                      <strong>
+                        {{ membro.nomePreferido || membro.nome }}
+                      </strong>
+
+                      @if (membro.nomePreferido) {
+                        <span class="busca-completo">{{ membro.nome }}</span>
+                      }
+                    </div>
+
+                    <span class="busca-meta">
+                      @if (membro.cpf) { CPF {{ membro.cpf }} }
+                      @if (membro.celular) { &middot; {{ membro.celular }} }
+                    </span>
+
+                    @if (membro.jaEhOficial) {
+                      <span class="selo-oficial">J&aacute; &eacute; oficial</span>
+                    }
+                  </button>
+                }
+              </div>
+            }
+
+            @if (termoBusca.trim().length >= 3 && !buscando && membros.length === 0) {
+              <p class="busca-vazia">
+                Nenhum membro encontrado. Se a pessoa n&atilde;o estiver
+                cadastrada, use a op&ccedil;&atilde;o "Pessoa nova".
+              </p>
+            }
+
+          } @else {
+
+            <div class="membro-escolhido">
+              <i class="bi bi-check-circle-fill"></i>
+
+              <div>
+                <strong>
+                  {{ membroSelecionado.nomePreferido || membroSelecionado.nome }}
+                </strong>
+
+                <span>
+                  @if (membroSelecionado.cpf) { CPF {{ membroSelecionado.cpf }} }
+                  @if (membroSelecionado.celular) { &middot; {{ membroSelecionado.celular }} }
+                </span>
+              </div>
+
+              <button type="button" class="btn-trocar" (click)="limparMembro()">
+                Trocar
+              </button>
+            </div>
+          }
+        </div>
+
+      } @else {
+
+        <div class="form-section">
+          <h4>Dados pessoais</h4>
+
+          <div class="form-grid">
+
+            <div class="full-width">
+              <label>Nome completo</label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="dados.pessoaNome"
+              />
+            </div>
+
+            <div>
+              <label>Nome preferido</label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="dados.pessoaNomePreferido"
+              />
+            </div>
+
+            <div>
+              <label>CPF</label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="dados.pessoaCpf"
+              />
+            </div>
+
+            <div>
+              <label>Data de nascimento</label>
+              <input
+                type="date"
+                class="form-control"
+                [(ngModel)]="dados.pessoaDataNascimento"
+              />
+            </div>
+
+            <div>
+              <label>E-mail</label>
+              <input
+                type="email"
+                class="form-control"
+                [(ngModel)]="dados.pessoaEmail"
+              />
+            </div>
+
+            <div>
+              <label>Celular</label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="dados.pessoaCelular"
+              />
+            </div>
+
+            <div>
+              <label>Telefone</label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="dados.pessoaTelefone"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4>Dados legion&aacute;rios</h4>
+
+          <div class="form-grid">
+            <div>
+              <label>Data de ingresso</label>
+              <input
+                type="date"
+                class="form-control"
+                [(ngModel)]="dados.dtIngresso"
+              />
+            </div>
+
+            <div>
+              <label>Data do compromisso</label>
+              <input
+                type="date"
+                class="form-control"
+                [(ngModel)]="dados.dtCompromisso"
+              />
+            </div>
+          </div>
+
+          <div class="funcoes-grid">
+            <label class="funcao-item">
+              <input type="checkbox" [(ngModel)]="dados.pretoriano" />
+              Pretoriano
+            </label>
+
+            <label class="funcao-item">
+              <input type="checkbox" [(ngModel)]="dados.adjutor" />
+              Adjutor
+            </label>
+
+            <label class="funcao-item">
+              <input type="checkbox" [(ngModel)]="dados.mesc" />
+              MESC
+            </label>
+
+            <label class="funcao-item">
+              <input type="checkbox" [(ngModel)]="dados.catequista" />
+              Catequista
+            </label>
+
+            <label class="funcao-item">
+              <input type="checkbox" [(ngModel)]="dados.coroinha" />
+              Coroinha
+            </label>
+          </div>
+        </div>
+      }
+    }
+
+    <!-- ETAPA 2 -->
+    @if (etapa === 2) {
+      <div class="form-section">
+        <h4>Cargo e unidade</h4>
+
+        <div class="form-grid">
+          <div>
+            <label>Unidade</label>
+            <select class="form-select" [(ngModel)]="dados.unidadeId">
+              <option value="">Selecione</option>
+
+              @for (unidade of unidades; track unidade.id) {
+                <option [value]="unidade.id">
+                  {{ unidade.tipo }} - {{ unidade.nome }}
+                  @if (unidade.cidade) { ({{ unidade.cidade }}) }
+                </option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label>Cargo</label>
+            <select class="form-select" [(ngModel)]="dados.cargoId">
+              <option [ngValue]="null">Selecione</option>
+
+              @for (cargo of cargos; track cargo.id) {
+                <option [ngValue]="cargo.id">{{ cargo.nome }}</option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label>N&uacute;mero do mandato</label>
+            <input
+              type="number"
+              class="form-control"
+              min="1"
+              [(ngModel)]="dados.numeroMandato"
+            />
+          </div>
+
+          <div>
+            <label>In&iacute;cio do mandato</label>
+            <input
+              type="date"
+              class="form-control"
+              [(ngModel)]="dados.dataInicio"
+            />
+          </div>
+
+          <div>
+            <label>Fim do mandato</label>
+            <input
+              type="date"
+              class="form-control"
+              [(ngModel)]="dados.dataFim"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h4>Justificativa</h4>
+
+        <textarea
+          rows="4"
+          class="form-control"
+          placeholder="Explique por que esta pessoa deve assumir o cargo."
+          [(ngModel)]="dados.justificativa"
+        ></textarea>
+      </div>
+    }
+
+    <!-- ETAPA 3 -->
+    @if (etapa === 3) {
+      <div class="form-section">
+        <h4>Revis&atilde;o da proposta</h4>
+
+        <div class="review-card">
+
+          <div class="review-linha">
+            <span>Origem</span>
+            <strong>
+              {{ origem === 'MEMBRO_EXISTENTE'
+                  ? 'Membro j&aacute; cadastrado'
+                  : 'Pessoa nova' }}
+            </strong>
+          </div>
+
+          <div class="review-linha">
+            <span>Nome</span>
+            <strong>
+              {{ origem === 'MEMBRO_EXISTENTE'
+                  ? (membroSelecionado?.nome ?? '-')
+                  : dados.pessoaNome }}
+            </strong>
+          </div>
+
+          @if (origem === 'PESSOA_NOVA' && dados.pessoaCpf) {
+            <div class="review-linha">
+              <span>CPF</span>
+              <strong>{{ dados.pessoaCpf }}</strong>
+            </div>
+          }
+
+          <div class="review-linha">
+            <span>Unidade</span>
+            <strong>{{ nomeUnidadeSelecionada }}</strong>
+          </div>
+
+          <div class="review-linha">
+            <span>Cargo</span>
+            <strong>{{ nomeCargoSelecionado }}</strong>
+          </div>
+
+          <div class="review-linha">
+            <span>In&iacute;cio do mandato</span>
+            <strong>{{ dados.dataInicio }}</strong>
+          </div>
+
+          @if (dados.justificativa) {
+            <div class="review-linha">
+              <span>Justificativa</span>
+              <strong>{{ dados.justificativa }}</strong>
+            </div>
+          }
+        </div>
+
+        <div class="aviso-analise">
+          <i class="bi bi-info-circle"></i>
+          <span>
+            A proposta ser&aacute; enviada como <strong>pendente</strong>.
+            S&oacute; entra na lista de oficiais depois que um perfil
+            autorizado aprovar.
+          </span>
+        </div>
+      </div>
+    }
+
+    <div class="form-actions">
+      @if (etapa < 3) {
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="proximaEtapa()"
+          [disabled]="!etapaValida"
+        >
+          Pr&oacute;ximo
+        </button>
+      }
+
+      @if (etapa === 3) {
+        <button
+          type="button"
+          class="btn btn-success"
+          (click)="enviar()"
+          [disabled]="carregando"
+        >
+          @if (carregando) {
+            Enviando...
+          } @else {
+            Enviar proposta
+          }
+        </button>
+      }
+    </div>
+
+  </div>
+</div>

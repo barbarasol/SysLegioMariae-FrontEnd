@@ -1,0 +1,30 @@
+<nav aria-label="breadcrumb" class="breadcrumb-nav">
+  <ol class="breadcrumb">
+
+    @for (item of itens; track item.label; let i = $index) {
+
+      <li
+        class="breadcrumb-item"
+        [class.active]="ehUltimo(i)"
+        [attr.aria-current]="ehUltimo(i) ? 'page' : null"
+      >
+        @if (temLink(i, item)) {
+          <a [routerLink]="item.routerLink" class="breadcrumb-link">
+            @if (item.icone) {
+              <i class="bi" [class]="item.icone"></i>
+            }
+            {{ item.label }}
+          </a>
+        } @else {
+          <span class="breadcrumb-atual">
+            @if (item.icone) {
+              <i class="bi" [class]="item.icone"></i>
+            }
+            {{ item.label }}
+          </span>
+        }
+      </li>
+    }
+
+  </ol>
+</nav>

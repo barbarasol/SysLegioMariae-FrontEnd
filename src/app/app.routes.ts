@@ -14,6 +14,9 @@ import { VisualizarSolicitacao } from './pages/afiliacao/solicitacoes-unidades/v
 import { authGuard } from './core/guards/auth.guard';
 import { ListagemUsuarios } from './pages/usuarios-plataforma/listagem-usuarios/listagem-usuarios';
 import { NovoUsuario } from './pages/usuarios-plataforma/novo-usuario/novo-usuario';
+import { Oficiais } from './pages/oficiais/oficiais';
+import { NovoOficial } from './pages/oficiais/novo-oficial/novo-oficial';
+import { SolicitacoesOficiais } from './pages/oficiais/solicitacoes-oficiais/solicitacoes-oficiais';
 
 export const routes: Routes = [
   {
@@ -94,6 +97,18 @@ export const routes: Routes = [
       {
         path: 'novo-usuario',
         component: NovoUsuario
+      },
+      {
+        path: 'oficiais',
+        component: Oficiais
+      },
+      {
+        path: 'novo-oficial',
+        component: NovoOficial
+      },
+      {
+        path: 'solicitacoes-oficiais',
+        component: SolicitacoesOficiais
       }
     ]
   }
