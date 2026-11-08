@@ -1,0 +1,109 @@
+<div class="visitas-container">
+  <header class="page-header">
+    <div>
+      <h2><i class="bi bi-calendar-check"></i> Visitas às Unidades</h2>
+      <p>Registre as visitas realizadas aos Conselhos e Praesidia, com histórico anual.</p>
+    </div>
+    <div class="atalhos">
+      <a class="btn btn-outline-primary" [routerLink]="['/numeros-unidades']" [queryParams]="{unidadeId: unidadeId}">Números das Unidades</a>
+      <a class="btn btn-outline-secondary" routerLink="/afiliacao"><i class="bi bi-arrow-left"></i> Conselhos–Praesidia</a>
+    </div>
+  </header>
+
+  <section class="painel">
+    <h3><i class="bi bi-funnel"></i> Filtros</h3>
+    <div class="filtros-grid">
+      <div><label for="tipo-visita">Tipo de unidade</label>
+        <select id="tipo-visita" class="form-select" [(ngModel)]="tipoSelecionado" (ngModelChange)="aoTrocarTipo()" [disabled]="carregandoUnidades || salvando">
+          <option value="">Todos</option>
+          @for (tipo of tipos; track tipo.codigo) { <option [value]="tipo.codigo">{{ tipo.nome }}</option> }
+        </select>
+      </div>
+      <div><label for="unidade-visita">Unidade</label>
+        <select id="unidade-visita" class="form-select" [(ngModel)]="unidadeId" (ngModelChange)="aoTrocarUnidade()" [disabled]="carregandoUnidades || salvando">
+          <option value="">Selecione uma unidade</option>
+          @for (u of unidadesDoTipo; track u.id) { <option [value]="u.id">{{ u.tipoNome }} — {{ u.nome }}</option> }
+        </select>
+      </div>
+      <div><label for="ano-visita">Ano</label>
+        <select id="ano-visita" class="form-select" [(ngModel)]="ano" (ngModelChange)="aoTrocarPeriodo()" [disabled]="salvando">
+          @for (a of anos; track a) { <option [ngValue]="a">{{ a }}</option> }
+        </select>
+      </div>
+      <div><label for="mes-visita">Mês (opcional)</label>
+        <select id="mes-visita" class="form-select" [(ngModel)]="mes" (ngModelChange)="aoTrocarPeriodo()" [disabled]="salvando">
+          <option value="">Todos os meses</option>
+          @for (nome of meses; track $index; let i = $index) { <option [value]="i+1">{{ nome }}</option> }
+        </select>
+      </div>
+    </div>
+  </section>
+
+  @if (erro) { <div class="aviso erro" role="alert"><i class="bi bi-exclamation-triangle"></i> {{ erro }}</div> }
+  @if (sucesso) { <div class="aviso sucesso" role="status"><i class="bi bi-check-circle"></i> {{ sucesso }}</div> }
+
+  @if (carregandoUnidades || carregando) {
+    <section class="painel mensagem">Carregando visitas...</section>
+  } @else if (!unidadeId) {
+    <section class="painel mensagem">Selecione uma unidade e o ano para consultar as visitas.</section>
+  } @else {
+    <section class="painel">
+      <div class="linha-cabecalho">
+        <div><h3>Visitas realizadas em {{ ano }}</h3><p>{{ visitas.length }} registro(s) no período selecionado</p></div>
+        @if (podeEditar) { <button type="button" class="btn btn-outline-primary" (click)="novo()"><i class="bi bi-plus-circle"></i> Nova visita</button> }
+      </div>
+      @if (visitas.length === 0) {
+        <p class="mensagem">Nenhuma visita registrada para este período.</p>
+      } @else {
+        <div class="tabela-scroll">
+          <table>
+            <thead><tr><th>Data</th><th>Visitantes</th><th>Observações</th><th>Ações</th></tr></thead>
+            <tbody>
+              @for (visita of visitas; track visita.id) {
+                <tr>
+                  <td>{{ visita.data_visita.slice(0,10).split('-').reverse().join('/') }}</td>
+                  <td>{{ visita.visitantes }}</td>
+                  <td>{{ visita.observacoes || '—' }}</td>
+                  <td>
+                    @if (podeEditar) {
+                      <div class="botoes-tabela">
+                        <button type="button" class="btn btn-sm btn-outline-primary" (click)="editar(visita)" [disabled]="salvando">Editar</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" (click)="excluir(visita)" [disabled]="salvando">Excluir</button>
+                      </div>
+                    } @else { <span>Consulta</span> }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    @if (podeEditar) {
+      <section class="painel">
+        <h3><i class="bi bi-pencil-square"></i> {{ editandoId ? 'Editar visita' : 'Registrar visita' }}</h3>
+        <p>Os visitantes são registrados em texto livre, conforme solicitado.</p>
+        <form (ngSubmit)="salvar()" #formVisita="ngForm">
+          <div class="form-grid">
+            <div><label for="data-visita">Data da visita *</label>
+              <input type="date" id="data-visita" name="dataVisita" class="form-control" required [(ngModel)]="form.data_visita" [disabled]="salvando" />
+            </div>
+            <div><label for="visitantes">Visitantes *</label>
+              <input id="visitantes" name="visitantes" type="text" class="form-control" maxlength="200" required [(ngModel)]="form.visitantes" placeholder="Nomes dos visitantes" [disabled]="salvando" />
+            </div>
+            <div class="full"><label for="obs-visitas">Observações</label>
+              <textarea id="obs-visitas" name="observacoes" rows="5" class="form-control" maxlength="10000" [(ngModel)]="form.observacoes" [disabled]="salvando"></textarea>
+            </div>
+          </div>
+          <div class="acoes">
+            @if (editandoId) { <button type="button" class="btn btn-outline-secondary" (click)="novo()" [disabled]="salvando">Cancelar edição</button> }
+            <button type="submit" class="btn btn-primary" [disabled]="!formVisita.valid || salvando">{{ salvando ? 'Salvando...' : editandoId ? 'Atualizar visita' : 'Salvar visita' }}</button>
+          </div>
+        </form>
+      </section>
+    } @else {
+      <p class="aviso">Seu perfil permite consultar, mas não alterar os dados desta unidade.</p>
+    }
+  }
+</div>

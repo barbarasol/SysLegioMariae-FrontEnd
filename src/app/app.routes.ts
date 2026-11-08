@@ -109,6 +109,22 @@ export const routes: Routes = [
       {
         path: 'solicitacoes-oficiais',
         component: SolicitacoesOficiais
+      },
+      {
+        path: 'numeros-unidades',
+        loadComponent: () =>
+          import('./pages/numeros-unidades/numeros-unidades')
+            .then(m => m.NumerosUnidades)
+      },
+      {
+        path: 'unidade-visitas',
+        loadComponent: () => import('./pages/unidade-visitas/unidade-visitas')
+          .then(m => m.UnidadeVisitas)
+      },
+      {
+        path: 'unidade-institucional',
+        loadComponent: () => import('./pages/unidade-institucional/unidade-institucional')
+          .then(m => m.UnidadeInstitucional)
       }
     ]
   }

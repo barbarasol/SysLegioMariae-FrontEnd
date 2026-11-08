@@ -1,0 +1,225 @@
+<div class="numeros-container">
+  <header class="page-header">
+    <div>
+      <h2><i class="bi bi-bar-chart-line"></i> Números das Unidades</h2>
+      <p>Registre e acompanhe a evolução mensal dos Conselhos e Praesidia.</p>
+    </div>
+    <a class="btn btn-outline-secondary" routerLink="/afiliacao">
+      <i class="bi bi-arrow-left"></i> Conselhos–Praesidia
+    </a>
+  </header>
+
+  <section class="painel filtros">
+    <div class="titulo-secao"><i class="bi bi-funnel"></i> Filtros</div>
+    <div class="filtros-grid">
+      <div class="campo-filtro">
+        <label for="tipoNumeros">Tipo da unidade</label>
+        <select id="tipoNumeros" class="form-select" name="tipoNumeros"
+          [(ngModel)]="tipoSelecionado" (ngModelChange)="aoTrocarTipo()"
+          [disabled]="carregandoUnidades || salvando">
+          <option value="">Todos os tipos</option>
+          @for (tipo of tipos; track tipo.codigo) {
+            <option [value]="tipo.codigo">{{ tipo.nome }}</option>
+          }
+        </select>
+      </div>
+      <div class="campo-filtro maior">
+        <label for="unidadeNumeros">Unidade legionária</label>
+        <select id="unidadeNumeros" class="form-select" name="unidadeNumeros"
+          [(ngModel)]="unidadeId" (ngModelChange)="aoTrocarUnidade()"
+          [disabled]="carregandoUnidades || salvando">
+          <option value="">Selecione uma unidade</option>
+          @for (unidade of unidadesDoTipo; track unidade.id) {
+            <option [value]="unidade.id">{{ unidade.tipoNome }} — {{ unidade.nome }}</option>
+          }
+        </select>
+      </div>
+      <div class="campo-filtro">
+        <label for="anoNumeros">Ano</label>
+        <select id="anoNumeros" class="form-select" name="anoNumeros"
+          [(ngModel)]="ano" (ngModelChange)="aoTrocarCompetencia()" [disabled]="salvando">
+          @for (anoOpcao of anos; track anoOpcao) {
+            <option [ngValue]="anoOpcao">{{ anoOpcao }}</option>
+          }
+        </select>
+      </div>
+      <div class="campo-filtro">
+        <label for="mesNumeros">Mês</label>
+        <select id="mesNumeros" class="form-select" name="mesNumeros"
+          [(ngModel)]="mes" (ngModelChange)="aoTrocarCompetencia()" [disabled]="salvando">
+          @for (nomeMes of meses; track $index; let i = $index) {
+            <option [ngValue]="i + 1">{{ nomeMes }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    @if (unidadeSelecionada) {
+      <div class="contexto-unidade">
+        <i class="bi bi-diagram-3"></i>
+        <strong>{{ unidadeSelecionada.nome }}</strong>
+        <span>{{ unidadeSelecionada.cidade || 'Localidade não informada' }}</span>
+        <span class="competencia">{{ labelMes(mes) }} / {{ ano }}</span>
+      </div>
+    }
+  </section>
+
+  @if (erro) {
+    <div class="aviso erro" role="alert"><i class="bi bi-exclamation-triangle"></i> {{ erro }}</div>
+  }
+  @if (sucesso) {
+    <div class="aviso sucesso" role="status"><i class="bi bi-check-circle"></i> {{ sucesso }}</div>
+  }
+
+  @if (carregandoUnidades) {
+    <div class="painel vazio"><i class="bi bi-arrow-repeat"></i> Carregando as unidades...</div>
+  } @else if (!unidadeId) {
+    <div class="painel vazio">
+      <i class="bi bi-diagram-3"></i>
+      <h3>Escolha uma unidade</h3>
+      <p>Selecione um Conselho ou Praesidium, o ano e o mês para consultar ou registrar seus números.</p>
+    </div>
+  } @else if (carregando) {
+    <div class="painel vazio"><i class="bi bi-arrow-repeat"></i> Carregando indicadores...</div>
+  } @else if (consultaPermitida) {
+    <section class="painel resumo">
+      <div class="resumo-topo">
+        <div>
+          <span class="rotulo">Competência selecionada</span>
+          <h3>{{ labelMes(mes) }} de {{ ano }}</h3>
+        </div>
+        <span class="estado"
+          [class.confirmado]="confirmado"
+          [class.rascunho]="registro && !confirmado">
+          @if (!registro) { Sem registro }
+          @else if (confirmado) { Confirmado }
+          @else { Rascunho }
+        </span>
+      </div>
+      @if (registro?.origem === 'VIRADA_ANO') {
+        <p class="nota"><i class="bi bi-files"></i>
+          Dados inicialmente copiados do ano anterior; confira todos os campos antes de confirmar.
+        </p>
+      }
+      @if (!permissoes.editar) {
+        <p class="nota"><i class="bi bi-shield-lock"></i>
+          Você possui acesso somente para consulta desta unidade.
+        </p>
+      }
+      @if (!registro && permissoes.editar) {
+        <p class="nota"><i class="bi bi-info-circle"></i>
+          Esta competência ainda não foi preenchida. Digite os números ou copie a última competência anterior.
+        </p>
+      }
+      <div class="indicadores-principais">
+        <div><span>Membros ativos</span><strong>{{ totalAtivos ?? '—' }}</strong></div>
+        <div><span>Auxiliares</span><strong>{{ totalAuxiliares ?? '—' }}</strong></div>
+        <div><span>Praesidia informados</span><strong>{{ valores.qtd_praesidia_total ?? '—' }}</strong></div>
+        <div><span>Origem</span><strong>{{ registro?.origem === 'VIRADA_ANO' ? 'Virada anual' : registro ? 'Manual' : 'Não iniciado' }}</strong></div>
+      </div>
+    </section>
+
+    @for (grupo of grupos; track grupo.titulo) {
+      <section class="painel indicadores">
+        <div class="titulo-secao">
+          <div>
+            <h3>{{ grupo.titulo }}</h3>
+            <p>{{ grupo.descricao }}</p>
+          </div>
+        </div>
+        <div class="campos-grid">
+          @for (campo of grupo.campos; track campo.chave) {
+            <div class="campo-numero">
+              <label [for]="campo.chave">{{ campo.titulo }}</label>
+              <input type="number" class="form-control"
+                [id]="campo.chave" [name]="campo.chave" min="0" step="1"
+                placeholder="Não informado"
+                [(ngModel)]="valores[campo.chave]"
+                (ngModelChange)="marcarAlterado()"
+                [disabled]="!podeEditar || carregando" />
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <section class="painel nota">
+      <p><i class="bi bi-info-circle"></i>
+        Atas, relatórios e visitas são administrados em módulos separados.
+        <a routerLink="/unidade-institucional" [queryParams]="{unidadeId: unidadeId}">Dados institucionais</a>
+        · <a routerLink="/unidade-visitas" [queryParams]="{unidadeId: unidadeId}">Visitas</a>
+      </p>
+    </section>
+
+    <section class="acoes-rodape painel">
+      <div>
+        <strong>{{ registro ? 'Registro existente' : 'Novo registro' }}</strong>
+        <p>{{ confirmado ? 'Período encerrado. Somente o administrador global pode reabri-lo.' : 'Ao salvar, o período fica como rascunho até a confirmação.' }}</p>
+      </div>
+      <div class="botoes-acoes">
+        @if (!registro && permissoes.editar) {
+          <button type="button" class="btn btn-outline-primary"
+            (click)="copiarAnterior()" [disabled]="salvando">
+            <i class="bi bi-files"></i> Copiar período anterior
+          </button>
+        }
+        @if (podeEditar) {
+          <button type="button" class="btn btn-primary" (click)="salvar()"
+            [disabled]="salvando">
+            <i class="bi bi-floppy"></i> Salvar rascunho
+          </button>
+        }
+        @if (registro && podeEditar) {
+          <button type="button" class="btn btn-success" (click)="confirmar()"
+            [disabled]="salvando || alterado">
+            <i class="bi bi-check-circle"></i> Confirmar competência
+          </button>
+        }
+        @if (confirmado && permissoes.reabrir) {
+          <button type="button" class="btn btn-outline-warning" (click)="reabrir()" [disabled]="salvando">
+            <i class="bi bi-unlock"></i> Reabrir para correção
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="painel historico">
+      <div class="titulo-secao">
+        <div>
+          <h3><i class="bi bi-clock-history"></i> Histórico de {{ ano }}</h3>
+          <p>Selecione um mês para consultar os números registrados.</p>
+        </div>
+      </div>
+      @if (historico.length === 0) {
+        <p class="vazio-historico">Nenhuma competência registrada para este ano.</p>
+      } @else {
+        <div class="tabela-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Competência</th>
+                <th>Status</th>
+                <th>Ativos</th>
+                <th>Auxiliares</th>
+                <th>Praesidia</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (linha of historico; track linha.id) {
+                <tr [class.selecionado]="linha.ano === ano && linha.mes === mes">
+                  <td>{{ labelMes(linha.mes) }} / {{ linha.ano }}</td>
+                  <td><span class="estado compacto" [class.confirmado]="linha.status === 'CONFIRMADO'">{{ linha.status }}</span></td>
+                  <td>{{ totalHistorico(linha) ?? '—' }}</td>
+                  <td>{{ linha.qtd_auxiliares_permanentes == null && linha.qtd_auxiliares_provisorios == null ? '—' : (linha.qtd_auxiliares_permanentes ?? 0) + (linha.qtd_auxiliares_provisorios ?? 0) }}</td>
+                  <td>{{ linha.qtd_praesidia_total ?? '—' }}</td>
+                  <td><button type="button" class="btn btn-sm btn-outline-primary"
+                    (click)="selecionarHistorico(linha)">Visualizar</button></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</div>

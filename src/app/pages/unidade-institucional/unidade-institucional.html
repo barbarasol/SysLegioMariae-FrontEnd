@@ -1,0 +1,60 @@
+<div class="institucional-container">
+  <header class="page-header">
+    <div><h2><i class="bi bi-building-check"></i> Dados Institucionais da Unidade</h2>
+      <p>Números de atas e relatórios, apresentação do último relatório e último congresso.</p>
+    </div>
+    <a class="btn btn-outline-secondary" routerLink="/afiliacao"><i class="bi bi-arrow-left"></i> Conselhos–Praesidia</a>
+  </header>
+
+  <section class="painel">
+    <h3><i class="bi bi-funnel"></i> Selecionar unidade</h3>
+    <div class="filtros-grid">
+      <div><label for="tipo-inst">Tipo</label>
+        <select id="tipo-inst" class="form-select" [(ngModel)]="tipoSelecionado" (ngModelChange)="aoTrocarTipo()" [disabled]="carregandoUnidades || salvando">
+          <option value="">Todos</option>
+          @for (t of tipos; track t.codigo) { <option [value]="t.codigo">{{ t.nome }}</option> }
+        </select>
+      </div>
+      <div><label for="unidade-inst">Unidade legionária</label>
+        <select id="unidade-inst" class="form-select" [(ngModel)]="unidadeId" (ngModelChange)="aoTrocarUnidade()" [disabled]="carregandoUnidades || salvando">
+          <option value="">Selecione uma unidade</option>
+          @for (u of unidadesDoTipo; track u.id) { <option [value]="u.id">{{ u.tipoNome }} — {{ u.nome }}</option> }
+        </select>
+      </div>
+    </div>
+  </section>
+
+  @if (erro) { <div class="aviso erro" role="alert">{{ erro }}</div> }
+  @if (sucesso) { <div class="aviso sucesso" role="status">{{ sucesso }}</div> }
+
+  @if (carregandoUnidades || carregando) { <section class="painel mensagem">Carregando dados institucionais...</section> }
+  @else if (!unidadeId) { <section class="painel mensagem">Selecione a unidade desejada para consultar ou atualizar suas informações.</section> }
+  @else if (consultaPermitida) {
+    <section class="painel">
+      <h3>Informações permanentes da unidade</h3>
+      <p>Esses campos pertencem diretamente à tabela <code>legio.unidade_legionaria</code>, não ao histórico mensal.</p>
+      <form (ngSubmit)="salvar()">
+        <div class="campos-grid">
+          <div><label for="ultimaAta">Número da última ata</label>
+            <input type="number" min="0" step="1" id="ultimaAta" name="ultimaAta" class="form-control" [(ngModel)]="dados.num_ult_ata" [disabled]="!podeEditar || salvando" placeholder="Não informado" />
+          </div>
+          <div><label for="ultimoRelatorio">Número do último relatório</label>
+            <input type="number" min="0" step="1" id="ultimoRelatorio" name="ultimoRelatorio" class="form-control" [(ngModel)]="dados.num_ult_relatorio" [disabled]="!podeEditar || salvando" placeholder="Não informado" />
+          </div>
+          <div><label for="apresRelatorio">Data da apresentação do último relatório</label>
+            <input type="date" id="apresRelatorio" name="apresRelatorio" class="form-control" [(ngModel)]="dados.dt_apresentacao_ult_relatorio" [disabled]="!podeEditar || salvando" />
+          </div>
+          <div><label for="ultimoCongresso">Data do último congresso</label>
+            <input type="date" id="ultimoCongresso" name="ultimoCongresso" class="form-control" [(ngModel)]="dados.dt_ultimo_congresso" [disabled]="!podeEditar || salvando" />
+          </div>
+        </div>
+        <div class="acoes">
+          <a class="btn btn-outline-primary" [routerLink]="['/unidade-visitas']" [queryParams]="{unidadeId: unidadeId}">Visitas</a>
+          <a class="btn btn-outline-primary" [routerLink]="['/numeros-unidades']" [queryParams]="{unidadeId: unidadeId}">Números das Unidades</a>
+          @if (podeEditar) { <button type="submit" class="btn btn-primary" [disabled]="salvando">{{ salvando ? 'Salvando...' : 'Salvar alterações' }}</button> }
+        </div>
+      </form>
+      @if (!podeEditar) { <p class="nota">Você possui permissão somente para consultar esta unidade.</p> }
+    </section>
+  }
+</div>
