@@ -45,3 +45,8 @@ Thumbs.db
 
 # Metadados Windows
 *:Zone.Identifier
+
+# Arquivos temporários de editores
+*.swp
+*.swo
+*.swx
