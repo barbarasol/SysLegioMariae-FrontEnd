@@ -77,10 +77,25 @@
 
   <div class="content-grid">
     <div class="structure-card">
-      <div class="card-header">
+      <div class="card-header" style="flex-wrap:wrap;gap:12px">
         <div>
           <h3><i class="bi bi-diagram-3"></i> Estrutura</h3>
-          <p>Relação hierárquica entre as unidades cadastradas.</p>
+          <p>
+            @if (modoOrdenacao === 'estado') {
+              Ordenação por UF e nome da unidade. Selecione “Hierarquia” para visualizar os vínculos pai/filho.
+            } @else {
+              Relação hierárquica de unidades, com irmãos ordenados por UF e nome.
+            }
+          </p>
+        </div>
+        <div style="width:100%;max-width:250px">
+          <label for="modoOrdenacaoEstrutura">Organizar estrutura</label>
+          <select id="modoOrdenacaoEstrutura" class="form-select"
+                  name="modoOrdenacaoEstrutura"
+                  [(ngModel)]="modoOrdenacao" (ngModelChange)="aoTrocarOrdenacao()">
+            <option value="estado">UF + Nome (alfabética)</option>
+            <option value="hierarquia">Hierarquia (pai → filhos)</option>
+          </select>
         </div>
       </div>
 
@@ -103,8 +118,9 @@
                 <span class="node-type">{{ unidade.tipoNome }}</span>
                 <strong>{{ unidade.nome }}</strong>
                 <span>
-                  {{ unidade.cidade || '-' }}
-                  @if (unidade.estadoRegiao) { — {{ unidade.estadoRegiao }} }
+                  {{ unidade.ufSigla || unidade.estadoRegiao || '-' }} —
+                  {{ unidade.cidade || '-' }} —
+                  {{ unidade.subdivisaoLocalNome || 'SUBDIVISÃO NÃO INFORMADA' }}
                 </span>
               </div>
 
@@ -155,11 +171,15 @@
           </div>
           <div class="info-item">
             <span>Localidade</span>
-            <strong>{{ unidadeSelecionada.cidade || '-' }}</strong>
+            <strong>
+              {{ unidadeSelecionada.ufSigla || unidadeSelecionada.estadoRegiao || '-' }} —
+              {{ unidadeSelecionada.cidade || '-' }} —
+              {{ unidadeSelecionada.subdivisaoLocalNome || 'SUBDIVISÃO NÃO INFORMADA' }}
+            </strong>
           </div>
           <div class="info-item">
             <span>Divisão/UF</span>
-            <strong>{{ unidadeSelecionada.estadoRegiao || '-' }}</strong>
+            <strong>{{ unidadeSelecionada.ufSigla || unidadeSelecionada.estadoRegiao || '-' }}</strong>
           </div>
           <div class="info-item">
             <span>Status</span>
@@ -174,14 +194,18 @@
           <button class="btn btn-outline-danger" (click)="excluir(unidadeSelecionada)">
             <i class="bi bi-trash"></i> Excluir
           </button>
-          <a class="btn btn-outline-primary"
-             [routerLink]="['/unidade-visitas']"
-             [queryParams]="{ unidadeId: unidadeSelecionada.id }">
+          <a
+            class="btn btn-outline-primary"
+            [routerLink]="['/unidade-visitas']"
+            [queryParams]="{ unidadeId: unidadeSelecionada.id }"
+          >
             <i class="bi bi-calendar-check"></i> Visitas
           </a>
-          <a class="btn btn-outline-primary"
-             [routerLink]="['/unidade-institucional']"
-             [queryParams]="{ unidadeId: unidadeSelecionada.id }">
+          <a
+            class="btn btn-outline-primary"
+            [routerLink]="['/unidade-institucional']"
+            [queryParams]="{ unidadeId: unidadeSelecionada.id }"
+          >
             <i class="bi bi-card-checklist"></i> Institucional
           </a>
         </div>

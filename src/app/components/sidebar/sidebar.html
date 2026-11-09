@@ -8,6 +8,7 @@
     />
     
     <p>Sys Legio Mariae</p>
+    <app-versao-atual></app-versao-atual>
   </div>
 
   <nav class="sidebar-menu">
@@ -100,6 +101,9 @@
       <span>Gerenciamento Usuários Plataforma</span>
 
     </a>
+
+    <!-- Exibido somente para usuários com perfil global PLATFORM_OWNER. -->
+    <app-platform-owner-menu></app-platform-owner-menu>
 
   </nav>
 

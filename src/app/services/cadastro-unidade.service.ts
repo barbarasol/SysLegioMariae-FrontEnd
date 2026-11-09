@@ -44,6 +44,8 @@ export interface UnidadeEstrutura {
   unidadeSuperiorNome: string | null;
   cidade: string | null;
   estadoRegiao: string | null;
+  ufSigla: string | null;
+  subdivisaoLocalNome: string | null;
   statusAprovacao: string;
   ativo: boolean;
 }
@@ -63,6 +65,13 @@ export interface UnidadeDetalhe {
   ufId: string;
   subdivisaoLocalId: string | null;
   codigoPostal: string | null;
+  sedeEnderecoProprio: boolean;
+  sedeSubdivisaoLocalId: string | null;
+  sedeCodigoPostal: string | null;
+  sedeLogradouro: string | null;
+  sedeNumeroLogradouro: string | null;
+  sedeComplemento: string | null;
+  sedeBairro: string | null;
   dataConstituicao: string | null;
   dataElevacao: string | null;
   diaReuniaoId: string | null;
@@ -141,6 +150,11 @@ export interface IgrejaOpcao {
   numeroLogradouro: string | null;
   complemento: string | null;
   bairro: string | null;
+  celular: string | null;
+  telefone: string | null;
+  telefone2: string | null;
+  email: string | null;
+  site: string | null;
 }
 
 export interface CriarUfRequest {
@@ -192,6 +206,15 @@ export interface CriarUnidadeRequest {
   site?: string | null;
   municipioId: string;
   igrejaId: string;
+  subdivisaoLocalId?: string | null;
+  sedeEnderecoProprio?: boolean;
+  copiarEnderecoParoquia?: boolean;
+  sedeSubdivisaoLocalId?: string | null;
+  sedeCodigoPostal?: string | null;
+  sedeLogradouro?: string | null;
+  sedeNumeroLogradouro?: string | null;
+  sedeComplemento?: string | null;
+  sedeBairro?: string | null;
   dataConstituicao: string;
   dataElevacao?: string | null;
   diaReuniaoId?: string | null;
@@ -412,6 +435,14 @@ export class CadastroUnidadeService {
         params,
         withCredentials: true
       }
+    );
+  }
+
+  atualizarIgreja(id: string, payload: CriarIgrejaRequest): Observable<IgrejaOpcao> {
+    return this.http.put<IgrejaOpcao>(
+      `${this.baseUrl}/igrejas/${encodeURIComponent(id)}`,
+      payload,
+      { withCredentials: true }
     );
   }
 

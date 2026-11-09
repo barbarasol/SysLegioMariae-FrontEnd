@@ -30,6 +30,7 @@ import { mensagemDeErro } from '../../../services/usuario.service';
 export class NovaUnidade implements OnInit {
   etapa = 1;
   modo: 'novo' | 'editar' | 'excluir' = 'novo';
+  subdivisaoLocalAlteradaPeloUsuario = false;
   unidadeId: string | null = null;
   // Status real retornado pelo backend ao editar/excluir uma unidade.
   statusAprovacao: string | null = null;
@@ -52,6 +53,18 @@ export class NovaUnidade implements OnInit {
 
   solicitacao = this.novaSolicitacao();
   novaParoquia = this.novaParoquiaVazia();
+  exibirEdicaoParoquia = false;
+  salvandoEdicaoParoquia = false;
+  pesquisandoCepEdicao = false;
+  mensagemCepEdicao = '';
+  resultadosCepEdicao: CodigoPostalOpcao[] = [];
+  private cepEdicaoSeq = 0;
+  igrejaEditandoId: string | null = null;
+  igrejaEdicao = {
+    nome: '', padre: '', codigoPostal: '', subdivisaoLocalId: '',
+    logradouro: '', numeroLogradouro: '', complemento: '', bairro: '',
+    celular: '', telefone: '', telefone2: '', email: '', site: ''
+  };
 
   filtroMunicipio = '';
   filtroSubdivisao = '';
@@ -78,6 +91,11 @@ export class NovaUnidade implements OnInit {
   codigoPostalEncontrado: CodigoPostalOpcao | null = null;
   codigoPostalNovo = false;
   mensagemCodigoPostal = '';
+  pesquisandoCepSede = false;
+  mensagemCepSede = '';
+  resultadosCepSede: CodigoPostalOpcao[] = [];
+  private cepSedeSeq = 0;
+  private cepParoquiaSeq = 0;
 
   exibirCadastroParoquia = false;
   exibirNovaUf = false;
@@ -158,6 +176,14 @@ export class NovaUnidade implements OnInit {
       municipioId: '',
       subdivisaoLocalId: '',
       igrejaId: '',
+      sedeEnderecoProprio: false,
+      copiarEnderecoParoquia: false,
+      sedeSubdivisaoLocalId: '',
+      sedeCodigoPostal: '',
+      sedeLogradouro: '',
+      sedeNumeroLogradouro: '',
+      sedeComplemento: '',
+      sedeBairro: '',
       tipoLogradouro: '',
       logradouro: '',
       bairro: '',
@@ -425,6 +451,8 @@ export class NovaUnidade implements OnInit {
         !!this.solicitacao.igrejaId &&
         !!this.solicitacao.dataFundacao &&
         (!this.exigeDataElevacao || !!this.solicitacao.dataElevacao) &&
+        (!this.solicitacao.sedeEnderecoProprio ||
+          !!this.solicitacao.sedeLogradouro.trim()) &&
         this.codigoPostalBrasilValido
       );
     }
@@ -453,11 +481,13 @@ export class NovaUnidade implements OnInit {
   }
 
   aoTrocarPais(): void {
+    this.fecharEdicaoParoquia();
     this.solicitacao.codigoPostal = '';
     this.solicitacao.codigoPostalSelecaoId = '';
     this.solicitacao.ufId = '';
     this.solicitacao.municipioId = '';
     this.solicitacao.subdivisaoLocalId = '';
+    this.solicitacao.sedeSubdivisaoLocalId = '';
     this.solicitacao.igrejaId = '';
     this.solicitacao.tipoLogradouro = '';
     this.solicitacao.logradouro = '';
@@ -487,6 +517,7 @@ export class NovaUnidade implements OnInit {
   aoTrocarUf(): void {
     this.solicitacao.municipioId = '';
     this.solicitacao.subdivisaoLocalId = '';
+    this.solicitacao.sedeSubdivisaoLocalId = '';
     this.solicitacao.igrejaId = '';
 
     this.municipios = [];
@@ -510,7 +541,9 @@ export class NovaUnidade implements OnInit {
   }
 
   aoTrocarMunicipio(): void {
+    this.fecharEdicaoParoquia();
     this.solicitacao.subdivisaoLocalId = '';
+    this.solicitacao.sedeSubdivisaoLocalId = '';
     this.solicitacao.igrejaId = '';
 
     this.subdivisoesLocais = [];
@@ -530,16 +563,16 @@ export class NovaUnidade implements OnInit {
   }
 
   aoTrocarSubdivisao(): void {
+    this.subdivisaoLocalAlteradaPeloUsuario = true;
+    // A seleção geral identifica a RA da unidade. Caso a sede seja própria,
+    // mantenha seu seletor sincronizado para não salvar o valor antigo.
+    if (this.solicitacao.sedeEnderecoProprio) {
+      this.solicitacao.sedeSubdivisaoLocalId =
+        this.solicitacao.subdivisaoLocalId || '';
+    }
     // A lista das Igrejas é municipal, não restrita à Região Administrativa.
     // Uma Igreja antiga pode ter subdivisao_local_id NULL.
-    const igreja = this.igrejaSelecionada;
-    if (
-      igreja?.subdivisaoLocalId &&
-      this.solicitacao.subdivisaoLocalId &&
-      igreja.subdivisaoLocalId !== this.solicitacao.subdivisaoLocalId
-    ) {
-      this.solicitacao.igrejaId = '';
-    }
+    // A RA da sede pode ser diferente da RA da paróquia; manter igrejaId.
     this.fecharCadastroParoquia();
 
     if (this.solicitacao.municipioId) {
@@ -548,15 +581,20 @@ export class NovaUnidade implements OnInit {
   }
 
   aoTrocarIgreja(): void {
+    this.fecharEdicaoParoquia();
     const igreja = this.igrejaSelecionada;
 
     if (!igreja) {
       return;
     }
 
-    if (igreja.subdivisaoLocalId) {
-      this.solicitacao.subdivisaoLocalId =
-        igreja.subdivisaoLocalId;
+    // A troca da paróquia durante uma edição não deve restaurar a RA
+    // da paróquia por cima da RA já registrada na unidade.
+    if (igreja.subdivisaoLocalId &&
+        this.modo === 'novo' &&
+        !this.subdivisaoLocalAlteradaPeloUsuario &&
+        !this.solicitacao.sedeEnderecoProprio) {
+      this.solicitacao.subdivisaoLocalId = igreja.subdivisaoLocalId;
     }
 
     if (igreja.codigoPostal) {
@@ -590,6 +628,10 @@ export class NovaUnidade implements OnInit {
     }
 
     this.limparEstadoCodigoPostal();
+    this.cepParoquiaSeq++;
+    if (this.ehBrasil && this.solicitacao.codigoPostal.replace(/\D/g, '').length === 8) {
+      this.pesquisarCodigoPostal();
+    }
   }
 
   pesquisarCodigoPostal(): void {
@@ -623,6 +665,7 @@ export class NovaUnidade implements OnInit {
       return;
     }
 
+    const seq = ++this.cepParoquiaSeq;
     this.pesquisandoCodigoPostal = true;
     this.mensagemCodigoPostal = '';
     this.codigoPostalResultados = [];
@@ -634,12 +677,15 @@ export class NovaUnidade implements OnInit {
       )
       .pipe(
         finalize(() => {
-          this.pesquisandoCodigoPostal = false;
-          this.cdr.detectChanges();
+          if (seq === this.cepParoquiaSeq) {
+            this.pesquisandoCodigoPostal = false;
+            this.cdr.detectChanges();
+          }
         })
       )
       .subscribe({
         next: (resultado) => {
+          if (seq !== this.cepParoquiaSeq) return;
           const encontrados = Array.isArray(resultado?.resultados)
             ? resultado.resultados
             : [];
@@ -668,6 +714,7 @@ export class NovaUnidade implements OnInit {
             `${encontrados.length} ocorrências encontradas. Selecione abaixo o endereço correspondente.`;
         },
         error: (error: HttpErrorResponse) => {
+          if (seq !== this.cepParoquiaSeq) return;
           this.toastService.erro(
             mensagemDeErro(
               error,
@@ -881,6 +928,10 @@ export class NovaUnidade implements OnInit {
           ].sort((a, b) => a.nome.localeCompare(b.nome));
 
           this.solicitacao.subdivisaoLocalId = subdivisao.id;
+          this.subdivisaoLocalAlteradaPeloUsuario = true;
+          if (this.solicitacao.sedeEnderecoProprio) {
+            this.solicitacao.sedeSubdivisaoLocalId = subdivisao.id;
+          }
           this.exibirNovaSubdivisao = false;
           this.carregarIgrejas();
 
@@ -899,7 +950,252 @@ export class NovaUnidade implements OnInit {
       });
   }
 
+  /** A alteração só substitui o endereço da unidade por ordem explícita. */
+  aoAlterarSedePropria(marcado: boolean): void {
+    this.solicitacao.sedeEnderecoProprio = !!marcado;
+    this.solicitacao.copiarEnderecoParoquia = false;
+    if (marcado && !this.solicitacao.sedeSubdivisaoLocalId) {
+      this.solicitacao.sedeSubdivisaoLocalId =
+        this.solicitacao.subdivisaoLocalId || '';
+    }
+  }
+
+  /** Quando o usuário escolher a RA da sede, ela também é a RA da unidade. */
+  aoTrocarSubdivisaoSede(): void {
+    this.solicitacao.subdivisaoLocalId =
+      this.solicitacao.sedeSubdivisaoLocalId || '';
+    this.subdivisaoLocalAlteradaPeloUsuario = true;
+  }
+
+  copiarEnderecoDaParoquia(): void {
+    const igreja = this.igrejaSelecionada;
+    if (!igreja) {
+      this.toastService.erro('Selecione primeiro a Igreja/Paróquia/Sede.');
+      return;
+    }
+    this.solicitacao.sedeEnderecoProprio = false;
+    this.solicitacao.copiarEnderecoParoquia = true;
+    this.toastService.sucesso('A cópia do endereço será efetivada ao salvar a unidade.');
+  }
+
+  aoAlterarCepSede(valor: string): void {
+    const bruto = String(valor ?? '');
+    if (this.ehBrasil) {
+      const numeros = bruto.replace(/\D/g, '').slice(0, 8);
+      this.solicitacao.sedeCodigoPostal = numeros.length > 5
+        ? `${numeros.slice(0, 5)}-${numeros.slice(5)}` : numeros;
+    } else {
+      this.solicitacao.sedeCodigoPostal = bruto.toUpperCase().slice(0, 20);
+    }
+    this.cepSedeSeq++;
+    this.resultadosCepSede = [];
+    this.mensagemCepSede = '';
+    if (this.ehBrasil && this.solicitacao.sedeCodigoPostal.replace(/\D/g, '').length === 8) {
+      this.pesquisarCepSede();
+    }
+  }
+
+  pesquisarCepSede(): void {
+    if (!this.ehBrasil) {
+      this.mensagemCepSede = 'Para outros países, informe o código postal e endereço manualmente.';
+      return;
+    }
+    const cep = this.solicitacao.sedeCodigoPostal.replace(/\D/g, '');
+    if (cep.length !== 8 || !this.solicitacao.paisId) {
+      this.toastService.erro('Informe um CEP brasileiro de 8 dígitos.');
+      return;
+    }
+    const seq = ++this.cepSedeSeq;
+    this.pesquisandoCepSede = true;
+    this.mensagemCepSede = '';
+    this.cadastroUnidadeService.buscarCodigosPostais(this.solicitacao.paisId, cep)
+      .pipe(finalize(() => {
+        if (seq === this.cepSedeSeq) {
+          this.pesquisandoCepSede = false;
+          this.cdr.detectChanges();
+        }
+      })).subscribe({
+        next: (resposta) => {
+          if (seq !== this.cepSedeSeq) return;
+          const encontrados = resposta.resultados || [];
+          if (!encontrados.length) {
+            this.mensagemCepSede = 'CEP não encontrado. Confira os dígitos.';
+            return;
+          }
+          const validos = encontrados.filter(item =>
+            item.municipioId === this.solicitacao.municipioId &&
+            item.ufId === this.solicitacao.ufId
+          );
+          if (!validos.length) {
+            this.mensagemCepSede = 'O CEP informado pertence a outro município/UF. Confira a localização da sede.';
+            return;
+          }
+          this.resultadosCepSede = validos;
+          if (validos.length === 1) this.aplicarCepSede(validos[0]);
+          else this.mensagemCepSede = 'Há mais de uma RA correspondente. Selecione o endereço correto.';
+        },
+        error: (erro: HttpErrorResponse) => {
+          if (seq === this.cepSedeSeq) this.mensagemCepSede = mensagemDeErro(erro, 'Erro ao consultar CEP da sede.');
+        }
+      });
+  }
+
+  selecionarCepSede(id: string): void {
+    const item = this.resultadosCepSede.find(x => x.id === id);
+    if (item) this.aplicarCepSede(item);
+  }
+
+  private aplicarCepSede(item: CodigoPostalOpcao): void {
+    this.solicitacao.sedeCodigoPostal = item.codigoPostal;
+    this.solicitacao.sedeLogradouro = (item.logradouro ?? '').toLocaleUpperCase('pt-BR');
+    this.solicitacao.sedeBairro = (item.bairro ?? '').toLocaleUpperCase('pt-BR');
+    // CEP sem mapeamento de RA não apaga uma RA escolhida manualmente.
+    if (item.subdivisaoLocalId) {
+      this.solicitacao.sedeSubdivisaoLocalId = item.subdivisaoLocalId;
+      this.solicitacao.subdivisaoLocalId = item.subdivisaoLocalId;
+      this.subdivisaoLocalAlteradaPeloUsuario = true;
+    }
+    this.resultadosCepSede = [];
+    this.mensagemCepSede = item.ufSigla?.toUpperCase() === 'DF' && !item.subdivisaoLocalId
+      ? 'CEP localizado, mas sem RA identificada. Escolha a subdivisão da sede manualmente.'
+      : 'Endereço da sede localizado. Confira número, complemento e subdivisão.';
+  }
+
+  abrirEdicaoParoquia(): void {
+    const atual = this.igrejaSelecionada;
+    if (!atual || !this.solicitacao.municipioId) return;
+    this.fecharCadastroParoquia();
+    this.igrejaEditandoId = atual.id;
+    this.igrejaEdicao = {
+      nome: atual.nome ?? '', padre: atual.padre ?? '',
+      codigoPostal: atual.codigoPostal ?? '', subdivisaoLocalId: atual.subdivisaoLocalId ?? '',
+      logradouro: atual.logradouro ?? '', numeroLogradouro: atual.numeroLogradouro ?? '',
+      complemento: atual.complemento ?? '', bairro: atual.bairro ?? '',
+      celular: atual.celular ?? '', telefone: atual.telefone ?? '',
+      telefone2: atual.telefone2 ?? '', email: atual.email ?? '', site: atual.site ?? ''
+    };
+    this.cepEdicaoSeq++;
+    this.resultadosCepEdicao = [];
+    this.mensagemCepEdicao = '';
+    this.exibirEdicaoParoquia = true;
+  }
+
+  fecharEdicaoParoquia(): void {
+    this.cepEdicaoSeq++;
+    this.exibirEdicaoParoquia = false;
+    this.igrejaEditandoId = null;
+    this.resultadosCepEdicao = [];
+    this.mensagemCepEdicao = '';
+  }
+
+  aoAlterarCepEdicao(valor: string): void {
+    const texto = String(valor ?? '');
+    if (this.ehBrasil) {
+      const digitos = texto.replace(/\D/g, '').slice(0, 8);
+      this.igrejaEdicao.codigoPostal = digitos.length > 5
+        ? `${digitos.slice(0, 5)}-${digitos.slice(5)}` : digitos;
+    } else this.igrejaEdicao.codigoPostal = texto.toUpperCase().slice(0, 20);
+    this.cepEdicaoSeq++;
+    this.resultadosCepEdicao = [];
+    this.mensagemCepEdicao = '';
+    if (this.ehBrasil && this.igrejaEdicao.codigoPostal.replace(/\D/g, '').length === 8) {
+      this.pesquisarCepEdicao();
+    }
+  }
+
+  pesquisarCepEdicao(): void {
+    if (!this.ehBrasil) {
+      this.mensagemCepEdicao = 'Para outros países, preencha o código postal manualmente.';
+      return;
+    }
+    const cep = this.igrejaEdicao.codigoPostal.replace(/\D/g, '');
+    if (cep.length !== 8 || !this.solicitacao.paisId) {
+      this.toastService.erro('Informe um CEP de 8 dígitos.');
+      return;
+    }
+    const seq = ++this.cepEdicaoSeq;
+    this.pesquisandoCepEdicao = true;
+    this.cadastroUnidadeService.buscarCodigosPostais(this.solicitacao.paisId, cep)
+      .pipe(finalize(() => {
+        if (seq === this.cepEdicaoSeq) {
+          this.pesquisandoCepEdicao = false;
+          this.cdr.detectChanges();
+        }
+      })).subscribe({
+        next: resposta => {
+          if (seq !== this.cepEdicaoSeq || !this.exibirEdicaoParoquia) return;
+          const encontrados = (resposta.resultados ?? []).filter(item =>
+            item.ufId === this.solicitacao.ufId &&
+            item.municipioId === this.solicitacao.municipioId
+          );
+          this.resultadosCepEdicao = encontrados;
+          if (!encontrados.length) {
+            this.mensagemCepEdicao = 'CEP não encontrado neste município. Confira os dados da paróquia.';
+          } else if (encontrados.length === 1) {
+            this.aplicarCepEdicao(encontrados[0]);
+          } else {
+            this.mensagemCepEdicao = 'Selecione a ocorrência / Região Administrativa correspondente.';
+          }
+        },
+        error: (erro: HttpErrorResponse) => {
+          if (seq === this.cepEdicaoSeq) this.mensagemCepEdicao = mensagemDeErro(erro, 'Erro ao pesquisar CEP.');
+        }
+      });
+  }
+
+  selecionarCepEdicao(id: string): void {
+    const item = this.resultadosCepEdicao.find(x => x.id === id);
+    if (item) this.aplicarCepEdicao(item);
+  }
+
+  private aplicarCepEdicao(item: CodigoPostalOpcao): void {
+    this.igrejaEdicao.codigoPostal = item.codigoPostal;
+    this.igrejaEdicao.logradouro = (item.logradouro ?? '').toLocaleUpperCase('pt-BR');
+    this.igrejaEdicao.bairro = (item.bairro ?? '').toLocaleUpperCase('pt-BR');
+    this.igrejaEdicao.subdivisaoLocalId = item.subdivisaoLocalId ?? '';
+    this.resultadosCepEdicao = [];
+    this.mensagemCepEdicao = item.ufSigla?.toUpperCase() === 'DF' && !item.subdivisaoLocalId
+      ? 'CEP localizado, mas sem RA identificada. Selecione a RA manualmente.'
+      : 'CEP localizado. Confira número, complemento e Região Administrativa.';
+  }
+
+  salvarEdicaoParoquia(): void {
+    if (!this.igrejaEditandoId || this.salvandoEdicaoParoquia || !this.igrejaEdicao.nome.trim()) return;
+    const id = this.igrejaEditandoId;
+    this.salvandoEdicaoParoquia = true;
+    this.cadastroUnidadeService.atualizarIgreja(id, {
+      nome: this.igrejaEdicao.nome.trim().toLocaleUpperCase('pt-BR'),
+      padre: this.igrejaEdicao.padre.trim().toLocaleUpperCase('pt-BR') || null,
+      municipioId: this.solicitacao.municipioId,
+      subdivisaoLocalId: this.igrejaEdicao.subdivisaoLocalId || null,
+      codigoPostal: this.igrejaEdicao.codigoPostal.trim() || null,
+      logradouro: this.igrejaEdicao.logradouro.trim().toLocaleUpperCase('pt-BR') || null,
+      bairro: this.igrejaEdicao.bairro.trim().toLocaleUpperCase('pt-BR') || null,
+      numeroLogradouro: this.igrejaEdicao.numeroLogradouro.trim().toLocaleUpperCase('pt-BR') || null,
+      complemento: this.igrejaEdicao.complemento.trim().toLocaleUpperCase('pt-BR') || null,
+      celular: this.igrejaEdicao.celular.trim() || null,
+      telefone: this.igrejaEdicao.telefone.trim() || null,
+      telefone2: this.igrejaEdicao.telefone2.trim() || null,
+      email: this.igrejaEdicao.email.trim() || null,
+      site: this.igrejaEdicao.site.trim() || null
+    }).pipe(finalize(() => {
+      this.salvandoEdicaoParoquia = false;
+      this.cdr.detectChanges();
+    })).subscribe({
+      next: igreja => {
+        this.igrejas = this.igrejas.map(item => item.id === id ? igreja : item)
+          .sort((a, b) => a.nome.localeCompare(b.nome));
+        this.fecharEdicaoParoquia();
+        this.toastService.sucesso('Igreja/Paróquia/Sede atualizada. Endereço da unidade preservado.');
+      },
+      error: (erro: HttpErrorResponse) => this.toastService.erro(
+        mensagemDeErro(erro, 'Não foi possível atualizar a Igreja/Paróquia/Sede.')
+      )
+    });
+  }
+
   abrirCadastroParoquia(): void {
+    this.fecharEdicaoParoquia();
     if (!this.solicitacao.municipioId) {
       this.toastService.erro(
         'Selecione primeiro o Município/Localidade.'
@@ -1007,9 +1303,10 @@ export class NovaUnidade implements OnInit {
             this.solicitacao.bairro = igreja.bairro ?? '';
           }
 
-          if (igreja.subdivisaoLocalId) {
-            this.solicitacao.subdivisaoLocalId =
-              igreja.subdivisaoLocalId;
+          if (igreja.subdivisaoLocalId &&
+              !this.subdivisaoLocalAlteradaPeloUsuario &&
+              !this.solicitacao.sedeEnderecoProprio) {
+            this.solicitacao.subdivisaoLocalId = igreja.subdivisaoLocalId;
           }
 
           this.codigoPostalNovo = false;
@@ -1227,8 +1524,11 @@ export class NovaUnidade implements OnInit {
             );
 
             if (existe) {
-              this.solicitacao.subdivisaoLocalId =
-                subdivisaoSelecionar;
+              if (!this.solicitacao.sedeEnderecoProprio) {
+                this.solicitacao.subdivisaoLocalId = subdivisaoSelecionar;
+                // Uma nova pesquisa de CEP feita durante a edição pode atualizar a RA.
+                this.subdivisaoLocalAlteradaPeloUsuario = true;
+              }
               // A lista de Igrejas já é carregada pelo município.
               // Não repetir uma requisição filtrada pela subdivisão.
             }
@@ -1459,6 +1759,30 @@ export class NovaUnidade implements OnInit {
           this.solicitacao.site.trim() || null,
         municipioId: this.solicitacao.municipioId,
         igrejaId: this.solicitacao.igrejaId,
+        // Envia sempre a RA selecionada, inclusive na edição.
+        // Se o seletor for limpo explicitamente, envia null.
+        subdivisaoLocalId: this.solicitacao.subdivisaoLocalId || null,
+        sedeEnderecoProprio: this.solicitacao.sedeEnderecoProprio,
+        copiarEnderecoParoquia: this.modo === 'editar' && this.solicitacao.copiarEnderecoParoquia,
+        // Na sede própria, prioriza o seletor da sede; usa o seletor geral
+        // como reserva para impedir que uma seleção válida seja descartada.
+        sedeSubdivisaoLocalId: this.solicitacao.sedeEnderecoProprio
+          ? (
+              this.solicitacao.sedeSubdivisaoLocalId ||
+              this.solicitacao.subdivisaoLocalId ||
+              null
+            )
+          : null,
+        sedeCodigoPostal: this.solicitacao.sedeEnderecoProprio
+          ? (this.solicitacao.sedeCodigoPostal.trim() || null) : null,
+        sedeLogradouro: this.solicitacao.sedeEnderecoProprio
+          ? (this.solicitacao.sedeLogradouro.trim() || null) : null,
+        sedeNumeroLogradouro: this.solicitacao.sedeEnderecoProprio
+          ? (this.solicitacao.sedeNumeroLogradouro.trim() || null) : null,
+        sedeComplemento: this.solicitacao.sedeEnderecoProprio
+          ? (this.solicitacao.sedeComplemento.trim() || null) : null,
+        sedeBairro: this.solicitacao.sedeEnderecoProprio
+          ? (this.solicitacao.sedeBairro.trim() || null) : null,
         dataConstituicao: this.solicitacao.dataFundacao,
         dataElevacao: this.exigeDataElevacao ? this.solicitacao.dataElevacao : null,
         diaReuniaoId:
@@ -1573,8 +1897,20 @@ export class NovaUnidade implements OnInit {
           this.solicitacao.paisId = unidade.paisId;
           this.solicitacao.ufId = unidade.ufId;
           this.solicitacao.municipioId = unidade.municipioId;
-          this.solicitacao.subdivisaoLocalId = unidade.subdivisaoLocalId ?? '';
+          // Priorizar a RA efetivamente gravada em unidade_legionaria.
+          // subdivisaoLocalId do detalhe é a RA da paróquia.
+          this.solicitacao.subdivisaoLocalId =
+            unidade.sedeSubdivisaoLocalId ?? unidade.subdivisaoLocalId ?? '';
+          this.subdivisaoLocalAlteradaPeloUsuario = false;
           this.solicitacao.igrejaId = unidade.igrejaId;
+          this.solicitacao.sedeEnderecoProprio = unidade.sedeEnderecoProprio;
+          this.solicitacao.copiarEnderecoParoquia = false;
+          this.solicitacao.sedeSubdivisaoLocalId = unidade.sedeSubdivisaoLocalId ?? '';
+          this.solicitacao.sedeCodigoPostal = unidade.sedeCodigoPostal ?? '';
+          this.solicitacao.sedeLogradouro = unidade.sedeLogradouro ?? '';
+          this.solicitacao.sedeNumeroLogradouro = unidade.sedeNumeroLogradouro ?? '';
+          this.solicitacao.sedeComplemento = unidade.sedeComplemento ?? '';
+          this.solicitacao.sedeBairro = unidade.sedeBairro ?? '';
           this.solicitacao.codigoPostal = unidade.codigoPostal ?? '';
           this.solicitacao.codigoPostalSelecaoId = unidade.codigoPostal
             ? `UNIDADE:${unidade.id}`
@@ -1628,7 +1964,7 @@ export class NovaUnidade implements OnInit {
                   const igreja = igrejas.find((item) => item.id === unidade.igrejaId);
                   if (igreja) {
                     this.solicitacao.igrejaId = igreja.id;
-                    this.aoTrocarIgreja();
+                    // Dados da unidade já foram carregados: não reaplicar endereço da igreja.
                   }
                 },
                 error: () => (this.igrejas = [])
@@ -1688,10 +2024,14 @@ export class NovaUnidade implements OnInit {
       const igrejaAnterior = mesmoMunicipio
         ? this.solicitacao.igrejaId
         : '';
+      const preservarRaSedePropria =
+        mesmoMunicipio && this.solicitacao.sedeEnderecoProprio;
 
       this.solicitacao.ufId = codigoPostal.ufId;
       this.solicitacao.municipioId = '';
-      this.solicitacao.subdivisaoLocalId = '';
+      if (!preservarRaSedePropria) {
+        this.solicitacao.subdivisaoLocalId = '';
+      }
       this.solicitacao.igrejaId = igrejaAnterior;
       this.filtroIgreja = '';
 
@@ -1704,13 +2044,17 @@ export class NovaUnidade implements OnInit {
       // independentemente da RA sugerida pelo CEP.
       this.carregarMunicipios(
         codigoPostal.municipioId ?? undefined,
-        codigoPostal.subdivisaoLocalId ?? undefined
+        preservarRaSedePropria
+          ? undefined
+          : (codigoPostal.subdivisaoLocalId ?? undefined)
       );
     }
 
-    this.toastService.sucesso(
-      `${this.rotuloCodigoPostal} localizado com sucesso.`
-    );
+    if (codigoPostal.ufSigla?.toUpperCase() === 'DF' && !codigoPostal.subdivisaoLocalId) {
+      this.toastService.erro('CEP localizado, mas sem RA mapeada. Selecione a Região Administrativa manualmente.');
+    } else {
+      this.toastService.sucesso(`${this.rotuloCodigoPostal} localizado com sucesso.`);
+    }
   }
 
   private invalidarCodigoPostalVinculado(): void {
@@ -1760,6 +2104,7 @@ export class NovaUnidade implements OnInit {
   }
 
   private limpar(): void {
+    this.subdivisaoLocalAlteradaPeloUsuario = false;
     this.erro = '';
     this.sucesso = '';
     this.solicitacao = this.novaSolicitacao();

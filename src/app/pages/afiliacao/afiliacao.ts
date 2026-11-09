@@ -41,6 +41,9 @@ export class Afiliacao implements OnInit {
   tipoSelecionado = '';
   unidadeFiltroId = '';
   unidadeSelecionada: UnidadeEstrutura | null = null;
+  // Ordenação global por UF e nome é a visualização padrão.
+  // O modo hierárquico preserva a sequência pai -> filhos.
+  modoOrdenacao: 'estado' | 'hierarquia' = 'estado';
 
   carregando = false;
   erroCarregamento = '';
@@ -157,6 +160,10 @@ export class Afiliacao implements OnInit {
     this.recalcularEstrutura();
   }
 
+  aoTrocarOrdenacao(): void {
+    this.recalcularEstrutura();
+  }
+
   selecionarUnidade(unidade: UnidadeEstrutura): void {
     this.unidadeSelecionada = unidade;
   }
@@ -230,9 +237,7 @@ export class Afiliacao implements OnInit {
     }
 
     for (const lista of this.unidadesPorTipo.values()) {
-      lista.sort((a, b) =>
-        a.nome.localeCompare(b.nome, 'pt-BR')
-      );
+      lista.sort((a, b) => this.compararPorEstado(a, b));
     }
 
     for (const lista of this.filhosPorPai.values()) {
@@ -254,6 +259,15 @@ export class Afiliacao implements OnInit {
     if (this.unidadeFiltroId) {
       this.estruturaVisivel =
         this.achatarSubarvore(this.unidadeFiltroId);
+      return;
+    }
+
+    if (this.modoOrdenacao === 'estado') {
+      // Lista estritamente ordenada por UF -> nome; sem recuo hierárquico.
+      const base = this.tipoSelecionado ? this.unidadesDoTipo : this.unidades;
+      this.estruturaVisivel = [...base]
+        .sort((a, b) => this.compararPorEstado(a, b))
+        .map((item) => ({ ...item, nivel: 0 }));
       return;
     }
 
@@ -386,18 +400,20 @@ export class Afiliacao implements OnInit {
     }
   }
 
-  private compararEstrutura(
-    a: UnidadeEstrutura,
-    b: UnidadeEstrutura
-  ): number {
-    const ia = this.indiceTipo(a.tipo);
-    const ib = this.indiceTipo(b.tipo);
+  private compararPorEstado(a: UnidadeEstrutura, b: UnidadeEstrutura): number {
+    const ufA = (a.ufSigla || a.estadoRegiao || '').trim();
+    const ufB = (b.ufSigla || b.estadoRegiao || '').trim();
+    const estado = ufA.localeCompare(ufB, 'pt-BR', { sensitivity: 'base' });
+    if (estado !== 0) return estado;
+    const nome = a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' });
+    if (nome !== 0) return nome;
+    return a.id.localeCompare(b.id);
+  }
 
-    if (ia !== ib) {
-      return ia - ib;
-    }
-
-    return a.nome.localeCompare(b.nome, 'pt-BR');
+  private compararEstrutura(a: UnidadeEstrutura, b: UnidadeEstrutura): number {
+    // A ordem pai-filhos sempre é preservada no modo hierarquia.
+    // Entre irmãos, ordenar por UF e depois por nome da unidade.
+    return this.compararPorEstado(a, b);
   }
 
   private indiceTipo(codigo: string): number {

@@ -17,6 +17,7 @@ import { NovoUsuario } from './pages/usuarios-plataforma/novo-usuario/novo-usuar
 import { Oficiais } from './pages/oficiais/oficiais';
 import { NovoOficial } from './pages/oficiais/novo-oficial/novo-oficial';
 import { SolicitacoesOficiais } from './pages/oficiais/solicitacoes-oficiais/solicitacoes-oficiais';
+import { platformOwnerGuard } from './guards/platform-owner.guard';
 
 export const routes: Routes = [
   {
@@ -125,7 +126,15 @@ export const routes: Routes = [
         path: 'unidade-institucional',
         loadComponent: () => import('./pages/unidade-institucional/unidade-institucional')
           .then(m => m.UnidadeInstitucional)
+      },
+      {
+        path: 'gerenciamento-platform-owner/versoes',
+        canActivate: [platformOwnerGuard],
+        loadComponent: () =>
+          import('./pages/gerenciamento-platform-owner/controle-versao/controle-versao')
+            .then(m => m.ControleVersaoPagina)
       }
+
     ]
   }
 ];

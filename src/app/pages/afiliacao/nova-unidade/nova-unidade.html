@@ -709,6 +709,12 @@
                 <i class="bi bi-plus-circle"></i>
                 Incluir Igreja/Paróquia/Sede
               </button>
+              <button type="button" class="btn btn-outline-secondary"
+                      (click)="abrirEdicaoParoquia()"
+                      [disabled]="carregando || !igrejaSelecionada"
+                      title="Corrigir cadastro e endereço da Igreja/Paróquia/Sede">
+                <i class="bi bi-pencil"></i> Editar Igreja/Paróquia/Sede
+              </button>
             </div>
 
             @if (!carregandoIgrejas && solicitacao.municipioId && igrejas.length === 0) {
@@ -731,10 +737,10 @@
                 <i class="bi bi-geo-alt"></i>
 
                 <div>
-                  <strong>Endereço da Unidade</strong>
+                  <strong>Endereço da Igreja/Paróquia</strong>
                   <small>
-                    Herdado automaticamente da Igreja/Paróquia/Sede selecionada.
-                    Uma cópia será gravada na Unidade no momento do cadastro.
+                    Este endereço pertence à Igreja/Paróquia selecionada.
+                    A sede da unidade pode ser cadastrada separadamente abaixo.
                   </small>
                 </div>
               </div>
@@ -772,6 +778,208 @@
               </div>
             </div>
           }
+
+
+          <!-- EDIÇÃO INDEPENDENTE DA IGREJA: não modifica a sede da unidade. -->
+          @if (exibirEdicaoParoquia && igrejaEditandoId) {
+            <div class="full-width nova-paroquia-box" style="margin-top:14px;padding:18px;border:1px solid #c5d6e8;border-radius:12px">
+              <h4><i class="bi bi-pencil-square"></i> Editar Igreja / Paróquia / Sede</h4>
+              <small class="campo-ajuda">Correção do cadastro da paróquia, sem sobrescrever os endereços de unidades já vinculadas.</small>
+              <div class="form-grid mt-3">
+                <div class="full-width">
+                  <label>Nome <span class="text-danger">*</span></label>
+                  <input class="form-control" name="edicaoIgrejaNome" maxlength="180"
+                         [(ngModel)]="igrejaEdicao.nome" [disabled]="salvandoEdicaoParoquia">
+                </div>
+                <div>
+                  <label>Padre / Responsável</label>
+                  <input class="form-control" name="edicaoIgrejaPadre"
+                         [(ngModel)]="igrejaEdicao.padre" [disabled]="salvandoEdicaoParoquia">
+                </div>
+                <div>
+                  <label>{{ rotuloCodigoPostal }}</label>
+                  <div class="d-flex gap-2">
+                    <input class="form-control" name="edicaoIgrejaCep"
+                           [ngModel]="igrejaEdicao.codigoPostal" (ngModelChange)="aoAlterarCepEdicao($event)"
+                           [disabled]="salvandoEdicaoParoquia">
+                    <button type="button" class="btn btn-outline-primary"
+                            (click)="pesquisarCepEdicao()"
+                            [disabled]="pesquisandoCepEdicao || salvandoEdicaoParoquia">
+                      {{ pesquisandoCepEdicao ? 'Pesquisando...' : 'Pesquisar' }}
+                    </button>
+                  </div>
+                  @if (mensagemCepEdicao) { <small class="campo-ajuda d-block">{{ mensagemCepEdicao }}</small> }
+                  @if (resultadosCepEdicao.length > 1) {
+                    <select class="form-select mt-2" name="resultadoCepEdicao"
+                            [ngModel]="''" (ngModelChange)="selecionarCepEdicao($event)">
+                      <option value="">Selecione a ocorrência / RA</option>
+                      @for (cep of resultadosCepEdicao; track cep.id) {
+                        <option [value]="cep.id">{{ cep.logradouro || cep.codigoPostal }} — {{ cep.subdivisaoLocalNome || 'Sem RA' }}</option>
+                      }
+                    </select>
+                  }
+                </div>
+                <div class="full-width">
+                  <label>Logradouro</label>
+                  <input class="form-control" name="edicaoIgrejaLogradouro" maxlength="200"
+                         [(ngModel)]="igrejaEdicao.logradouro" [disabled]="salvandoEdicaoParoquia">
+                </div>
+                <div>
+                  <label>Número</label>
+                  <input class="form-control" name="edicaoIgrejaNumero" maxlength="30"
+                         [(ngModel)]="igrejaEdicao.numeroLogradouro" [disabled]="salvandoEdicaoParoquia">
+                </div>
+                <div>
+                  <label>Complemento</label>
+                  <input class="form-control" name="edicaoIgrejaComplemento" maxlength="150"
+                         [(ngModel)]="igrejaEdicao.complemento" [disabled]="salvandoEdicaoParoquia">
+                </div>
+                <div>
+                  <label>Bairro / Distrito</label>
+                  <input class="form-control" name="edicaoIgrejaBairro" maxlength="120"
+                         [(ngModel)]="igrejaEdicao.bairro" [disabled]="salvandoEdicaoParoquia">
+                </div>
+                <div>
+                  <label>RA / Subdivisão Local</label>
+                  <select class="form-select" name="edicaoIgrejaSubdivisao"
+                          [(ngModel)]="igrejaEdicao.subdivisaoLocalId" [disabled]="salvandoEdicaoParoquia">
+                    <option value="">Não informada — selecionar manualmente quando CEP sem mapeamento</option>
+                    @for (sub of subdivisoesLocais; track sub.id) {
+                      <option [value]="sub.id">{{ sub.nome }} @if (sub.codigo) { — {{ sub.codigo }} }</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label>Celular</label>
+                  <input class="form-control" name="edicaoIgrejaCelular"
+                         [(ngModel)]="igrejaEdicao.celular" [disabled]="salvandoEdicaoParoquia">
+                </div>
+                <div>
+                  <label>Telefone</label>
+                  <input class="form-control" name="edicaoIgrejaTelefone"
+                         [(ngModel)]="igrejaEdicao.telefone" [disabled]="salvandoEdicaoParoquia">
+                </div>
+                <div>
+                  <label>Telefone 2</label>
+                  <input class="form-control" name="edicaoIgrejaTelefone2"
+                         [(ngModel)]="igrejaEdicao.telefone2" [disabled]="salvandoEdicaoParoquia">
+                </div>
+                <div>
+                  <label>E-mail</label>
+                  <input class="form-control" type="email" name="edicaoIgrejaEmail"
+                         [(ngModel)]="igrejaEdicao.email" [disabled]="salvandoEdicaoParoquia">
+                </div>
+                <div class="full-width">
+                  <label>Site</label>
+                  <input class="form-control" name="edicaoIgrejaSite"
+                         [(ngModel)]="igrejaEdicao.site" [disabled]="salvandoEdicaoParoquia">
+                </div>
+              </div>
+              <div class="d-flex gap-2 mt-3">
+                <button type="button" class="btn btn-outline-secondary"
+                        (click)="fecharEdicaoParoquia()" [disabled]="salvandoEdicaoParoquia">Cancelar</button>
+                <button type="button" class="btn btn-primary" (click)="salvarEdicaoParoquia()"
+                        [disabled]="salvandoEdicaoParoquia || !igrejaEdicao.nome.trim()">
+                  {{ salvandoEdicaoParoquia ? 'Salvando...' : 'Salvar alterações da Paróquia' }}
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- SEDE PRÓPRIA DA UNIDADE: não altera a igreja/paróquia vinculada. -->
+          <div class="full-width sede-unidade-box" style="padding:16px;border:1px solid #e4d9d9;border-radius:10px;margin-top:12px">
+            <label class="d-flex align-items-center gap-2">
+              <input type="checkbox" name="sedeEnderecoProprio"
+                     [ngModel]="solicitacao.sedeEnderecoProprio"
+                     (ngModelChange)="aoAlterarSedePropria($event)" [disabled]="carregando">
+              <strong>A sede da unidade possui endereço próprio, diferente da paróquia</strong>
+            </label>
+            <small class="campo-ajuda">
+              Na inclusão, desmarcado copia automaticamente o endereço da paróquia.
+              Na alteração, o endereço salvo é preservado. Para copiar novamente,
+              utilize o botão específico abaixo.
+            </small>
+            @if (modo === 'editar') {
+              <div class="mt-2 mb-2">
+                <button type="button" class="btn btn-outline-primary"
+                        (click)="copiarEnderecoDaParoquia()"
+                        [disabled]="carregando || !igrejaSelecionada">
+                  <i class="bi bi-arrow-down-circle"></i> Atualizar endereço da sede a partir da paróquia
+                </button>
+                @if (solicitacao.copiarEnderecoParoquia) {
+                  <small class="campo-ajuda d-block">O endereço da sede será substituído pelo endereço da paróquia ao salvar.</small>
+                }
+              </div>
+            }
+            @if (solicitacao.sedeEnderecoProprio) {
+              <div class="form-grid" style="margin-top:14px">
+                <div class="full-width">
+                  <label>Logradouro da sede <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" name="sedeLogradouro"
+                         maxlength="200" [(ngModel)]="solicitacao.sedeLogradouro"
+                         [disabled]="carregando" placeholder="Rua, avenida, praça ou endereço da sede">
+                </div>
+                <div>
+                  <label>Número da sede</label>
+                  <input type="text" class="form-control" name="sedeNumeroLogradouro"
+                         maxlength="30" [(ngModel)]="solicitacao.sedeNumeroLogradouro" [disabled]="carregando">
+                </div>
+                <div>
+                  <label>Complemento da sede</label>
+                  <input type="text" class="form-control" name="sedeComplemento"
+                         maxlength="150" [(ngModel)]="solicitacao.sedeComplemento" [disabled]="carregando">
+                </div>
+                <div>
+                  <label>Bairro / distrito da sede</label>
+                  <input type="text" class="form-control" name="sedeBairro"
+                         maxlength="120" [(ngModel)]="solicitacao.sedeBairro" [disabled]="carregando">
+                </div>
+                <div>
+                  <label>{{ rotuloCodigoPostal }} da sede</label>
+                  <div class="d-flex gap-2">
+                    <input type="text" class="form-control" name="sedeCodigoPostal"
+                           maxlength="20" [ngModel]="solicitacao.sedeCodigoPostal"
+                           (ngModelChange)="aoAlterarCepSede($event)" [disabled]="carregando">
+                    <button type="button" class="btn btn-outline-primary"
+                            (click)="pesquisarCepSede()"
+                            [disabled]="carregando || pesquisandoCepSede || !solicitacao.sedeCodigoPostal.trim()">
+                      {{ pesquisandoCepSede ? 'Pesquisando...' : 'Pesquisar' }}
+                    </button>
+                  </div>
+                  @if (mensagemCepSede) { <small class="campo-ajuda d-block">{{ mensagemCepSede }}</small> }
+                  @if (resultadosCepSede.length > 1) {
+                    <label>Endereço correspondente</label>
+                    <select class="form-select" name="resultadoCepSede"
+                            [ngModel]="''" (ngModelChange)="selecionarCepSede($event)">
+                      <option value="">Selecione uma ocorrência</option>
+                      @for (item of resultadosCepSede; track item.id) {
+                        <option [value]="item.id">{{ item.logradouro || item.codigoPostal }} — {{ item.subdivisaoLocalNome || 'RA não informada' }}</option>
+                      }
+                    </select>
+                  }
+
+                </div>
+                <div class="full-width">
+                  <label>Subdivisão local da unidade — sede própria (RA / distrito / região)</label>
+                  <select class="form-select" name="sedeSubdivisaoLocalId"
+                          [(ngModel)]="solicitacao.sedeSubdivisaoLocalId"
+                          (ngModelChange)="aoTrocarSubdivisaoSede()"
+                          [disabled]="carregando || !solicitacao.municipioId">
+                    <option value="">Não informada</option>
+                    @for (subdivisao of subdivisoesLocais; track subdivisao.id) {
+                      <option [value]="subdivisao.id">
+                        {{ subdivisao.nome }} @if (subdivisao.codigo) { — {{ subdivisao.codigo }} }
+                      </option>
+                    }
+                  </select>
+                  <small class="campo-ajuda">
+                    País, divisão administrativa e município da sede são os selecionados acima.
+                    A subdivisão aqui é independente da subdivisão da paróquia.
+                  </small>
+                </div>
+              </div>
+            }
+          </div>
 
           <!-- CADASTRO RÁPIDO DE PARÓQUIA -->
           @if (exibirCadastroParoquia) {
@@ -1417,10 +1625,15 @@
           </p>
 
           <p>
-            <strong>Endereço herdado:</strong>
-            {{ igrejaSelecionada?.codigoPostal || 'Sem código postal' }}
-            —
-            {{ enderecoIgrejaSelecionada }}
+            <strong>Endereço da sede:</strong>
+            @if (solicitacao.sedeEnderecoProprio) {
+              {{ solicitacao.sedeLogradouro || '-' }} —
+              {{ solicitacao.sedeNumeroLogradouro || 'S/N' }} —
+              {{ solicitacao.sedeCodigoPostal || 'Sem código postal' }}
+            } @else {
+              {{ igrejaSelecionada?.codigoPostal || 'Sem código postal' }}
+              {{ enderecoIgrejaSelecionada }}
+            }
           </p>
 
           <p>

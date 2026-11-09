@@ -151,3 +151,22 @@ aside i {
 
   opacity: 1;
 }
+
+/* v3.2.4: espaço para a versão abaixo da marca e submenu de administração. */
+.sidebar-logo {
+  height: auto;
+  min-height: 90px;
+  flex-shrink: 0;
+  gap: 5px;
+}
+
+.sidebar-menu {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+app-platform-owner-menu {
+  display: block;
+  width: 100%;
+}

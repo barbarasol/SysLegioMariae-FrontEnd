@@ -1,0 +1,14 @@
+.controle-versao { display: grid; gap: 20px; max-width: 1100px; margin: 0 auto; padding: 20px; }
+.cabecalho { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.cabecalho h2 { font-size: 1.45rem; margin: 0 0 5px; }
+.cabecalho p { color: #697081; margin: 0; }
+.card { padding: 20px; border: 1px solid #e0e0e0; border-radius: 12px; background: var(--bs-body-bg, #fff); }
+.versao-form { display: grid; grid-template-columns: minmax(220px, 1fr) auto; gap: 14px; align-items: end; }
+.campo { display: grid; gap: 6px; }
+.acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.historico h3 { font-size: 1.1rem; margin-bottom: 16px; }
+.acoes-tabela { white-space: nowrap; display: flex; gap: 6px; }
+@media (max-width: 760px) { .versao-form { grid-template-columns: 1fr; } }
+
+.fuso-info { font-size: .83rem; color: #64748b; margin: -5px 0 15px; }
+.data-hora { white-space: nowrap; font-variant-numeric: tabular-nums; }
