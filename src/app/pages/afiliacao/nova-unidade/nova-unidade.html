@@ -1112,6 +1112,18 @@
                 </div>
 
                 <div>
+                  <label>Telefone 2</label>
+                  <input
+                    type="tel"
+                    class="form-control"
+                    name="novaParoquiaTelefone2"
+                    [(ngModel)]="novaParoquia.telefone2"
+                    [disabled]="salvandoParoquia"
+                    placeholder="Opcional"
+                  >
+                </div>
+
+                <div>
                   <label>E-mail</label>
                   <input
                     type="email"

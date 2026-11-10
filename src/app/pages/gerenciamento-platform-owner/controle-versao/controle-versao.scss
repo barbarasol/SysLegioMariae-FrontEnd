@@ -3,12 +3,22 @@
 .cabecalho h2 { font-size: 1.45rem; margin: 0 0 5px; }
 .cabecalho p { color: #697081; margin: 0; }
 .card { padding: 20px; border: 1px solid #e0e0e0; border-radius: 12px; background: var(--bs-body-bg, #fff); }
-.versao-form { display: grid; grid-template-columns: minmax(220px, 1fr) auto; gap: 14px; align-items: end; }
+.versao-form { display: grid; gap: 14px; }
+.campos-versao { display: grid; grid-template-columns: minmax(145px, 190px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.campo-versao input { width: 100%; }
+.campo-implementacao textarea { min-height: 88px; resize: vertical; }
 .campo { display: grid; gap: 6px; }
 .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
 .historico h3 { font-size: 1.1rem; margin-bottom: 16px; }
 .acoes-tabela { white-space: nowrap; display: flex; gap: 6px; }
-@media (max-width: 760px) { .versao-form { grid-template-columns: 1fr; } }
+@media (max-width: 760px) {
+  .campos-versao { grid-template-columns: 1fr; }
+  .campo-versao { max-width: 190px; }
+}
 
 .fuso-info { font-size: .83rem; color: #64748b; margin: -5px 0 15px; }
 .data-hora { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.historico .table-responsive { overflow-x: auto; }
+.historico table { min-width: 1050px; }
+.implementacao-historico { min-width: 260px; max-width: 460px; white-space: pre-wrap; overflow-wrap: anywhere; vertical-align: top; }

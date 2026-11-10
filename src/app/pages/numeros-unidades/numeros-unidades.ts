@@ -40,7 +40,10 @@ export class NumerosUnidades implements OnInit {
   valores: ValoresNumerosUnidade = criarValoresVazios();
   registro: RegistroNumerosUnidade | null = null;
   historico: RegistroNumerosUnidade[] = [];
-  permissoes: PermissoesNumerosUnidade = { editar: false, reabrir: false };
+  permissoes: PermissoesNumerosUnidade = { editar: false };
+  sugestaoCopia: RegistroNumerosUnidade | null = null;
+  copiaPendente = false;
+  copiadoDeId: string | null = null;
   carregandoUnidades = false;
   carregando = false;
   consultaPermitida = false;
@@ -60,12 +63,8 @@ export class NumerosUnidades implements OnInit {
     return this.unidades.find(u => u.id === this.unidadeId) ?? null;
   }
 
-  get confirmado(): boolean {
-    return this.registro?.status === 'CONFIRMADO';
-  }
-
   get podeEditar(): boolean {
-    return !!this.unidadeId && this.permissoes.editar && !this.confirmado && !this.salvando;
+    return !!this.unidadeId && this.permissoes.editar && !this.salvando && !this.carregando && !this.copiaPendente;
   }
 
   get totalAtivos(): number | null {
@@ -144,7 +143,10 @@ export class NumerosUnidades implements OnInit {
     this.registro = null;
     this.consultaPermitida = false;
     this.historico = [];
-    this.permissoes = { editar: false, reabrir: false };
+    this.permissoes = { editar: false };
+    this.sugestaoCopia = null;
+    this.copiaPendente = false;
+    this.copiadoDeId = null;
     this.alterado = false;
     this.erro = '';
     this.sucesso = '';
@@ -159,9 +161,10 @@ export class NumerosUnidades implements OnInit {
     this.erro = '';
     forkJoin({
       atual: this.numerosService.obter(unidadeId, ano, mes),
-      historico: this.numerosService.listarHistorico(unidadeId, ano)
+      historico: this.numerosService.listarHistorico(unidadeId, ano),
+      ultimo: this.numerosService.listarHistorico(unidadeId)
     }).subscribe({
-      next: ({ atual, historico }) => {
+      next: ({ atual, historico, ultimo }) => {
         // Evita sobrescrever o formulário quando usuário troca filtro rapidamente.
         if (this.unidadeId !== unidadeId || Number(this.ano) !== ano || Number(this.mes) !== mes) return;
         this.registro = atual.registro;
@@ -169,6 +172,12 @@ export class NumerosUnidades implements OnInit {
         this.permissoes = atual.permissoes;
         this.valores = atual.registro ? extrairValores(atual.registro) : criarValoresVazios();
         this.historico = historico.registros;
+        // Só propõe copiar quando a competência selecionada ainda não existe.
+        // A última competência é específica da unidade e pode ser de outro ano.
+        this.sugestaoCopia = !atual.registro && atual.permissoes.editar
+          ? (ultimo.registros[0] ?? null) : null;
+        this.copiaPendente = this.sugestaoCopia !== null;
+        this.copiadoDeId = null;
         this.alterado = false;
         this.carregando = false;
         this.cdr.detectChanges();
@@ -188,13 +197,16 @@ export class NumerosUnidades implements OnInit {
     this.salvando = true;
     this.erro = '';
     this.sucesso = '';
-    this.numerosService.salvar(this.unidadeId, Number(this.ano), Number(this.mes), this.valores).subscribe({
+    this.numerosService.salvar(this.unidadeId, Number(this.ano), Number(this.mes), this.valores, this.copiadoDeId).subscribe({
       next: ({ registro }) => {
         this.registro = registro;
         this.valores = extrairValores(registro);
         this.alterado = false;
         this.salvando = false;
-        this.sucesso = 'Indicadores salvos como rascunho. Clique em Confirmar para concluir a competência.';
+        this.copiadoDeId = null;
+        this.sugestaoCopia = null;
+        this.copiaPendente = false;
+        this.sucesso = 'Indicadores salvos com sucesso. Você pode editá-los novamente quando precisar.';
         this.carregarHistorico();
         this.cdr.detectChanges();
       },
@@ -206,60 +218,39 @@ export class NumerosUnidades implements OnInit {
     });
   }
 
-  confirmar(): void {
-    if (!this.registro || !this.podeEditar || this.carregando || !this.unidadeId) return;
-    if (this.alterado) {
-      this.erro = 'Salve as alterações antes de confirmar esta competência.';
-      this.cdr.detectChanges();
-      return;
-    }
-    if (!window.confirm('Confirma os números desta competência? Depois, a edição ficará bloqueada.')) return;
-    this.executarAcao('confirmar');
+  /** Preenche localmente a nova competência, sem salvar nem criar linha no banco. */
+  usarUltimaCompetencia(): void {
+    if (!this.sugestaoCopia || !this.copiaPendente) return;
+    this.valores = extrairValores(this.sugestaoCopia);
+    this.copiadoDeId = this.sugestaoCopia.id;
+    this.copiaPendente = false;
+    this.alterado = true;
+    this.sucesso = 'Números copiados para o formulário. Confira e clique em Salvar para registrar.';
+    this.cdr.detectChanges();
   }
 
-  reabrir(): void {
-    if (!this.registro || !this.confirmado || !this.permissoes.reabrir || !this.unidadeId) return;
-    if (!window.confirm('Reabrir esta competência confirmada para correção? A ação será auditada.')) return;
-    this.executarAcao('reabrir');
-  }
-
-  copiarAnterior(): void {
-    if (this.registro || !this.podeEditar || this.carregando || !this.unidadeId) return;
-    if (!window.confirm('Copiar os números da última competência anterior para este mês como RASCUNHO?')) return;
-    this.executarAcao('copiar');
-  }
-
-  private executarAcao(acao: 'confirmar' | 'reabrir' | 'copiar'): void {
-    if (!this.unidadeId) return;
-    this.salvando = true;
-    this.erro = '';
+  iniciarEmBranco(): void {
+    if (!this.copiaPendente) return;
+    this.valores = criarValoresVazios();
+    this.copiadoDeId = null;
+    this.copiaPendente = false;
+    this.alterado = false;
     this.sucesso = '';
-    const unidadeId = this.unidadeId;
-    const ano = Number(this.ano);
-    const mes = Number(this.mes);
-    const pedido = acao === 'confirmar'
-      ? this.numerosService.confirmar(unidadeId, ano, mes)
-      : acao === 'reabrir'
-        ? this.numerosService.reabrir(unidadeId, ano, mes)
-        : this.numerosService.copiarAnterior(unidadeId, ano, mes);
-    pedido.subscribe({
-      next: ({ registro }) => {
-        this.registro = registro;
-        this.valores = extrairValores(registro);
-        this.alterado = false;
-        this.salvando = false;
-        this.sucesso = acao === 'confirmar' ? 'Competência confirmada com sucesso.'
-          : acao === 'reabrir' ? 'Competência reaberta como rascunho.'
-            : 'Dados anteriores copiados como rascunho. Confira antes de confirmar.';
-        this.carregarHistorico();
-        this.cdr.detectChanges();
-      },
-      error: (erro: HttpErrorResponse) => {
-        this.erro = this.mensagemErro(erro, 'Não foi possível realizar esta operação.');
-        this.salvando = false;
-        this.cdr.detectChanges();
-      }
-    });
+    this.cdr.detectChanges();
+  }
+
+  get ativosOrigem(): number | null {
+    if (!this.sugestaoCopia) return null;
+    const r = this.sugestaoCopia;
+    return r.qtd_ativos_com_promessa == null && r.qtd_ativos_sem_promessa == null
+      ? null : (r.qtd_ativos_com_promessa ?? 0) + (r.qtd_ativos_sem_promessa ?? 0);
+  }
+
+  get auxiliaresOrigem(): number | null {
+    if (!this.sugestaoCopia) return null;
+    const r = this.sugestaoCopia;
+    return r.qtd_auxiliares_permanentes == null && r.qtd_auxiliares_provisorios == null
+      ? null : (r.qtd_auxiliares_permanentes ?? 0) + (r.qtd_auxiliares_provisorios ?? 0);
   }
 
   private carregarHistorico(): void {

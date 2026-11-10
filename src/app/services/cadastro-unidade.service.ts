@@ -34,6 +34,29 @@ export interface UnidadeResumoCadastro {
   statusAprovacao: string;
 }
 
+export interface IndicadoresEstrutura {
+  ano: number;
+  mes: number;
+  status: 'CONFIRMADO' | 'RASCUNHO';
+  qtd_comitia: number | null;
+  qtd_curiae: number | null;
+  qtd_curiae_juv: number | null;
+  qtd_praesidia: number | null;
+  qtd_praesidia_juv: number | null;
+  qtd_velites: number | null;
+  qtd_praticios: number | null;
+  qtd_pretorianos: number | null;
+  qtd_adjutores: number | null;
+  qtd_ativos_com_promessa: number | null;
+  qtd_ativos_sem_promessa: number | null;
+  qtd_auxiliares_permanentes: number | null;
+  qtd_auxiliares_provisorios: number | null;
+  qtd_mescs: number | null;
+  qtd_catequistas: number | null;
+  qtd_coroinhas: number | null;
+  qtd_praesidia_total: number | null;
+}
+
 export interface UnidadeEstrutura {
   id: string;
   nome: string;
@@ -48,6 +71,7 @@ export interface UnidadeEstrutura {
   subdivisaoLocalNome: string | null;
   statusAprovacao: string;
   ativo: boolean;
+  numeros?: IndicadoresEstrutura | null;
 }
 
 export interface UnidadeDetalhe {

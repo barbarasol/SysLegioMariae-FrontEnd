@@ -1,6 +1,7 @@
 export interface ControleVersao {
   id: string;
   ultima_versao: string;
+  implementacao: string | null;
   usu_inc_id: string;
   usu_alt_id: string | null;
   usu_inc_nome: string;

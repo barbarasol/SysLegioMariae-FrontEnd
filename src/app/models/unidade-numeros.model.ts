@@ -30,7 +30,6 @@ export interface RegistroNumerosUnidade extends ValoresNumerosUnidade {
 
 export interface PermissoesNumerosUnidade {
   editar: boolean;
-  reabrir: boolean;
 }
 
 export const GRUPOS_NUMEROS: Array<{

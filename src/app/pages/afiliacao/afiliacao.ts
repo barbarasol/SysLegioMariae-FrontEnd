@@ -19,6 +19,7 @@ import {
   UnidadeEstrutura
 } from '../../services/cadastro-unidade.service';
 import { ToastService } from '../../services/toast.service';
+import { montarLinhasConsolidadas, type LinhaTabelaConsolidada, COLUNAS_ESTRUTURA } from '../../utils/consolidar-estrutura.util';
 
 interface UnidadeLinha extends UnidadeEstrutura {
   nivel: number;
@@ -37,6 +38,8 @@ export class Afiliacao implements OnInit {
   unidades: UnidadeEstrutura[] = [];
   unidadesDoTipo: UnidadeEstrutura[] = [];
   estruturaVisivel: UnidadeLinha[] = [];
+  linhasTabela: LinhaTabelaConsolidada[] = [];
+  readonly colunasNumeros = COLUNAS_ESTRUTURA;
 
   tipoSelecionado = '';
   unidadeFiltroId = '';
@@ -137,6 +140,7 @@ export class Afiliacao implements OnInit {
           this.tiposFiltro = [];
           this.unidadesDoTipo = [];
           this.estruturaVisivel = [];
+          this.linhasTabela = [];
           this.erroCarregamento =
             'Não foi possível carregar a estrutura das unidades.';
 
@@ -259,6 +263,7 @@ export class Afiliacao implements OnInit {
     if (this.unidadeFiltroId) {
       this.estruturaVisivel =
         this.achatarSubarvore(this.unidadeFiltroId);
+      this.atualizarLinhasTabela();
       return;
     }
 
@@ -268,6 +273,7 @@ export class Afiliacao implements OnInit {
       this.estruturaVisivel = [...base]
         .sort((a, b) => this.compararPorEstado(a, b))
         .map((item) => ({ ...item, nivel: 0 }));
+      this.atualizarLinhasTabela();
       return;
     }
 
@@ -297,6 +303,7 @@ export class Afiliacao implements OnInit {
       }
 
       this.estruturaVisivel = linhas;
+      this.atualizarLinhasTabela();
       return;
     }
 
@@ -345,6 +352,7 @@ export class Afiliacao implements OnInit {
     }
 
     this.estruturaVisivel = linhas;
+    this.atualizarLinhasTabela();
   }
 
   private achatarSubarvore(id: string): UnidadeLinha[] {
@@ -398,6 +406,18 @@ export class Afiliacao implements OnInit {
         ignorarRaizes
       );
     }
+  }
+
+  private atualizarLinhasTabela(): void {
+    this.linhasTabela = montarLinhasConsolidadas(
+      this.estruturaVisivel,
+      this.unidades,
+      this.modoOrdenacao
+    );
+  }
+
+  formatarQuantidade(numero: number | null): string {
+    return numero == null ? '—' : numero.toLocaleString('pt-BR');
   }
 
   private compararPorEstado(a: UnidadeEstrutura, b: UnidadeEstrutura): number {

@@ -87,17 +87,13 @@
           <span class="rotulo">Competência selecionada</span>
           <h3>{{ labelMes(mes) }} de {{ ano }}</h3>
         </div>
-        <span class="estado"
-          [class.confirmado]="confirmado"
-          [class.rascunho]="registro && !confirmado">
-          @if (!registro) { Sem registro }
-          @else if (confirmado) { Confirmado }
-          @else { Rascunho }
+        <span class="estado" [class.confirmado]="!!registro">
+          {{ registro ? 'Registrado' : 'Novo registro' }}
         </span>
       </div>
       @if (registro?.origem === 'VIRADA_ANO') {
         <p class="nota"><i class="bi bi-files"></i>
-          Dados inicialmente copiados do ano anterior; confira todos os campos antes de confirmar.
+          Dados copiados de outra competência; você pode atualizá-los normalmente.
         </p>
       }
       @if (!permissoes.editar) {
@@ -107,7 +103,7 @@
       }
       @if (!registro && permissoes.editar) {
         <p class="nota"><i class="bi bi-info-circle"></i>
-          Esta competência ainda não foi preenchida. Digite os números ou copie a última competência anterior.
+          Esta competência ainda não foi preenchida. Você pode digitar os números ou aproveitar a última competência registrada.
         </p>
       }
       <div class="indicadores-principais">
@@ -117,6 +113,34 @@
         <div><span>Origem</span><strong>{{ registro?.origem === 'VIRADA_ANO' ? 'Virada anual' : registro ? 'Manual' : 'Não iniciado' }}</strong></div>
       </div>
     </section>
+
+    @if (copiaPendente && sugestaoCopia) {
+      <section class="painel sugestao-copia" aria-label="Copiar números da última competência">
+        <h3><i class="bi bi-files"></i> Deseja copiar os números da última competência?</h3>
+        <p>
+          Para <strong>{{ unidadeSelecionada?.nome }}</strong>, o último registro é
+          <strong>{{ labelMes(sugestaoCopia.mes) }} / {{ sugestaoCopia.ano }}</strong>.
+          Você pode copiar os valores e ajustá-los antes de salvar <strong>{{ labelMes(mes) }} / {{ ano }}</strong>.
+        </p>
+        <div class="resumo-copia">
+          <div><span>Ativos</span><strong>{{ ativosOrigem ?? '—' }}</strong></div>
+          <div><span>Auxiliares</span><strong>{{ auxiliaresOrigem ?? '—' }}</strong></div>
+          <div><span>Total Praesidia</span><strong>{{ sugestaoCopia.qtd_praesidia_total ?? '—' }}</strong></div>
+          <div><span>Comitia</span><strong>{{ sugestaoCopia.qtd_comitia ?? '—' }}</strong></div>
+          <div><span>Curiae</span><strong>{{ sugestaoCopia.qtd_curiae ?? '—' }}</strong></div>
+          <div><span>Praesidia</span><strong>{{ sugestaoCopia.qtd_praesidia ?? '—' }}</strong></div>
+        </div>
+        <div class="botoes-acoes">
+          <button type="button" class="btn btn-outline-secondary" (click)="iniciarEmBranco()">
+            <i class="bi bi-file-earmark"></i> Começar em branco
+          </button>
+          <button type="button" class="btn btn-primary" (click)="usarUltimaCompetencia()">
+            <i class="bi bi-files"></i> Copiar números de {{ labelMes(sugestaoCopia.mes) }} / {{ sugestaoCopia.ano }}
+          </button>
+        </div>
+        <small>A cópia só será gravada quando você clicar em Salvar números.</small>
+      </section>
+    }
 
     @for (grupo of grupos; track grupo.titulo) {
       <section class="painel indicadores">
@@ -152,31 +176,16 @@
 
     <section class="acoes-rodape painel">
       <div>
-        <strong>{{ registro ? 'Registro existente' : 'Novo registro' }}</strong>
-        <p>{{ confirmado ? 'Período encerrado. Somente o administrador global pode reabri-lo.' : 'Ao salvar, o período fica como rascunho até a confirmação.' }}</p>
+        <strong>{{ registro ? 'Competência registrada' : 'Nova competência' }}</strong>
+        <p>
+          {{ registro ? 'Você pode atualizar estes números sempre que necessário.'
+                      : 'Preencha os indicadores e clique em Salvar números.' }}
+        </p>
       </div>
       <div class="botoes-acoes">
-        @if (!registro && permissoes.editar) {
-          <button type="button" class="btn btn-outline-primary"
-            (click)="copiarAnterior()" [disabled]="salvando">
-            <i class="bi bi-files"></i> Copiar período anterior
-          </button>
-        }
         @if (podeEditar) {
-          <button type="button" class="btn btn-primary" (click)="salvar()"
-            [disabled]="salvando">
-            <i class="bi bi-floppy"></i> Salvar rascunho
-          </button>
-        }
-        @if (registro && podeEditar) {
-          <button type="button" class="btn btn-success" (click)="confirmar()"
-            [disabled]="salvando || alterado">
-            <i class="bi bi-check-circle"></i> Confirmar competência
-          </button>
-        }
-        @if (confirmado && permissoes.reabrir) {
-          <button type="button" class="btn btn-outline-warning" (click)="reabrir()" [disabled]="salvando">
-            <i class="bi bi-unlock"></i> Reabrir para correção
+          <button type="button" class="btn btn-primary" (click)="salvar()" [disabled]="salvando">
+            <i class="bi bi-floppy"></i> Salvar números
           </button>
         }
       </div>
@@ -197,7 +206,7 @@
             <thead>
               <tr>
                 <th>Competência</th>
-                <th>Status</th>
+                <th>Situação</th>
                 <th>Ativos</th>
                 <th>Auxiliares</th>
                 <th>Praesidia</th>
@@ -208,7 +217,7 @@
               @for (linha of historico; track linha.id) {
                 <tr [class.selecionado]="linha.ano === ano && linha.mes === mes">
                   <td>{{ labelMes(linha.mes) }} / {{ linha.ano }}</td>
-                  <td><span class="estado compacto" [class.confirmado]="linha.status === 'CONFIRMADO'">{{ linha.status }}</span></td>
+                  <td><span class="estado compacto confirmado">Registrado</span></td>
                   <td>{{ totalHistorico(linha) ?? '—' }}</td>
                   <td>{{ linha.qtd_auxiliares_permanentes == null && linha.qtd_auxiliares_provisorios == null ? '—' : (linha.qtd_auxiliares_permanentes ?? 0) + (linha.qtd_auxiliares_provisorios ?? 0) }}</td>
                   <td>{{ linha.qtd_praesidia_total ?? '—' }}</td>

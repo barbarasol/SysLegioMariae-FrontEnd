@@ -840,3 +840,87 @@
     gap: 5px;
   }
 }
+
+/* =============================================================
+   Estrutura quantitativa — largura total e rolagem horizontal
+   ============================================================= */
+.afiliacao-container .consolidado-card {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+.afiliacao-container .quadro-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.afiliacao-container .quadro-titulo > div:last-child { min-width: 220px; }
+.afiliacao-container .quadro-titulo label { display: block; margin-bottom: 5px; font-size: 12px; }
+.afiliacao-container .estrutura-tabela-scroll { overflow-x: auto; max-width: 100%; }
+.afiliacao-container .estrutura-tabela {
+  width: 100%;
+  min-width: 1380px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  font-size: 11px;
+  line-height: 1.3;
+}
+.afiliacao-container .estrutura-tabela th,
+.afiliacao-container .estrutura-tabela td {
+  border-bottom: 1px solid #eee0e1;
+  padding: 9px 5px;
+  vertical-align: middle;
+}
+.afiliacao-container .estrutura-tabela thead th {
+  background: #eceff5;
+  color: #63353a;
+  font-size: 10px;
+  font-weight: 750;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  text-align: center;
+  white-space: normal;
+}
+.afiliacao-container .estrutura-tabela .col-unidade { width: 315px; text-align: left; padding-left: 12px; }
+.afiliacao-container .estrutura-tabela .col-num {
+  width: 58px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.afiliacao-container .estrutura-tabela thead .col-num { text-align: center; }
+.afiliacao-container .estrutura-tabela .col-status { width: 72px; text-align: center; }
+.afiliacao-container .estrutura-tabela .col-acoes { width: 74px; text-align: center; }
+.afiliacao-container .estrutura-tabela .col-nota { text-align: center; font-size: 10px; white-space: nowrap; }
+.afiliacao-container .linha-unidade:hover { background: #fff8f8; }
+.afiliacao-container .linha-juvenil { background: #f0fbf4; }
+.afiliacao-container .identificacao-unidade {
+  display: grid;
+  grid-template-columns: 68px 1fr;
+  gap: 5px;
+  padding-left: calc(var(--nivel, 0) * 9px);
+}
+.afiliacao-container .tipo-unidade { font-size: 9px; color: #a13b40; text-transform: uppercase; font-weight: 700; }
+.afiliacao-container .dados-unidade { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.afiliacao-container .dados-unidade strong { font-size: 12px; font-weight: 750; }
+.afiliacao-container .dados-unidade small { font-size: 10px; font-weight: 400; color: #755c5f; }
+.afiliacao-container .dados-unidade .referencia-numeros { color: #476273; }
+.afiliacao-container .acoes-unidade { display: flex; justify-content: center; gap: 4px; }
+.afiliacao-container .acoes-unidade .btn {
+  width: 27px; height: 27px; min-height: 27px; padding: 0;
+  display: inline-flex; justify-content: center; align-items: center;
+}
+.afiliacao-container .linha-total { background: #fff0d3; color: #71421b; font-weight: 750; }
+.afiliacao-container .linha-total-geral { background: #a13b40; color: #fff; }
+.afiliacao-container .linha-total small { display: block; font-size: 9px; opacity: .8; }
+.afiliacao-container .estrutura-vazia { padding: 32px; text-align: center; color: #755c5f; }
+.afiliacao-container .nota-consolidacao { margin: 10px 15px 15px; font-size: 11px; line-height: 1.6; color: #755c5f; }
+@media (max-width: 780px) {
+  .afiliacao-container .quadro-titulo { align-items: stretch; }
+  .afiliacao-container .quadro-titulo > div:last-child { width: 100%; }
+  .afiliacao-container .estrutura-tabela { min-width: 1380px; }
+}

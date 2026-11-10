@@ -18,11 +18,11 @@ export class ControleVersaoService {
   listar(): Observable<ControleVersao[]> {
     return this.http.get<ControleVersao[]>(this.baseUrl, { withCredentials: true });
   }
-  criar(ultima_versao: string): Observable<ControleVersao> {
-    return this.http.post<ControleVersao>(this.baseUrl, { ultima_versao }, { withCredentials: true });
+  criar(ultima_versao: string, implementacao: string | null = null): Observable<ControleVersao> {
+    return this.http.post<ControleVersao>(this.baseUrl, { ultima_versao, implementacao }, { withCredentials: true });
   }
-  atualizar(id: string, ultima_versao: string): Observable<ControleVersao> {
-    return this.http.put<ControleVersao>(`${this.baseUrl}/${encodeURIComponent(id)}`, { ultima_versao }, { withCredentials: true });
+  atualizar(id: string, ultima_versao: string, implementacao: string | null = null): Observable<ControleVersao> {
+    return this.http.put<ControleVersao>(`${this.baseUrl}/${encodeURIComponent(id)}`, { ultima_versao, implementacao }, { withCredentials: true });
   }
   excluir(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${encodeURIComponent(id)}`, { withCredentials: true });

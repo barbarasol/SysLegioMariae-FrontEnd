@@ -11,11 +11,19 @@
   @if (sucesso) { <div class="alert alert-success" role="status">{{ sucesso }}</div> }
 
   <form class="card versao-form" (ngSubmit)="salvar()">
-    <div class="campo">
-      <label for="ultimaVersao">{{ idEdicao ? 'Editar versão' : 'Cadastrar versão' }}</label>
-      <input id="ultimaVersao" name="ultimaVersao" class="form-control"
-        maxlength="50" required autocomplete="off" placeholder="Ex.: 3.2.4"
-        [(ngModel)]="versaoDigitada" [disabled]="salvando" />
+    <div class="campos-versao">
+      <div class="campo campo-versao">
+        <label for="ultimaVersao">{{ idEdicao ? 'Editar versão' : 'Cadastrar versão' }}</label>
+        <input id="ultimaVersao" name="ultimaVersao" class="form-control"
+          maxlength="50" required autocomplete="off" placeholder="Ex.: 3.2.9"
+          [(ngModel)]="versaoDigitada" [disabled]="salvando" />
+      </div>
+      <div class="campo campo-implementacao">
+        <label for="implementacao">Implementação</label>
+        <textarea id="implementacao" name="implementacao" class="form-control"
+          rows="3" placeholder="Descreva as funcionalidades, alterações e correções desta versão"
+          [(ngModel)]="implementacaoDigitada" [disabled]="salvando"></textarea>
+      </div>
     </div>
     <div class="acoes">
       <button type="submit" class="btn btn-primary" [disabled]="salvando || !versaoDigitada.trim()">
@@ -39,6 +47,7 @@
         <table class="table table-striped">
           <thead><tr>
             <th>Versão</th>
+            <th>Implementação</th>
             <th>Inclusão (data/hora)</th>
             <th>Usuário inclusão</th>
             <th>Última alteração (data/hora)</th>
@@ -49,6 +58,7 @@
             @for (item of registros; track item.id; let primeiro = $first) {
               <tr>
                 <td><strong>{{ item.ultima_versao }}</strong> @if (primeiro) { <span class="badge bg-success">Atual</span> }</td>
+                <td class="implementacao-historico">{{ item.implementacao || '—' }}</td>
                 <td class="data-hora">{{ formatarDataHora(item.created_at) }}</td>
                 <td>{{ item.usu_inc_nome }}</td>
                 <td class="data-hora">{{ item.usu_alt_id ? formatarDataHora(item.update_at) : '—' }}</td>

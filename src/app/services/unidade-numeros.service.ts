@@ -38,29 +38,15 @@ export class UnidadeNumerosService {
     );
   }
 
-  salvar(unidadeId: string, ano: number, mes: number, valores: ValoresNumerosUnidade): Observable<{
-    registro: RegistroNumerosUnidade;
-  }> {
+  salvar(
+    unidadeId: string,
+    ano: number,
+    mes: number,
+    valores: ValoresNumerosUnidade,
+    copiadoDeId: string | null = null
+  ): Observable<{ registro: RegistroNumerosUnidade }> {
     return this.http.put<{ registro: RegistroNumerosUnidade }>(
-      this.urlCompetencia(unidadeId, ano, mes), { valores }, this.options
-    );
-  }
-
-  confirmar(unidadeId: string, ano: number, mes: number): Observable<{ registro: RegistroNumerosUnidade }> {
-    return this.http.post<{ registro: RegistroNumerosUnidade }>(
-      `${this.urlCompetencia(unidadeId, ano, mes)}/confirmar`, {}, this.options
-    );
-  }
-
-  reabrir(unidadeId: string, ano: number, mes: number): Observable<{ registro: RegistroNumerosUnidade }> {
-    return this.http.post<{ registro: RegistroNumerosUnidade }>(
-      `${this.urlCompetencia(unidadeId, ano, mes)}/reabrir`, {}, this.options
-    );
-  }
-
-  copiarAnterior(unidadeId: string, ano: number, mes: number): Observable<{ registro: RegistroNumerosUnidade }> {
-    return this.http.post<{ registro: RegistroNumerosUnidade }>(
-      `${this.urlCompetencia(unidadeId, ano, mes)}/copiar-anterior`, {}, this.options
+      this.urlCompetencia(unidadeId, ano, mes), { valores, copiadoDeId }, this.options
     );
   }
 }

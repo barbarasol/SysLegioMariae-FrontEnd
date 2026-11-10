@@ -18,6 +18,7 @@ export class ControleVersaoPagina implements OnInit {
   readonly fusoLocal = Intl.DateTimeFormat().resolvedOptions().timeZone || 'do dispositivo';
   registros: ControleVersao[] = [];
   versaoDigitada = '';
+  implementacaoDigitada = '';
   idEdicao: string | null = null;
   carregando = false;
   salvando = false;
@@ -38,10 +39,11 @@ export class ControleVersaoPagina implements OnInit {
   editar(registro: ControleVersao): void {
     this.idEdicao = registro.id;
     this.versaoDigitada = registro.ultima_versao;
+    this.implementacaoDigitada = registro.implementacao ?? '';
     this.erro = '';
     this.sucesso = '';
   }
-  cancelar(): void { this.idEdicao = null; this.versaoDigitada = ''; }
+  cancelar(): void { this.idEdicao = null; this.versaoDigitada = ''; this.implementacaoDigitada = ''; }
   salvar(): void {
     if (this.salvando) return;
     const versao = this.versaoDigitada.trim();
@@ -50,9 +52,10 @@ export class ControleVersaoPagina implements OnInit {
       return;
     }
     this.salvando = true; this.erro = ''; this.sucesso = '';
+    const implementacao = this.implementacaoDigitada.trim() || null;
     const request = this.idEdicao
-      ? this.service.atualizar(this.idEdicao, versao)
-      : this.service.criar(versao);
+      ? this.service.atualizar(this.idEdicao, versao, implementacao)
+      : this.service.criar(versao, implementacao);
     request.pipe(finalize(() => { this.salvando = false; this.cdr.detectChanges(); })).subscribe({
       next: () => { this.sucesso = 'Versão salva com sucesso.'; this.cancelar(); this.service.notificarAlteracao(); this.listar(); this.cdr.detectChanges(); },
       error: e => { this.erro = this.mensagem(e, 'Não foi possível salvar a versão.'); this.cdr.detectChanges(); }
