@@ -1,3 +1,11 @@
+@if (carregandoCatalogos) {
+  <div class="novo-membro-container"><p>Verificando acesso aos Praesidia autorizados...</p></div>
+} @else if (acessoNegado) {
+  <div class="novo-membro-container" role="alert">
+    <h2>Acesso restrito</h2>
+    <p>Você precisa de acesso direto como OPERADOR ou ADMIN_UNIDADE a um Praesidium, ou ser PLATFORM_OWNER, para cadastrar membros.</p>
+  </div>
+} @else {
 <div class="novo-membro-container">
   <div class="page-header">
     <h2>Novo Membro</h2>
@@ -291,7 +299,7 @@
             class="form-select"
             name="unidadeId"
             [(ngModel)]="membro.unidadeId"
-            [disabled]="carregando || carregandoCatalogos"
+            [disabled]="carregando || carregandoCatalogos || catalogos.unidades.length === 1"
           >
             <option value="">Selecione</option>
 
@@ -394,3 +402,4 @@
     </div>
   </div>
 </div>
+}

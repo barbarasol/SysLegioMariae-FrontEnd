@@ -1,3 +1,12 @@
+@if (acessoNegado) {
+  <div class="membros-container">
+    <div class="empty-state" role="alert">
+      <i class="bi bi-shield-lock"></i>
+      <h2>Acesso restrito ao módulo Membros</h2>
+      <p>Somente o Platform Owner ou usuários OPERADOR/ADMIN_UNIDADE vinculados diretamente a um Praesidium podem consultar e cadastrar membros.</p>
+    </div>
+  </div>
+} @else {
 <div class="membros-container">
   <div class="page-header">
     <div>
@@ -6,7 +15,7 @@
       <p>Gerencie e acompanhe os membros da Legião de Maria.</p>
     </div>
 
-    <button class="btn btn-primary" (click)="novoMembro()">
+    <button class="btn btn-primary" (click)="novoMembro()" [disabled]="carregando || catalogos.unidades.length === 0">
       <i class="bi bi-plus-circle"></i>
       Novo Membro
     </button>
@@ -65,8 +74,8 @@
 
       <div class="filter-field">
         <label for="unidadeId">Unidade</label>
-        <select id="unidadeId" class="form-select" name="unidadeId" [(ngModel)]="filtros.unidadeId">
-          <option value="">Todas</option>
+        <select id="unidadeId" class="form-select" name="unidadeId" [(ngModel)]="filtros.unidadeId" [disabled]="catalogos.unidades.length <= 1">
+          <option value="">Todas as unidades autorizadas</option>
 
           @for (unidade of catalogos.unidades; track unidade.id) {
             <option [value]="unidade.id">{{ unidade.tipo }} — {{ unidade.nome }}</option>
@@ -225,3 +234,5 @@
     }
   </div>
 </div>
+
+}

@@ -47,7 +47,8 @@ export class Membros implements OnInit {
     categoriaCodigo: ''
   };
 
-  carregando = false;
+  carregando = true;
+  acessoNegado = false;
 
   constructor(
     private membroService: MembroService,
@@ -77,6 +78,7 @@ export class Membros implements OnInit {
   }
 
   carregar(): void {
+    if (this.acessoNegado) return;
     this.carregando = true;
 
     forkJoin({
@@ -113,9 +115,17 @@ export class Membros implements OnInit {
           this.membros = membros;
           this.resumo = resumo;
           this.catalogos = catalogos;
+          this.acessoNegado = false;
+          if (catalogos.unidades.length === 1) {
+            this.filtros.unidadeId = catalogos.unidades[0].id;
+          }
         },
         error: (error: HttpErrorResponse) => {
           this.membros = [];
+          if (error.status === 401 || error.status === 403) {
+            this.acessoNegado = true;
+            return;
+          }
 
           this.toastService.erro(
             mensagemDeErro(
@@ -139,10 +149,14 @@ export class Membros implements OnInit {
       categoriaCodigo: ''
     };
 
+    if (this.catalogos.unidades.length === 1) {
+      this.filtros.unidadeId = this.catalogos.unidades[0].id;
+    }
     this.carregar();
   }
 
   novoMembro(): void {
+    if (this.acessoNegado || this.catalogos.unidades.length === 0) return;
     this.router.navigate(['cadastro-membro']);
   }
 }

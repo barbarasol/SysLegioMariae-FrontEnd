@@ -58,7 +58,8 @@ export class NovoMembro implements OnInit {
   };
 
   carregando = false;
-  carregandoCatalogos = false;
+  carregandoCatalogos = true;
+  acessoNegado = false;
 
   constructor(
     private membroService: MembroService,
@@ -80,7 +81,8 @@ export class NovoMembro implements OnInit {
     }
 
     if (this.etapa === 3) {
-      return !!this.membro.unidadeId;
+      return !this.acessoNegado && !!this.membro.unidadeId &&
+        this.catalogos.unidades.some((unidade) => unidade.id === this.membro.unidadeId);
     }
 
     return true;
@@ -146,8 +148,18 @@ export class NovoMembro implements OnInit {
       .subscribe({
         next: (dados) => {
           this.catalogos = dados;
+          this.acessoNegado = dados.unidades.length === 0;
+          if (dados.unidades.length === 1) {
+            this.membro.unidadeId = dados.unidades[0].id;
+          }
+          this.cdr.detectChanges();
         },
         error: (error: HttpErrorResponse) => {
+          if (error.status === 401 || error.status === 403) {
+            this.acessoNegado = true;
+            this.cdr.detectChanges();
+            return;
+          }
           this.toastService.erro(
             mensagemDeErro(
               error,
@@ -159,7 +171,8 @@ export class NovoMembro implements OnInit {
   }
 
   salvar(): void {
-    if (this.carregando || !this.etapaValida) {
+    if (this.carregando || this.carregandoCatalogos || this.acessoNegado ||
+        this.etapa !== 3 || !this.etapaValida) {
       return;
     }
 
@@ -213,6 +226,11 @@ export class NovoMembro implements OnInit {
           this.cdr.detectChanges();
         },
         error: (error: HttpErrorResponse) => {
+          if (error.status === 401 || error.status === 403) {
+            this.acessoNegado = true;
+            this.cdr.detectChanges();
+            return;
+          }
           this.toastService.erro(
             mensagemDeErro(
               error,
@@ -246,7 +264,7 @@ export class NovoMembro implements OnInit {
       coroinha: false,
       status: 'ATIVO',
       observacao: '',
-      unidadeId: '',
+      unidadeId: this.catalogos.unidades.length === 1 ? this.catalogos.unidades[0].id : '',
       categoriaCodigo: '',
       cargoCodigo: '',
       numeroMandato: null
