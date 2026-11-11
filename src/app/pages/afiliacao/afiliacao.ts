@@ -20,6 +20,7 @@ import {
 } from '../../services/cadastro-unidade.service';
 import { ToastService } from '../../services/toast.service';
 import { montarLinhasConsolidadas, type LinhaTabelaConsolidada, COLUNAS_ESTRUTURA } from '../../utils/consolidar-estrutura.util';
+import { Breadcrumb, ItemBreadcrumb } from '../../components/breadcrumb/breadcrumb';
 
 interface UnidadeLinha extends UnidadeEstrutura {
   nivel: number;
@@ -27,7 +28,7 @@ interface UnidadeLinha extends UnidadeEstrutura {
 
 @Component({
   selector: 'app-afiliacao',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, Breadcrumb],
   templateUrl: './afiliacao.html',
   styleUrl: './afiliacao.scss'
 })
@@ -64,6 +65,11 @@ export class Afiliacao implements OnInit {
     'PRAESIDIUM',
     'VELITE',
     'PATRICIOS'
+  ];
+
+  itens: ItemBreadcrumb[] = [
+    { label: 'Início', routerLink: '/home', icone: 'bi-house' },
+    { label: 'Conselhos-Praesidia', routerLink: '/afiliacao', icone: 'bi-diagram-3' }
   ];
 
   constructor(

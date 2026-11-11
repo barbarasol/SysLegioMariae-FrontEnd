@@ -1,12 +1,17 @@
 :host { display: block; color: #54191c; }
-.numeros-container { padding: 24px 28px 48px; max-width: 1600px; margin: 0 auto; }
+.numeros-container { width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 40px;
+  box-sizing: border-box; }
 .page-header, .resumo-topo, .titulo-secao, .acoes-rodape { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
 .page-header { margin-bottom: 22px; align-items: flex-start; }
 .page-header h2 { font-size: 28px; font-weight: 750; color: #7f1d26; margin: 0 0 6px; }
 .page-header p, .titulo-secao p, .acoes-rodape p { margin: 0; color: #86686b; font-size: 13px; }
 .painel { background: #fff; border: 1px solid #efd5d7; border-radius: 13px; padding: 23px 26px; box-shadow: 0 4px 17px rgba(120,27,40,.035); margin-bottom: 18px; }
 .titulo-secao { margin-bottom: 18px; font-weight: 700; color: #841c25; }
-.titulo-secao h3 { margin: 0 0 5px; font-size: 18px; }
+.painel h3 { color: #71232e; font-size: 18px; margin: 0 0 16px; }
 .titulo-secao > div { flex: 1; }
 .filtros-grid { display: grid; grid-template-columns: 1.2fr 2fr minmax(115px,.65fr) minmax(140px,.8fr); gap: 14px; align-items: end; }
 .campo-filtro, .campo-numero, .busca-pessoas { display: flex; flex-direction: column; gap: 7px; min-width: 0; }

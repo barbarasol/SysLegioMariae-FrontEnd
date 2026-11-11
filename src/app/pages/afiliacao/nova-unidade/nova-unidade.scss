@@ -1,14 +1,24 @@
-/* ============================================================
-   SYSLEGIOMARIAE
-   NOVA UNIDADE
-   Arquivo SCSS completo
-   ============================================================ */
+$legio-red-600: #a13b40;
+$legio-red-700: #8f2b2f;
+$legio-red-800: #7a2024;
+$legio-white: #ffffff;
+$legio-rose-100: #fff3f3;
+$legio-rose-050: #fff8f8;
+$legio-border: #eadfe0;
+$legio-text: #343a40;
+$legio-text-muted: #6c757d;
+$legio-success: #198754;
+$legio-success-bg: #e8f5ec;
+$legio-birthday: #b7791f;
+$legio-birthday-bg: #fff8e3;
 
 .nova-unidade-container {
   width: 100%;
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 24px;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 40px;
+  box-sizing: border-box;
 }
 
 .page-header {
@@ -394,33 +404,44 @@ textarea.form-control {
 }
 
 .btn-outline-primary {
-  --bs-btn-color: #7a2024;
-  --bs-btn-border-color: #9b6669;
-  --bs-btn-hover-bg: #7a2024;
-  --bs-btn-hover-border-color: #7a2024;
-  --bs-btn-active-bg: #68191d;
-  --bs-btn-active-border-color: #68191d;
+  color: $legio-red-600;
+  border-color: $legio-red-600;
+  background: transparent;
+
+  &:hover {
+    background: $legio-red-600;
+    border-color: $legio-red-600;
+    color: $legio-white;
+  }
 }
 
 .btn-primary {
-  --bs-btn-bg: #7a2024;
-  --bs-btn-border-color: #7a2024;
-  --bs-btn-hover-bg: #68191d;
-  --bs-btn-hover-border-color: #68191d;
-  --bs-btn-active-bg: #571418;
-  --bs-btn-active-border-color: #571418;
+  background: $legio-red-600;
+  border-color: $legio-red-600;
+
+  &:hover {
+    background: $legio-red-700;
+    border-color: $legio-red-700;
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 0.15rem rgba(161, 59, 64, 0.2);
+  }
 }
 
 .btn-success {
-  --bs-btn-bg: #356846;
-  --bs-btn-border-color: #356846;
-  --bs-btn-hover-bg: #2a5739;
-  --bs-btn-hover-border-color: #2a5739;
+  background: $legio-success;
+  border-color: $legio-success;
+
+  &:hover {
+    background: #157347;
+    border-color: #157347;
+  }
 }
 
 @media (max-width: 920px) {
   .nova-unidade-container {
-    padding: 18px;
+    padding: 25px;
   }
 
   .wizard-steps {
@@ -439,7 +460,7 @@ textarea.form-control {
 
 @media (max-width: 760px) {
   .nova-unidade-container {
-    padding: 12px;
+    padding: 18px;
   }
 
   .page-header h2 {
@@ -484,6 +505,10 @@ textarea.form-control {
 }
 
 @media (max-width: 520px) {
+  .nova-unidade-container {
+    padding: 12px;
+  }
+
   .wizard-steps {
     grid-template-columns: 1fr;
   }

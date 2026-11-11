@@ -13,10 +13,11 @@ import { SolicitacaoOficialService } from '../../../services/solicitacao-oficial
 import { ToastService } from '../../../services/toast.service';
 import { mensagemDeErro } from '../../../services/usuario.service';
 import { Breadcrumb, ItemBreadcrumb } from '../../../components/breadcrumb/breadcrumb';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-solicitacoes-oficiais',
-  imports: [FormsModule, Breadcrumb],
+  imports: [FormsModule, Breadcrumb, RouterLink],
   templateUrl: './solicitacoes-oficiais.html',
   styleUrl: './solicitacoes-oficiais.scss'
 })

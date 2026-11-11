@@ -1,12 +1,10 @@
 <div class="visitas-container">
+  <app-breadcrumb [itens]="itens" />
+
   <header class="page-header">
     <div>
-      <h2><i class="bi bi-calendar-check"></i> Visitas às Unidades</h2>
+      <h2>Visitas às Unidades</h2>
       <p>Registre as visitas realizadas aos Conselhos e Praesidia, com histórico anual.</p>
-    </div>
-    <div class="atalhos">
-      <a class="btn btn-outline-primary" [routerLink]="['/numeros-unidades']" [queryParams]="{unidadeId: unidadeId}">Números das Unidades</a>
-      <a class="btn btn-outline-secondary" routerLink="/afiliacao"><i class="bi bi-arrow-left"></i> Conselhos–Praesidia</a>
     </div>
   </header>
 

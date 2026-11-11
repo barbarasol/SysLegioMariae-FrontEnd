@@ -8,10 +8,11 @@ import {
 } from '../../services/cadastro-unidade.service';
 import { UnidadeVisitasService } from '../../services/unidade-visitas.service';
 import { FormVisita, RegistroVisita, visitaVazia } from '../../models/unidade-visitas.model';
+import { Breadcrumb, ItemBreadcrumb } from '../../components/breadcrumb/breadcrumb';
 
 @Component({
   selector: 'app-unidade-visitas',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, Breadcrumb],
   templateUrl: './unidade-visitas.html',
   styleUrl: './unidade-visitas.scss'
 })
@@ -35,6 +36,12 @@ export class UnidadeVisitas implements OnInit {
   salvando = false;
   erro = '';
   sucesso = '';
+
+  itens: ItemBreadcrumb[] = [
+    { label: 'Início', routerLink: '/home', icone: 'bi-house' },
+    { label: 'Conselhos-Praesidia', routerLink: '/afiliacao', icone: 'bi-diagram-3' },
+    { label: 'Visitas', routerLink: '/unidade-visitas', icone: 'bi-calendar-check'}
+  ];
 
   constructor(
     private readonly cadastro: CadastroUnidadeService,

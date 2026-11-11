@@ -8,6 +8,7 @@ import { SolicitacaoService } from '../../../services/solicitacao.service';
 import { ToastService } from '../../../services/toast.service';
 import { mensagemDeErro } from '../../../services/usuario.service';
 import { DatePipe } from '@angular/common';
+import { Breadcrumb, ItemBreadcrumb } from '../../../components/breadcrumb/breadcrumb';
 
 
 const ROTULO_STATUS: Record<SolicitacaoStatus, string> = {
@@ -22,7 +23,8 @@ const ROTULO_STATUS: Record<SolicitacaoStatus, string> = {
   imports: [
     RouterLink,
     FormsModule,
-    DatePipe
+    DatePipe,
+    Breadcrumb
   ],
   templateUrl: './solicitacoes-unidades.html',
   styleUrl: './solicitacoes-unidades.scss'
@@ -42,6 +44,12 @@ export class SolicitacoesUnidades implements OnInit {
 
   carregando = false;
   processandoId: string | null = null;
+
+  itens: ItemBreadcrumb[] = [
+    { label: 'Início', routerLink: '/home', icone: 'bi-house' },
+    { label: 'Conselhos-Praesidia', routerLink: '/afiliacao', icone: 'bi-diagram-3' },
+    { label: 'Solicitações Unidade', routerLink: '/solicitacoes-unidade', icone: 'bi-clipboard-plus-fill'}
+  ];
 
   constructor(
     private solicitacaoService: SolicitacaoService,

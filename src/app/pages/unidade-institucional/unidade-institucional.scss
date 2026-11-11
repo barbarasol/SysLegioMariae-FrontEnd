@@ -1,7 +1,12 @@
 :host { display:block; }
-.institucional-container { max-width: 1160px; margin: 0 auto; padding: 26px; color: #432f33; }
+.institucional-container { width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 40px;
+  box-sizing: border-box;}
 .page-header { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px; }
-.page-header h2 { color:#6e1e2b; margin:0 0 8px; font-size:24px; }
+.page-header h2 { color:#7f1d26; margin:0 0 6px; font-size:28px; font-weight: 750;}
 .page-header p,.painel p { color:#7e6d70; font-size:13px; }
 .painel { padding:22px; border:1px solid #e7d9db; border-radius:12px; margin-bottom:18px; background:#fff; }
 .painel h3 { color:#71232e; font-size:18px; margin:0 0 16px; }

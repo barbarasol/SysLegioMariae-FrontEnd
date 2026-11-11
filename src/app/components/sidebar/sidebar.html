@@ -53,7 +53,7 @@
     </a> -->
 
     <a
-      routerLink="/contagem-membros"
+      routerLink="/membros"
       routerLinkActive="active"
       class="menu-item">
 
@@ -72,15 +72,46 @@
 
     </a>
 
-    <a
-      routerLink="/afiliacao"
-      routerLinkActive="active"
-      class="menu-item">
+    <!-- Conselhos-Praesidia, com subitens sempre abertos -->
+    <div class="menu-grupo">
+      <a
+        routerLink="/afiliacao"
+        routerLinkActive="active"
+        class="menu-item"
+      >
+        <i class="bi bi-diagram-3"></i>
+        <span>Conselhos-Praesidia</span>
+      </a>
 
-      <i class="bi-diagram-3"></i>
-      <span>Conselhos-Praesidia</span>
+      <div class="submenu">
+        <a
+          routerLink="/numeros-unidades"
+          routerLinkActive="active"
+          class="menu-item subitem"
+        >
+          <i class="bi bi-bar-chart-line"></i>
+          <span>Números das Unidades</span>
+        </a>
 
-    </a>
+        <a
+          routerLink="/unidade-visitas"
+          routerLinkActive="active"
+          class="menu-item subitem"
+        >
+          <i class="bi bi-calendar-check"></i>
+          <span>Vistas às Unidades</span>
+        </a>
+
+        <a
+          routerLink="/unidade-institucional"
+          routerLinkActive="active"
+          class="menu-item subitem"
+        >
+          <i class="bi bi-card-checklist"></i>
+          <span>Dados Institucionais</span>
+        </a>
+      </div>
+    </div>
 
     <a
       routerLink="/perfil"

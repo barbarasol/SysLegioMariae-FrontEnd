@@ -20,10 +20,11 @@ import {
 } from '../../../services/cadastro-unidade.service';
 import { ToastService } from '../../../services/toast.service';
 import { mensagemDeErro } from '../../../services/usuario.service';
+import { Breadcrumb, ItemBreadcrumb } from '../../../components/breadcrumb/breadcrumb';
 
 @Component({
   selector: 'app-nova-unidade',
-  imports: [FormsModule],
+  imports: [FormsModule, Breadcrumb],
   templateUrl: './nova-unidade.html',
   styleUrl: './nova-unidade.scss'
 })
@@ -120,6 +121,12 @@ export class NovaUnidade implements OnInit {
 
   erro = '';
   sucesso = '';
+
+  itens: ItemBreadcrumb[] = [
+    { label: 'Início', routerLink: '/home', icone: 'bi-house' },
+    { label: 'Conselhos-Praesidia', routerLink: '/afiliacao', icone: 'bi-diagram-3' },
+    { label: 'Nova Unidade', routerLink: '/nova-unidade', icone: 'bi-clipboard-plus'}
+  ];
 
   constructor(
     private cadastroUnidadeService: CadastroUnidadeService,

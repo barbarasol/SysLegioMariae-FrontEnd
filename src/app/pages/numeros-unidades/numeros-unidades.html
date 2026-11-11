@@ -1,16 +1,15 @@
 <div class="numeros-container">
+  <app-breadcrumb [itens]="itens" />
+
   <header class="page-header">
     <div>
-      <h2><i class="bi bi-bar-chart-line"></i> Números das Unidades</h2>
+      <h2>Números das Unidades</h2>
       <p>Registre e acompanhe a evolução mensal dos Conselhos e Praesidia.</p>
     </div>
-    <a class="btn btn-outline-secondary" routerLink="/afiliacao">
-      <i class="bi bi-arrow-left"></i> Conselhos–Praesidia
-    </a>
   </header>
 
   <section class="painel filtros">
-    <div class="titulo-secao"><i class="bi bi-funnel"></i> Filtros</div>
+    <h3><i class="bi bi-funnel"></i> Filtros</h3>
     <div class="filtros-grid">
       <div class="campo-filtro">
         <label for="tipoNumeros">Tipo da unidade</label>

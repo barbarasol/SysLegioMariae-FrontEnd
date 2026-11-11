@@ -1,7 +1,12 @@
 :host { display: block; }
-.visitas-container { max-width: 1440px; margin: 0 auto; padding: 26px; color: #432f33; }
+.visitas-container { width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 40px;
+  box-sizing: border-box; }
 .page-header,.linha-cabecalho { display: flex; justify-content: space-between; align-items: center; gap: 18px; margin-bottom: 18px; }
-.page-header h2 { color: #6e1e2b; margin: 0 0 7px; font-size: 24px; font-weight: 700; }
+.page-header h2 { color:#7f1d26; margin:0 0 6px; font-size:28px; font-weight: 750;}
 .page-header p,.linha-cabecalho p { margin: 0; font-size: 13px; color: #7e6d70; }
 .atalhos { display: flex; flex-wrap: wrap; gap: 8px; }
 .painel { background: #fff; border: 1px solid #e7d9db; border-radius: 12px; box-shadow: 0 4px 18px #00000006; padding: 22px; margin-bottom: 18px; }

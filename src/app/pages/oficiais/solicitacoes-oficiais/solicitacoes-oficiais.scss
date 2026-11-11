@@ -41,14 +41,40 @@ $legio-birthday-bg: #fff8e3;
   }
 }
 
-.btn-primary {
-  background: $legio-red-600;
-  border-color: $legio-red-600;
+.btn-novo-oficial {
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
 
-  &:hover {
-    background: $legio-red-700;
-    border-color: $legio-red-700;
-  }
+.btn-novo-oficial {
+  background: $legio-red-600;
+  color: $legio-white;
+  border: 1px solid $legio-red-600;
+}
+
+.btn-novo-oficial:hover {
+  background: $legio-red-700;
+  border-color: $legio-red-700;
+  color: $legio-white;
+  transform: translateY(-1px);
+}
+
+.btn-solicitacoes:focus-visible, .btn-novo-oficial:focus-visible {
+  outline: 3px solid rgba(161, 59, 64,  0.2);
+  outline-offset: 2px;
+}
+
+.btn-solicitacoes:active, .btn-novo-oficial:active {
+  transform: translateY(0);
 }
 
 .btn-outline-secondary {

@@ -74,6 +74,36 @@
   margin-top: auto;
 }
 
+/* Grupo de menu com subitens permanentes */
+
+.menu-grupo {
+  display: flex;
+  flex-direction: column;
+}
+
+.submenu {
+  display: flex;
+  flex-direction: column;
+
+  /* Linha vertical marcando a hierarquia */
+  margin-left: 8px;
+
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.subitem {
+  min-height: 38px;
+  padding-left: 12px;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  i {
+    font-size: 13px;
+    opacity: 0.85;
+  }
+}
+
 /*
  * ACRESCENTAR AO FINAL de:
  * src/app/components/sidebar/sidebar.scss

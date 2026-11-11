@@ -6,10 +6,11 @@ import { forkJoin } from 'rxjs';
 import { CadastroUnidadeService, TipoUnidadeOpcao, UnidadeEstrutura } from '../../services/cadastro-unidade.service';
 import { UnidadeInstitucionalService } from '../../services/unidade-institucional.service';
 import { AtualizarDadosInstitucionais, dadosVazios } from '../../models/unidade-institucional.model';
+import { Breadcrumb, ItemBreadcrumb } from '../../components/breadcrumb/breadcrumb';
 
 @Component({
   selector: 'app-unidade-institucional',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, Breadcrumb],
   templateUrl: './unidade-institucional.html',
   styleUrl: './unidade-institucional.scss'
 })
@@ -27,6 +28,12 @@ export class UnidadeInstitucional implements OnInit {
   salvando = false;
   erro = '';
   sucesso = '';
+
+  itens: ItemBreadcrumb[] = [
+    { label: 'Início', routerLink: '/home', icone: 'bi-house' },
+    { label: 'Conselhos-Praesidia', routerLink: '/afiliacao', icone: 'bi-diagram-3' },
+    { label: 'Dados Institucional', routerLink: '/unidade-institucional', icone: 'bi-card-checklist'}
+  ];
 
   constructor(
     private readonly cadastro: CadastroUnidadeService,

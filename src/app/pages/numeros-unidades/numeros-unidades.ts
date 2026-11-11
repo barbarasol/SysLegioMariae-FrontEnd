@@ -15,10 +15,11 @@ import {
   PermissoesNumerosUnidade,
   RegistroNumerosUnidade, ValoresNumerosUnidade
 } from '../../models/unidade-numeros.model';
+import { Breadcrumb, ItemBreadcrumb } from '../../components/breadcrumb/breadcrumb';
 
 @Component({
   selector: 'app-numeros-unidades',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, Breadcrumb],
   templateUrl: './numeros-unidades.html',
   styleUrl: './numeros-unidades.scss'
 })
@@ -51,6 +52,12 @@ export class NumerosUnidades implements OnInit {
   alterado = false;
   erro = '';
   sucesso = '';
+
+  itens: ItemBreadcrumb[] = [
+    { label: 'Início', routerLink: '/home', icone: 'bi-house' },
+    { label: 'Conselhos-Praesidia', routerLink: '/afiliacao', icone: 'bi-diagram-3' },
+    { label: 'Números Unidade', routerLink: '/numeros-unidade', icone: 'bi-bar-chart-line'}
+  ];
 
   constructor(
     private cadastroUnidade: CadastroUnidadeService,
