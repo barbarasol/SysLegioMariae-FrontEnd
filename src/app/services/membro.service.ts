@@ -101,4 +101,52 @@ export class MembroService {
       { withCredentials: true }
     );
   }
+
+  meuCadastro(): Observable<MeuCadastroMembro> {
+    return this.http.get<MeuCadastroMembro>(
+      `${environment.apiUrl}/membros/me`,
+      { withCredentials: true }
+    );
+  }
+
+  atualizarMeuCadastro(payload: AtualizarMeuCadastroInput): Observable<MeuCadastroMembro> {
+    return this.http.patch<MeuCadastroMembro>(
+      `${environment.apiUrl}/membros/me`,
+      payload,
+      { withCredentials: true }
+    );
+  }
+
 }
+
+/** Dados que o usuário com perfil MEMBRO pode consultar do próprio cadastro. */
+export interface MeuCadastroMembro {
+  id: string;
+  nome: string;
+  nomePreferido: string | null;
+  cpf: string | null;
+  rg: string | null;
+  dataNascimento: string | null;
+  email: string | null;
+  celular: string | null;
+  telefone: string | null;
+  formacaoEscolar: string | null;
+  aposentado: boolean;
+  status: string;
+  categoria: string | null;
+  unidadeNome: string | null;
+  cargoNome: string | null;
+  dtIngresso: string | null;
+  dtCompromisso: string | null;
+  pretoriano: boolean;
+  adjutor: boolean;
+  mesc: boolean;
+  catequista: boolean;
+  coroinha: boolean;
+}
+
+export type AtualizarMeuCadastroInput = Pick<
+  MeuCadastroMembro,
+  'nome' | 'nomePreferido' | 'rg' | 'dataNascimento' |
+  'email' | 'celular' | 'telefone' | 'formacaoEscolar' | 'aposentado'
+>;

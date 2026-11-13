@@ -148,7 +148,8 @@ export class NovoMembro implements OnInit {
       .subscribe({
         next: (dados) => {
           this.catalogos = dados;
-          this.acessoNegado = dados.unidades.length === 0;
+          const acesso = dados as CatalogosMembro & { somenteMeuCadastro?: boolean };
+          this.acessoNegado = acesso.somenteMeuCadastro === true || dados.unidades.length === 0;
           if (dados.unidades.length === 1) {
             this.membro.unidadeId = dados.unidades[0].id;
           }

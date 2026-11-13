@@ -6,6 +6,96 @@
       <p>Somente o Platform Owner ou usuários OPERADOR/ADMIN_UNIDADE vinculados diretamente a um Praesidium podem consultar e cadastrar membros.</p>
     </div>
   </div>
+} @else if (somenteMeuCadastro) {
+  <div class="membros-container">
+    <div class="page-header">
+      <div>
+        <h2>Meu cadastro de membro</h2>
+        <p>Consulte seus dados e atualize as informações pessoais permitidas.</p>
+      </div>
+    </div>
+
+    @if (carregandoMeuCadastro) {
+      <div class="empty-state"><p>Carregando seu cadastro...</p></div>
+    } @else if (!meuCadastro || !edicaoPropria) {
+      <div class="empty-state" role="alert">
+        <p>Seu cadastro de membro ainda não foi vinculado ao usuário.</p>
+        <p>Solicite ao responsável do Praesidium que associe a sua pessoa ao cadastro de membro.</p>
+      </div>
+    } @else {
+      <div class="filter-card">
+        <div class="card-title">Informações legionárias (somente leitura)</div>
+        <p><strong>CPF:</strong> {{ meuCadastro.cpf || 'Não informado' }}</p>
+        <p><strong>Praesidium:</strong> {{ meuCadastro.unidadeNome || 'Sem unidade vinculada' }}</p>
+        <p><strong>Categoria:</strong> {{ meuCadastro.categoria || 'Não informada' }}</p>
+        <p><strong>Cargo:</strong> {{ meuCadastro.cargoNome || 'Não informado' }}</p>
+        <p><strong>Status:</strong> {{ rotulo(meuCadastro.status) }}</p>
+        <p><strong>Ingresso:</strong> {{ meuCadastro.dtIngresso || 'Não informado' }}</p>
+        <p><strong>Promessa:</strong> {{ meuCadastro.dtCompromisso || 'Não informada' }}</p>
+        <p>Os vínculos, categoria, cargo, status e funções legionárias são alterados somente pelos responsáveis autorizados.</p>
+      </div>
+
+      <div class="filter-card">
+        <div class="card-title">Meus dados pessoais</div>
+        <div class="filters-grid">
+          <div class="filter-field">
+            <label for="meu-nome">Nome completo</label>
+            <input id="meu-nome" class="form-control" name="meuNome"
+              [(ngModel)]="edicaoPropria.nome" [disabled]="salvandoMeuCadastro" />
+          </div>
+          <div class="filter-field">
+            <label for="meu-preferido">Nome preferido</label>
+            <input id="meu-preferido" class="form-control" name="meuPreferido"
+              [(ngModel)]="edicaoPropria.nomePreferido" [disabled]="salvandoMeuCadastro" />
+          </div>
+          <div class="filter-field">
+            <label for="meu-rg">RG</label>
+            <input id="meu-rg" class="form-control" name="meuRg"
+              [(ngModel)]="edicaoPropria.rg" [disabled]="salvandoMeuCadastro" />
+          </div>
+          <div class="filter-field">
+            <label for="meu-nascimento">Data de nascimento</label>
+            <input id="meu-nascimento" type="date" class="form-control" name="meuNascimento"
+              [(ngModel)]="edicaoPropria.dataNascimento" [disabled]="salvandoMeuCadastro" />
+          </div>
+          <div class="filter-field">
+            <label for="meu-email">E-mail para contato</label>
+            <input id="meu-email" type="email" class="form-control" name="meuEmail"
+              [(ngModel)]="edicaoPropria.email" [disabled]="salvandoMeuCadastro" />
+          </div>
+          <div class="filter-field">
+            <label for="meu-celular">Celular</label>
+            <input id="meu-celular" class="form-control" name="meuCelular"
+              [(ngModel)]="edicaoPropria.celular" [disabled]="salvandoMeuCadastro" />
+          </div>
+          <div class="filter-field">
+            <label for="meu-telefone">Telefone</label>
+            <input id="meu-telefone" class="form-control" name="meuTelefone"
+              [(ngModel)]="edicaoPropria.telefone" [disabled]="salvandoMeuCadastro" />
+          </div>
+          <div class="filter-field">
+            <label for="meu-formacao">Formação escolar</label>
+            <input id="meu-formacao" class="form-control" name="meuFormacao" maxlength="80"
+              [(ngModel)]="edicaoPropria.formacaoEscolar" [disabled]="salvandoMeuCadastro" />
+          </div>
+          <div class="filter-field">
+            <label for="meu-aposentado">Aposentado</label>
+            <select id="meu-aposentado" class="form-select" name="meuAposentado"
+              [(ngModel)]="edicaoPropria.aposentado" [disabled]="salvandoMeuCadastro">
+              <option [ngValue]="false">Não</option>
+              <option [ngValue]="true">Sim</option>
+            </select>
+          </div>
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-primary" type="button" (click)="salvarMeuCadastro()"
+            [disabled]="salvandoMeuCadastro || !edicaoPropria.nome.trim()">
+            {{ salvandoMeuCadastro ? 'Salvando...' : 'Salvar minhas alterações' }}
+          </button>
+        </div>
+      </div>
+    }
+  </div>
 } @else {
 <div class="membros-container">
   <div class="page-header">
@@ -74,7 +164,7 @@
 
       <div class="filter-field">
         <label for="unidadeId">Unidade</label>
-        <select id="unidadeId" class="form-select" name="unidadeId" [(ngModel)]="filtros.unidadeId" [disabled]="catalogos.unidades.length <= 1">
+        <select id="unidadeId" class="form-select" name="unidadeId" [(ngModel)]="filtros.unidadeId" [disabled]="!platformOwner && catalogos.unidades.length <= 1">
           <option value="">Todas as unidades autorizadas</option>
 
           @for (unidade of catalogos.unidades; track unidade.id) {
