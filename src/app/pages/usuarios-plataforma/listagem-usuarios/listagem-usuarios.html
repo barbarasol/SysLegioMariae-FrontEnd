@@ -376,7 +376,7 @@
               class="btn-close"
               aria-label="Fechar"
               (click)="cancelarEdicao()"
-              [disabled]="salvandoEdicao || salvandoAcesso"
+              [disabled]="salvandoEdicao || salvandoAcesso || aprovandoSolicitacao"
             ></button>
 
           </div>
@@ -641,6 +641,20 @@
                 </div>
               }
 
+              @if (usuarioEdicao.solicitacaoStatus === 'PENDENTE') {
+                <div class="alert alert-info" role="status">
+                  <strong>Solicitação pendente:</strong>
+                  {{ usuarioEdicao.solicitacaoUnidadeNome || 'Unidade não identificada' }} —
+                  {{ usuarioEdicao.solicitacaoPerfilCodigo }}.
+                  Revise a unidade e o perfil abaixo e clique em aprovar para ativar a conta.
+                </div>
+                <button type="button" class="btn btn-success mb-3"
+                  (click)="aprovarCadastro()"
+                  [disabled]="aprovandoSolicitacao || carregandoCadastros">
+                  {{ aprovandoSolicitacao ? 'Aprovando...' : 'Aprovar cadastro e ativar usuário' }}
+                </button>
+              }
+
               <div class="access-form-card">
 
                 <div class="row g-3 align-items-end">
@@ -804,9 +818,7 @@
                 @if (perfilMembroSelecionado()) {
 
                   <div class="alert alert-warning mt-3 mb-0">
-                    O perfil <strong>MEMBRO</strong> exige que
-                    esta pessoa já possua vínculo ativo como membro
-                    da unidade em <strong>legio.membro_unidade</strong>.
+                    O perfil <strong>MEMBRO</strong> pode ser aprovado pelo proprietário da plataforma antes de completar o cadastro legionário. O acesso será restrito ao próprio cadastro até a validação institucional.
                   </div>
 
                 }
@@ -972,7 +984,7 @@
               type="button"
               class="btn btn-outline-secondary"
               (click)="cancelarEdicao()"
-              [disabled]="salvandoEdicao || salvandoAcesso"
+              [disabled]="salvandoEdicao || salvandoAcesso || aprovandoSolicitacao"
             >
               Fechar
             </button>

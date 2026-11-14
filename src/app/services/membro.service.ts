@@ -117,6 +117,43 @@ export class MembroService {
     );
   }
 
+
+  listarPendentes(unidadeId?: string): Observable<MembroPendenteValidacao[]> {
+    const params = unidadeId ? new HttpParams().set('unidadeId', unidadeId) : undefined;
+    return this.http.get<MembroPendenteValidacao[]>(
+      `${environment.apiUrl}/membros/pendentes`, { params, withCredentials: true }
+    );
+  }
+
+  validarPendente(usuarioId: string, categoriaCodigo: string): Observable<MembroValidadoResponse> {
+    return this.http.post<MembroValidadoResponse>(
+      `${environment.apiUrl}/membros/pendentes/${encodeURIComponent(usuarioId)}/validar`,
+      { categoriaCodigo }, { withCredentials: true }
+    );
+  }
+}
+
+export interface MembroPendenteValidacao {
+  usuarioId: string;
+  pessoaId: string;
+  membroId: string | null;
+  nome: string;
+  nomePreferido: string | null;
+  cpf: string | null;
+  email: string | null;
+  celular: string | null;
+  formacaoEscolar: string | null;
+  aposentado: boolean;
+  unidadeId: string;
+  unidadeNome: string;
+  autorizadoEm: string | null;
+}
+
+export interface MembroValidadoResponse {
+  membroId: string;
+  unidadeId: string;
+  categoriaCodigo: string;
+  status: 'ATIVO';
 }
 
 /** Dados que o usuário com perfil MEMBRO pode consultar do próprio cadastro. */

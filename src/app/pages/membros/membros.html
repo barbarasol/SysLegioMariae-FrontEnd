@@ -11,7 +11,7 @@
     <div class="page-header">
       <div>
         <h2>Meu cadastro de membro</h2>
-        <p>Consulte seus dados e atualize as informações pessoais permitidas.</p>
+        <p>Complete seus dados pessoais. O vínculo legionário, a categoria e o cargo dependem de validação da unidade.</p>
       </div>
     </div>
 
@@ -19,10 +19,16 @@
       <div class="empty-state"><p>Carregando seu cadastro...</p></div>
     } @else if (!meuCadastro || !edicaoPropria) {
       <div class="empty-state" role="alert">
-        <p>Seu cadastro de membro ainda não foi vinculado ao usuário.</p>
-        <p>Solicite ao responsável do Praesidium que associe a sua pessoa ao cadastro de membro.</p>
+        <p>Não foi possível consultar seu cadastro pessoal.</p>
+        <p>Verifique com o administrador da plataforma a situação do seu acesso.</p>
       </div>
     } @else {
+      @if (meuCadastro.status === 'PENDENTE_VINCULO') {
+        <div class="alert alert-info" role="status">
+          Seus dados pessoais podem ser completados agora. A confirmação da condição legionária
+          e da categoria será realizada pelo responsável da unidade.
+        </div>
+      }
       <div class="filter-card">
         <div class="card-title">Informações legionárias (somente leitura)</div>
         <p><strong>CPF:</strong> {{ meuCadastro.cpf || 'Não informado' }}</p>
@@ -105,11 +111,90 @@
       <p>Gerencie e acompanhe os membros da Legião de Maria.</p>
     </div>
 
-    <button class="btn btn-primary" (click)="novoMembro()" [disabled]="carregando || catalogos.unidades.length === 0">
-      <i class="bi bi-plus-circle"></i>
-      Novo Membro
-    </button>
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button" class="btn btn-outline-primary" (click)="alternarPendentes()"
+        [attr.aria-expanded]="mostrandoPendentes" [disabled]="catalogos.unidades.length === 0">
+        <i class="bi bi-person-check"></i>
+        {{ mostrandoPendentes ? 'Ocultar pendentes' : 'Membros pendentes' }}
+        @if (pendentes.length > 0) {
+          <span class="badge bg-warning text-dark ms-1">{{ pendentes.length }}</span>
+        }
+      </button>
+      <button class="btn btn-primary" (click)="novoMembro()" [disabled]="carregando || catalogos.unidades.length === 0">
+        <i class="bi bi-plus-circle"></i>
+        Novo Membro
+      </button>
+    </div>
   </div>
+
+  @if (mostrandoPendentes) {
+    <div class="table-card mb-4" id="membros-pendentes">
+      <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+        <div class="card-title mb-0">Membros pendentes de validação ({{ pendentes.length }})</div>
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="carregarPendentes()"
+          [disabled]="carregandoPendentes || validandoPendenteId !== null">
+          <i class="bi bi-arrow-clockwise"></i> Atualizar
+        </button>
+      </div>
+      <p>Usuários com perfil MEMBRO já autorizado, mas ainda sem vínculo legionário ativo no Praesidium.
+        A validação confirma a categoria e o vínculo institucional.</p>
+      @if (erroPendentes) {
+        <div class="alert alert-danger" role="alert">{{ erroPendentes }}</div>
+      }
+      @if (carregandoPendentes) {
+        <div class="empty-state"><p>Consultando membros pendentes...</p></div>
+      } @else if (pendentes.length === 0 && !erroPendentes) {
+        <div class="empty-state"><p>Nenhum membro aguardando validação nas unidades autorizadas.</p></div>
+      } @else if (pendentes.length > 0) {
+        @if (categoriasValidacao.length === 0) {
+          <div class="alert alert-warning" role="alert">
+            Nenhuma categoria Ativo ou Auxiliar está configurada no catálogo de categorias de membros.
+          </div>
+        }
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead><tr>
+              <th>Membro</th><th>Praesidium</th><th>Dados informados</th>
+              <th>Categoria legionária</th><th>Ação</th>
+            </tr></thead>
+            <tbody>
+              @for (pendente of pendentes; track pendente.usuarioId) {
+                <tr>
+                  <td>
+                    <strong>{{ pendente.nome }}</strong>
+                    <div class="small text-muted">{{ pendente.cpf || 'CPF não informado' }}</div>
+                    <div class="small text-muted">{{ pendente.email || 'E-mail não informado' }}</div>
+                  </td>
+                  <td>{{ pendente.unidadeNome }}</td>
+                  <td>
+                    <div>Celular: {{ pendente.celular || '—' }}</div>
+                    <div>Formação: {{ pendente.formacaoEscolar || '—' }}</div>
+                    <div>Aposentado: {{ pendente.aposentado ? 'Sim' : 'Não' }}</div>
+                  </td>
+                  <td>
+                    <select class="form-select" [name]="'categoriaPendente' + pendente.usuarioId"
+                      [(ngModel)]="categoriasPendentesSelecionadas[pendente.usuarioId]"
+                      [disabled]="validandoPendenteId !== null || categoriasValidacao.length === 0">
+                      <option value="">Selecione Ativo ou Auxiliar</option>
+                      @for (categoria of categoriasValidacao; track categoria.codigo) {
+                        <option [value]="categoria.codigo">{{ categoria.nome }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td>
+                    <button type="button" class="btn btn-sm btn-success" (click)="validarPendente(pendente)"
+                      [disabled]="validandoPendenteId !== null || !categoriasPendentesSelecionadas[pendente.usuarioId]">
+                      {{ validandoPendenteId === pendente.usuarioId ? 'Validando...' : 'Validar membro' }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
 
   <!-- Cards Resumo -->
   <div class="stats-grid">

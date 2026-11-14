@@ -2,7 +2,7 @@
   <div class="page-header">
     <h2>Novo Usuário</h2>
 
-    <p>Crie sua conta de acesso. As permissões serão definidas posteriormente.</p>
+    <p>Crie sua conta, informe a unidade e solicite um perfil. O administrador aprovará seu acesso.</p>
   </div>
 
   <div class="form-card">
@@ -97,10 +97,39 @@
             <input
               type="text"
               class="form-control"
-              value="Ativo"
+              value="Pendente de autorização"
               disabled
             />
           </div>
+
+          <div class="full-width">
+            <label for="unidadeSolicitada">Unidade à qual deseja pertencer</label>
+            <select id="unidadeSolicitada" class="form-select" name="unidadeSolicitada"
+              [(ngModel)]="unidadeSolicitadaId" [disabled]="carregando || carregandoCatalogo" required>
+              <option value="">Selecione a unidade</option>
+              @for (unidade of unidadesCadastro; track unidade.id) {
+                <option [value]="unidade.id">{{ unidade.tipoCodigo }} — {{ unidade.nome }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="full-width">
+            <label for="perfilSolicitado">Perfil que deseja solicitar</label>
+            <select id="perfilSolicitado" class="form-select" name="perfilSolicitado"
+              [(ngModel)]="perfilSolicitadoCodigo" [disabled]="carregando || carregandoCatalogo" required>
+              <option value="">Selecione o perfil</option>
+              @for (perfil of perfisCadastro; track perfil.codigo) {
+                <option [value]="perfil.codigo">{{ perfil.codigo }} — {{ perfil.nome }}</option>
+              }
+            </select>
+            <small>Esta é uma solicitação, não uma concessão de acesso.</small>
+          </div>
+          @if (!perfilPermitidoNaUnidade) {
+            <div class="full-width form-alert" role="alert">O perfil MEMBRO deve ser solicitado para um Praesidium.</div>
+          }
+          @if (erroCatalogo) {
+            <div class="full-width form-alert" role="alert">{{ erroCatalogo }}</div>
+          }
 
           <div>
             <label>Senha</label>
@@ -190,10 +219,14 @@
           </div>
         </div>
 
+        <div class="form-grid">
+          <div><label>Unidade solicitada</label><input class="form-control" [value]="unidadeSelecionada?.nome || '-'" disabled /></div>
+          <div><label>Perfil solicitado</label><input class="form-control" [value]="perfilSolicitadoCodigo" disabled /></div>
+        </div>
         <div class="confirmacao-aviso">
           <i class="bi bi-info-circle"></i>
 
-          O usuário será criado com status <strong>Pendente de ativação</strong> e sem perfil de acesso. Um administrador definirá as permissões posteriormente.
+          A conta será criada como <strong>Pendente de autorização</strong>. A unidade e o perfil escolhidos serão submetidos ao administrador. O acesso só será concedido após aprovação; o pagamento será tratado posteriormente.
         </div>
       }
 

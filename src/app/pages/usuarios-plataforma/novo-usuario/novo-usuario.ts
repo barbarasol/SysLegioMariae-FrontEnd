@@ -1,11 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectorRef,
-  Component
+  Component,
+  OnInit
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
+import type { PerfilDisponivel, UnidadeDisponivel } from '../../../models/usuario.model';
 
 import {
   mensagemDeErro,
@@ -20,7 +22,7 @@ import {
   styleUrl: './novo-usuario.scss',
   templateUrl: './novo-usuario.html',
 })
-export class NovoUsuario {
+export class NovoUsuario implements OnInit {
 
   etapa = 1;
 
@@ -31,6 +33,13 @@ export class NovoUsuario {
   email = '';
   senha = '';
   confirmarSenha = '';
+  unidadeSolicitadaId = '';
+  perfilSolicitadoCodigo = '';
+  unidadesCadastro: UnidadeDisponivel[] = [];
+  perfisCadastro: PerfilDisponivel[] = [];
+  carregandoCatalogo = false;
+  erroCatalogo = '';
+
 
   erro = '';
   sucesso = '';
@@ -41,6 +50,32 @@ export class NovoUsuario {
     private cdr: ChangeDetectorRef,
     private router: Router
   ) {}
+
+  ngOnInit(): void {
+    this.carregandoCatalogo = true;
+    this.usuarioService.listarCatalogoCadastro()
+      .pipe(finalize(() => { this.carregandoCatalogo = false; this.cdr.detectChanges(); }))
+      .subscribe({
+        next: (resultado) => {
+          this.unidadesCadastro = resultado.unidades ?? [];
+          this.perfisCadastro = resultado.perfis ?? [];
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.erroCatalogo = 'Não foi possível carregar as unidades e os perfis. Recarregue a página.';
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  get unidadeSelecionada(): UnidadeDisponivel | undefined {
+    return this.unidadesCadastro.find((u) => u.id === this.unidadeSolicitadaId);
+  }
+
+  get perfilPermitidoNaUnidade(): boolean {
+    return this.perfilSolicitadoCodigo !== 'MEMBRO' ||
+      this.unidadeSelecionada?.tipoCodigo === 'PRAESIDIUM';
+  }
 
   get senhasDiferentes(): boolean {
     return (
@@ -64,7 +99,11 @@ export class NovoUsuario {
       return (
         this.senha.length >= 6 &&
         this.confirmarSenha.length >= 6 &&
-        this.senha === this.confirmarSenha
+        this.senha === this.confirmarSenha &&
+        !!this.unidadeSolicitadaId &&
+        !!this.perfilSolicitadoCodigo &&
+        this.perfilPermitidoNaUnidade &&
+        !this.carregandoCatalogo
       );
     }
 
@@ -104,6 +143,12 @@ export class NovoUsuario {
     }
 
     if (this.etapa === 2) {
+
+      if (!this.unidadeSolicitadaId || !this.perfilSolicitadoCodigo || !this.perfilPermitidoNaUnidade) {
+        this.erro = 'Escolha uma unidade válida e um perfil compatível. MEMBRO requer Praesidium.';
+        this.cdr.detectChanges();
+        return;
+      }
 
       if (!this.senha) {
         this.erro =
@@ -198,7 +243,9 @@ export class NovoUsuario {
           this.celular,
 
         senha:
-          this.senha
+          this.senha,
+        unidadeSolicitadaId: this.unidadeSolicitadaId,
+        perfilSolicitadoCodigo: this.perfilSolicitadoCodigo
       })
       .pipe(
         finalize(() => {
@@ -249,7 +296,7 @@ export class NovoUsuario {
             (pessoaReutilizada
               ? 'Vinculado à pessoa já cadastrada, sem modificar os dados do legionário. '
               : '') +
-            'O cadastro ficará pendente até a definição das permissões.';
+            'Sua solicitação de unidade e perfil ficará aguardando aprovação administrativa.';
 
           this.etapa = 1;
           this.limpar();
@@ -293,5 +340,8 @@ export class NovoUsuario {
     this.email = '';
     this.senha = '';
     this.confirmarSenha = '';
+    this.unidadeSolicitadaId = '';
+    this.perfilSolicitadoCodigo = '';
+
   }
 }

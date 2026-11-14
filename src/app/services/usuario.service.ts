@@ -39,7 +39,7 @@ export class UsuarioService {
 
   criar(
     payload:
-      CriarUsuarioRequest
+      CriarUsuarioRequest & { unidadeSolicitadaId?: string; perfilSolicitadoCodigo?: string }
   ): Observable<UsuarioCriadoResponse> {
 
     return this.http
@@ -67,13 +67,38 @@ export class UsuarioService {
 
           celular:
             payload.celular
-              ?.trim() || null
+              ?.trim() || null,
+
+          unidadeSolicitadaId: payload.unidadeSolicitadaId || null,
+          perfilSolicitadoCodigo: payload.perfilSolicitadoCodigo || null
         },
         {
           withCredentials:
             true
         }
       );
+  }
+
+  /** Catálogo de solicitação: não exige token, não concede permissão. */
+  listarCatalogoCadastro(): Observable<{
+    unidades: UnidadeDisponivel[];
+    perfis: PerfilDisponivel[];
+  }> {
+    return this.http.get<{ unidades: UnidadeDisponivel[]; perfis: PerfilDisponivel[] }>(
+      `${environment.apiUrl}/usuarios/catalogos-cadastro`
+    );
+  }
+
+  /** Apenas PLATFORM_OWNER pode aprovar uma solicitação de acesso. */
+  aprovarSolicitacao(
+    usuarioId: string,
+    payload: { unidadeId: string; perfilCodigo: string }
+  ): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(
+      `${environment.apiUrl}/usuarios/${encodeURIComponent(usuarioId)}/aprovar-solicitacao`,
+      payload,
+      { withCredentials: true }
+    );
   }
 
   listar(

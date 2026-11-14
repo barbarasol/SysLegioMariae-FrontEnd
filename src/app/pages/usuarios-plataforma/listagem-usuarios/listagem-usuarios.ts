@@ -46,8 +46,14 @@ type DirecaoOrdenacao =
   | 'asc'
   | 'desc';
 
-interface UsuarioEdicao
-  extends UsuarioLista {
+interface UsuarioComSolicitacao extends UsuarioLista {
+  solicitacaoUnidadeId?: string | null;
+  solicitacaoUnidadeNome?: string | null;
+  solicitacaoPerfilCodigo?: string | null;
+  solicitacaoStatus?: string | null;
+}
+
+interface UsuarioEdicao extends UsuarioComSolicitacao {
   perfilCodigo: string;
 }
 
@@ -84,7 +90,7 @@ implements OnInit {
   filtroEmail = '';
 
   usuarios:
-    UsuarioLista[] = [];
+    UsuarioComSolicitacao[] = [];
 
   perfisGlobais:
     PerfilDisponivel[] = [];
@@ -118,6 +124,7 @@ implements OnInit {
   carregandoAcessos = false;
   salvandoEdicao = false;
   salvandoAcesso = false;
+  aprovandoSolicitacao = false;
 
   excluindoId:
     string | null =
@@ -549,6 +556,11 @@ implements OnInit {
       this.carregarCadastrosApoio();
     }
 
+
+    if (this.usuarioEdicao?.solicitacaoStatus === 'PENDENTE') {
+      this.acessoFormulario.unidadeId = this.usuarioEdicao.solicitacaoUnidadeId || '';
+      this.acessoFormulario.perfilCodigo = this.usuarioEdicao.solicitacaoPerfilCodigo || '';
+    }
     this.carregarAcessosUnidade();
 
     this.cdr
@@ -797,6 +809,34 @@ implements OnInit {
 
     this.cdr
       .detectChanges();
+  }
+
+  aprovarCadastro(): void {
+    const usuario = this.usuarioEdicao;
+    if (!usuario || this.aprovandoSolicitacao || usuario.solicitacaoStatus !== 'PENDENTE') return;
+    const unidadeId = this.acessoFormulario.unidadeId || usuario.solicitacaoUnidadeId || '';
+    const perfilCodigo = this.acessoFormulario.perfilCodigo || usuario.solicitacaoPerfilCodigo || '';
+    if (!unidadeId || !perfilCodigo) {
+      this.erroAcesso = 'Selecione unidade e perfil para aprovar.';
+      return;
+    }
+    this.aprovandoSolicitacao = true;
+    this.erroAcesso = '';
+    this.usuarioService.aprovarSolicitacao(usuario.id, { unidadeId, perfilCodigo })
+      .pipe(finalize(() => { this.aprovandoSolicitacao = false; this.cdr.detectChanges(); }))
+      .subscribe({
+        next: () => {
+          this.sucessoAcesso = 'Solicitação aprovada! O usuário está ativo e seu acesso foi concedido.';
+          this.usuarioEdicao = { ...usuario, solicitacaoStatus: 'APROVADA', status: 'ATIVO' };
+          this.carregarAcessosUnidade();
+          this.filtrar();
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          this.erroAcesso = error?.error?.message || 'Não foi possível aprovar o cadastro.';
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   salvarAcesso():

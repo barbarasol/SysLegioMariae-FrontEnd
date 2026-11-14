@@ -5,13 +5,14 @@ import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CatalogosMembro, MembroListado, ResumoMembros } from '../../models/membro.model';
 import { mensagemDeErro } from '../../services/usuario.service';
-import { MembroService, type MeuCadastroMembro, type AtualizarMeuCadastroInput } from '../../services/membro.service';
+import { MembroService, type MeuCadastroMembro, type AtualizarMeuCadastroInput, type MembroPendenteValidacao } from '../../services/membro.service';
 import { ToastService } from '../../services/toast.service';
 
 const ROTULO_STATUS: Record<string, string> = {
   ATIVO: 'Ativo',
   INATIVO: 'Inativo',
-  FALECIDO: 'Falecido'
+  FALECIDO: 'Falecido',
+  PENDENTE_VINCULO: 'Aguardando validação pela unidade'
 };
 
 function catalogosVazios(): CatalogosMembro {
@@ -52,10 +53,18 @@ export class Membros implements OnInit, OnDestroy {
   salvandoMeuCadastro = false;
   carregandoMeuCadastro = false;
 
+  mostrandoPendentes = false;
+  carregandoPendentes = false;
+  pendentes: MembroPendenteValidacao[] = [];
+  categoriasPendentesSelecionadas: Record<string, string> = {};
+  validandoPendenteId: string | null = null;
+  erroPendentes = '';
+
   private requisicaoMembros?: Subscription;
   private requisicaoResumo?: Subscription;
   private requisicaoCatalogos?: Subscription;
   private requisicaoMeuCadastro?: Subscription;
+  private requisicaoPendentes?: Subscription;
 
   constructor(
     private membroService: MembroService,
@@ -67,8 +76,6 @@ export class Membros implements OnInit, OnDestroy {
   ngOnInit(): void {
     // A lista deve aparecer assim que seu endpoint responder.
     // Resumo e catálogos são independentes: não bloqueiam a tabela.
-    this.carregar();
-    this.carregarResumo();
     this.carregarCatalogos();
   }
 
@@ -77,6 +84,7 @@ export class Membros implements OnInit, OnDestroy {
     this.requisicaoResumo?.unsubscribe();
     this.requisicaoCatalogos?.unsubscribe();
     this.requisicaoMeuCadastro?.unsubscribe();
+    this.requisicaoPendentes?.unsubscribe();
   }
 
   rotulo(status: string): string {
@@ -163,7 +171,14 @@ export class Membros implements OnInit, OnDestroy {
           };
           this.platformOwner = escopo.platformOwner === true;
           this.somenteMeuCadastro = escopo.somenteMeuCadastro === true;
-          if (this.somenteMeuCadastro) this.carregarMeuCadastro();
+          if (this.somenteMeuCadastro) {
+            this.carregando = false;
+            this.carregarMeuCadastro();
+          } else {
+            this.carregar();
+            this.carregarResumo();
+            this.carregarPendentes();
+          }
 
           // Um único Praesidium autorizado: seleção automática do filtro.
           // A consulta sem filtro já é restrita no backend, portanto não
@@ -176,6 +191,72 @@ export class Membros implements OnInit, OnDestroy {
       },
       error: (erro: HttpErrorResponse) => {
         this.processarErro(erro, 'Não foi possível carregar as unidades autorizadas.');
+      }
+    });
+  }
+
+  /** Catálogo real do banco; o responsável escolhe uma categoria Ativo/Auxiliar. */
+  get categoriasValidacao(): CatalogosMembro['categorias'] {
+    return this.catalogos.categorias.filter(categoria => {
+      const descricao = `${categoria.codigo} ${categoria.nome}`
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+      return /(^|[^A-Z])(ATIV[OA]S?|AUXILIAR(?:ES)?)(?=[^A-Z]|$)/.test(descricao);
+    });
+  }
+
+  alternarPendentes(): void {
+    if (this.acessoNegado || this.somenteMeuCadastro) return;
+    this.mostrandoPendentes = !this.mostrandoPendentes;
+    if (this.mostrandoPendentes) this.carregarPendentes();
+  }
+
+  carregarPendentes(): void {
+    if (this.acessoNegado || this.somenteMeuCadastro) return;
+    this.requisicaoPendentes?.unsubscribe();
+    this.carregandoPendentes = true;
+    this.erroPendentes = '';
+    this.requisicaoPendentes = this.membroService.listarPendentes().subscribe({
+      next: pendentes => {
+        this.pendentes = Array.isArray(pendentes) ? pendentes : [];
+        this.carregandoPendentes = false;
+        this.cdr.detectChanges();
+      },
+      error: (erro: HttpErrorResponse) => {
+        this.carregandoPendentes = false;
+        this.erroPendentes = mensagemDeErro(erro, 'Não foi possível consultar membros pendentes.');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  validarPendente(pendente: MembroPendenteValidacao): void {
+    if (this.validandoPendenteId || this.carregandoPendentes || this.somenteMeuCadastro) return;
+    const categoriaCodigo = this.categoriasPendentesSelecionadas[pendente.usuarioId] ?? '';
+    const categoria = this.categoriasValidacao.find(c => c.codigo === categoriaCodigo);
+    if (!categoria) {
+      this.erroPendentes = 'Selecione uma categoria Ativo ou Auxiliar para validar o membro.';
+      return;
+    }
+    const confirmado = window.confirm(
+      `Confirmar ${pendente.nome} como ${categoria.nome} no Praesidium ${pendente.unidadeNome}?`
+    );
+    if (!confirmado) return;
+    this.erroPendentes = '';
+    this.validandoPendenteId = pendente.usuarioId;
+    this.membroService.validarPendente(pendente.usuarioId, categoriaCodigo).subscribe({
+      next: () => {
+        this.validandoPendenteId = null;
+        delete this.categoriasPendentesSelecionadas[pendente.usuarioId];
+        this.toastService.sucesso(`Vínculo de ${pendente.nome} validado com sucesso.`);
+        this.carregarPendentes();
+        this.carregar();
+        this.carregarResumo();
+        this.cdr.detectChanges();
+      },
+      error: (erro: HttpErrorResponse) => {
+        this.validandoPendenteId = null;
+        this.erroPendentes = mensagemDeErro(erro, 'Não foi possível validar o membro.');
+        this.cdr.detectChanges();
       }
     });
   }
@@ -222,7 +303,7 @@ export class Membros implements OnInit, OnDestroy {
         if (erro.status === 404) {
           this.meuCadastro = null;
           this.edicaoPropria = null;
-          this.toastService.erro('Seu usuário não possui um registro de membro vinculado. Procure o responsável do Praesidium.');
+          this.toastService.erro('Não foi possível localizar seu cadastro pessoal.');
           this.cdr.detectChanges();
           return;
         }
