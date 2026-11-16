@@ -38,8 +38,42 @@
     <section class="charts-grid">
       <article class="chart-card">
         <div class="card-title">Membros por categoria</div>
-        <div class="chart-area"><canvas #membrosChart aria-label="Membros ativos e auxiliares" role="img"></canvas></div>
-        <div class="chart-values"><span><strong>Ativos:</strong> {{ totalAtivos | number:'1.0-0' }}</span><span><strong>Auxiliares:</strong> {{ totalAuxiliares | number:'1.0-0' }}</span></div>
+        <div class="chart-area"><canvas #membrosChart aria-label="Ativos, Pretorianos, Auxiliares e Adjutores" role="img"></canvas></div>
+        <div class="membros-resumo" aria-label="Resumo dos membros por categoria">
+          <div class="membros-resumo-destaques">
+            <div class="membros-indicador">
+              <span class="membros-indicador-rotulo">Ativos</span>
+              <strong class="membros-indicador-numero">{{ totalAtivos | number:'1.0-0' }}</strong>
+            </div>
+            <div class="membros-indicador">
+              <span class="membros-indicador-rotulo">Auxiliares</span>
+              <strong class="membros-indicador-numero">{{ totalAuxiliares | number:'1.0-0' }}</strong>
+            </div>
+            <div class="membros-indicador">
+              <span class="membros-indicador-rotulo">Pretorianos</span>
+              <strong>{{ totalPretorianos | number:'1.0-0' }} — {{ percentualPretorianos | number:'1.2-2' }}% dos ativos</strong>
+            </div>
+            <div class="membros-indicador">
+              <span class="membros-indicador-rotulo">Adjutores</span>
+              <strong>{{ totalAdjutores | number:'1.0-0' }} — {{ percentualAdjutores | number:'1.2-2' }}% dos auxiliares</strong>
+            </div>
+          </div>
+          <div class="membros-medias">
+            <h4>Média de membros por Praesidium</h4>
+            <div class="membros-resumo-destaques">
+              <div class="membros-indicador">
+                <span class="membros-indicador-rotulo">Ativos / Praesidium</span>
+                <strong class="membros-indicador-numero">{{ mediaAtivosPorPraesidium === null ? '—' : (mediaAtivosPorPraesidium | number:'1.2-2') }}</strong>
+                <small>@if (mediaAtivosPorPraesidium !== null) { {{ totalAtivos | number:'1.0-0' }} ÷ {{ resumo.totais.qtd_praesidia_total | number:'1.0-0' }} } @else { Sem Praesidia informados }</small>
+              </div>
+              <div class="membros-indicador">
+                <span class="membros-indicador-rotulo">Auxiliares / Praesidium</span>
+                <strong class="membros-indicador-numero">{{ mediaAuxiliaresPorPraesidium === null ? '—' : (mediaAuxiliaresPorPraesidium | number:'1.2-2') }}</strong>
+                <small>@if (mediaAuxiliaresPorPraesidium !== null) { {{ totalAuxiliares | number:'1.0-0' }} ÷ {{ resumo.totais.qtd_praesidia_total | number:'1.0-0' }} } @else { Sem Praesidia informados }</small>
+              </div>
+            </div>
+          </div>
+        </div>
       </article>
       <article class="chart-card">
         <div class="card-title">Estrutura organizacional informada</div>

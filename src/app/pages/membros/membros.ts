@@ -3,7 +3,7 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { CatalogosMembro, MembroListado, ResumoMembros } from '../../models/membro.model';
+import { CatalogosMembro, MembroListado, MembroEdicao, ResumoMembros } from '../../models/membro.model';
 import { mensagemDeErro } from '../../services/usuario.service';
 import { MembroService, type MeuCadastroMembro, type AtualizarMeuCadastroInput, type MembroPendenteValidacao } from '../../services/membro.service';
 import { ToastService } from '../../services/toast.service';
@@ -60,6 +60,13 @@ export class Membros implements OnInit, OnDestroy {
   validandoPendenteId: string | null = null;
   erroPendentes = '';
 
+  membroEmEdicao: MembroEdicao | null = null;
+  carregandoEdicao = false;
+  salvandoEdicao = false;
+  erroEdicao = '';
+  private requisicaoEdicao?: Subscription;
+
+
   private requisicaoMembros?: Subscription;
   private requisicaoResumo?: Subscription;
   private requisicaoCatalogos?: Subscription;
@@ -85,6 +92,7 @@ export class Membros implements OnInit, OnDestroy {
     this.requisicaoCatalogos?.unsubscribe();
     this.requisicaoMeuCadastro?.unsubscribe();
     this.requisicaoPendentes?.unsubscribe();
+    this.requisicaoEdicao?.unsubscribe();
   }
 
   rotulo(status: string): string {
@@ -285,6 +293,60 @@ export class Membros implements OnInit, OnDestroy {
     this.router.navigate(['cadastro-membro']);
   }
 
+
+  editarMembro(membro: MembroListado): void {
+    if (this.acessoNegado || this.somenteMeuCadastro || this.carregandoEdicao || this.salvandoEdicao) return;
+    this.requisicaoEdicao?.unsubscribe();
+    this.membroEmEdicao = null;
+    this.erroEdicao = '';
+    this.carregandoEdicao = true;
+    this.requisicaoEdicao = this.membroService.obterParaEdicao(membro.id, membro.unidadeId).subscribe({
+      next: cadastro => {
+        this.membroEmEdicao = cadastro;
+        this.carregandoEdicao = false;
+        this.cdr.detectChanges();
+        document.getElementById('formulario-edicao-membro')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      },
+      error: (erro: HttpErrorResponse) => {
+        this.carregandoEdicao = false;
+        this.erroEdicao = mensagemDeErro(erro, 'Não foi possível carregar os dados completos do membro.');
+        this.toastService.erro(this.erroEdicao);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  cancelarEdicao(): void {
+    if (this.salvandoEdicao) return;
+    this.requisicaoEdicao?.unsubscribe();
+    this.membroEmEdicao = null;
+    this.carregandoEdicao = false;
+    this.erroEdicao = '';
+    this.cdr.detectChanges();
+  }
+
+  salvarEdicao(): void {
+    const cadastro = this.membroEmEdicao;
+    if (!cadastro || this.salvandoEdicao || !cadastro.nome.trim() || !cadastro.categoriaCodigo || !cadastro.unidadeId) return;
+    this.salvandoEdicao = true;
+    this.erroEdicao = '';
+    this.membroService.atualizarMembro(cadastro.id, cadastro).subscribe({
+      next: () => {
+        this.salvandoEdicao = false;
+        this.membroEmEdicao = null;
+        this.toastService.sucesso('Cadastro do membro atualizado com sucesso.');
+        this.carregar();
+        this.carregarResumo();
+        this.cdr.detectChanges();
+      },
+      error: (erro: HttpErrorResponse) => {
+        this.salvandoEdicao = false;
+        this.erroEdicao = mensagemDeErro(erro, 'Não foi possível atualizar o membro.');
+        this.toastService.erro(this.erroEdicao);
+        this.cdr.detectChanges();
+      }
+    });
+  }
 
   /** O perfil MEMBRO consulta e altera somente o cadastro vinculado à sua própria pessoa. */
   carregarMeuCadastro(): void {

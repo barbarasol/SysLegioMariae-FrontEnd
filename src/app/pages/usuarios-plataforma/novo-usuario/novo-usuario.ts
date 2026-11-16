@@ -11,7 +11,10 @@ import type { PerfilDisponivel, UnidadeDisponivel } from '../../../models/usuari
 
 import {
   mensagemDeErro,
-  UsuarioService
+  UsuarioService,
+  type LocalidadeCadastro,
+  type SubdivisaoCadastro,
+  type PaisCadastro
 } from '../../../services/usuario.service';
 
 @Component({
@@ -30,6 +33,12 @@ export class NovoUsuario implements OnInit {
   nomePreferido = '';
   cpf = '';
   celular = '';
+  paisId = '';
+  municipioId = '';
+  subdivisaoLocalId = '';
+  localidadesCadastro: LocalidadeCadastro[] = [];
+  subdivisoesCadastro: SubdivisaoCadastro[] = [];
+  paisesCadastro: PaisCadastro[] = [];
   email = '';
   senha = '';
   confirmarSenha = '';
@@ -59,6 +68,10 @@ export class NovoUsuario implements OnInit {
         next: (resultado) => {
           this.unidadesCadastro = resultado.unidades ?? [];
           this.perfisCadastro = resultado.perfis ?? [];
+          this.paisesCadastro = resultado.paises ?? [];
+          const brasil = this.paisesCadastro.find(p => p.sigla?.toUpperCase() === 'BR');
+          if (!this.paisId && brasil) this.paisId = brasil.id;
+          if (this.paisId) this.carregarLocalidades();
           this.cdr.detectChanges();
         },
         error: () => {
@@ -66,6 +79,66 @@ export class NovoUsuario implements OnInit {
           this.cdr.detectChanges();
         }
       });
+  }
+
+  paisAlterado(): void {
+    this.municipioId = '';
+    this.subdivisaoLocalId = '';
+    this.localidadesCadastro = [];
+    this.subdivisoesCadastro = [];
+    this.carregarLocalidades();
+  }
+
+  municipioAlterado(): void {
+    this.subdivisaoLocalId = '';
+    this.subdivisoesCadastro = [];
+    if (!this.municipioNoDF) return;
+    this.usuarioService.listarSubdivisoesCadastro(this.municipioId).subscribe({
+      next: (lista) => { this.subdivisoesCadastro = lista; this.cdr.detectChanges(); },
+      error: () => { this.erro = 'Não foi possível carregar as subdivisões locais.'; this.cdr.detectChanges(); }
+    });
+  }
+
+  private carregarLocalidades(): void {
+    if (!this.paisId) return;
+    this.usuarioService.listarLocalidadesCadastro(this.paisId).subscribe({
+      next: (lista) => { this.localidadesCadastro = lista; this.cdr.detectChanges(); },
+      error: () => { this.erro = 'Não foi possível carregar os municípios/localidades.'; this.cdr.detectChanges(); }
+    });
+  }
+
+  get municipioNoDF(): boolean {
+    if (!this.brasileiro || !this.municipioId) return false;
+    const localidade = this.localidadesCadastro.find(m => m.id === this.municipioId);
+    return localidade?.ufSigla?.toUpperCase() === 'DF';
+  }
+
+  get paisSelecionado(): PaisCadastro | undefined {
+    return this.paisesCadastro.find(p => p.id === this.paisId);
+  }
+
+  get brasileiro(): boolean {
+    return this.paisSelecionado?.sigla?.trim().toUpperCase() === 'BR';
+  }
+
+  get celularValido(): boolean {
+    const numero = this.celular.trim().replace(/[\s().-]/g, '');
+    if (this.brasileiro) {
+      return /^(?:\d{10,11}|\+55\d{10,11})$/.test(numero);
+    }
+    return /^\+[1-9]\d{7,14}$/.test(numero);
+  }
+
+  get cpfValido(): boolean {
+    if (!this.brasileiro && !this.cpf.trim()) return true;
+    const cpf = this.cpf.replace(/\D/g, '');
+    if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
+    const digito = (n: number) => {
+      const soma = Array.from({length:n}, (_,i) => Number(cpf[i]) * (n+1-i)).reduce((a,b) => a+b,0);
+      const resto = (soma*10)%11;
+      return resto===10?0:resto;
+    };
+    return digito(9)===Number(cpf[9]) && digito(10)===Number(cpf[10]);
   }
 
   get unidadeSelecionada(): UnidadeDisponivel | undefined {
@@ -90,6 +163,14 @@ export class NovoUsuario implements OnInit {
     if (this.etapa === 1) {
       return (
         !!this.nome.trim() &&
+        !!this.paisId &&
+        this.paisesCadastro.some(p => p.id === this.paisId) &&
+        !!this.municipioId &&
+        this.localidadesCadastro.some(m => m.id === this.municipioId) &&
+        (!this.subdivisaoLocalId || (this.municipioNoDF &&
+          this.subdivisoesCadastro.some(s => s.id === this.subdivisaoLocalId))) &&
+        this.cpfValido &&
+        this.celularValido &&
         !!this.email.trim() &&
         this.emailValido(this.email)
       );
@@ -119,6 +200,34 @@ export class NovoUsuario implements OnInit {
     this.erro = '';
 
     if (this.etapa === 1) {
+      if (!this.paisId || !this.paisesCadastro.some(p => p.id === this.paisId)) {
+        this.erro = 'Selecione um país válido.';
+        this.cdr.detectChanges();
+        return;
+      }
+      if (!this.municipioId || !this.localidadesCadastro.some(m => m.id === this.municipioId)) {
+        this.erro = 'Selecione um município/localidade do país informado.';
+        this.cdr.detectChanges();
+        return;
+      }
+      if (this.subdivisaoLocalId && (!this.municipioNoDF ||
+          !this.subdivisoesCadastro.some(item => item.id === this.subdivisaoLocalId))) {
+        this.erro = 'Selecione uma Região Administrativa válida do Distrito Federal.';
+        this.cdr.detectChanges();
+        return;
+      }
+      if (!this.cpfValido) {
+        this.erro = 'Informe um CPF válido para o Brasil ou deixe em branco se estrangeiro.';
+        this.cdr.detectChanges();
+        return;
+      }
+      if (!this.celularValido) {
+        this.erro = this.brasileiro
+          ? 'Informe celular brasileiro com DDD (10 ou 11 dígitos).'
+          : 'Informe celular internacional no formato +DD seguido do número.';
+        this.cdr.detectChanges();
+        return;
+      }
 
       if (!this.nome.trim()) {
         this.erro =
@@ -236,11 +345,11 @@ export class NovoUsuario implements OnInit {
         email:
           this.email,
 
-        cpf:
-          this.cpf,
-
-        celular:
-          this.celular,
+        cpf: this.cpf,
+        paisId: this.paisId,
+        municipioId: this.municipioId,
+        subdivisaoLocalId: this.subdivisaoLocalId || null,
+        celular: this.celular,
 
         senha:
           this.senha,
@@ -337,6 +446,11 @@ export class NovoUsuario implements OnInit {
     this.nomePreferido = '';
     this.cpf = '';
     this.celular = '';
+    this.paisId = this.paisesCadastro.find(p => p.sigla?.toUpperCase() === 'BR')?.id ?? '';
+    this.municipioId = '';
+    this.subdivisaoLocalId = '';
+    this.subdivisoesCadastro = [];
+    this.carregarLocalidades();
     this.email = '';
     this.senha = '';
     this.confirmarSenha = '';

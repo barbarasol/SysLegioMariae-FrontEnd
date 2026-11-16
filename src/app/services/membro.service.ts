@@ -8,6 +8,7 @@ import {
   FiltrosMembros,
   MembroCriadoResponse,
   MembroListado,
+  MembroEdicao,
   ResumoMembros
 } from '../models/membro.model';
 
@@ -99,6 +100,33 @@ export class MembroService {
         numeroMandato: payload.numeroMandato ?? null
       },
       { withCredentials: true }
+    );
+  }
+
+  obterParaEdicao(id: string, unidadeId?: string | null): Observable<MembroEdicao> {
+    const params = unidadeId ? new HttpParams().set('unidadeId', unidadeId) : undefined;
+    return this.http.get<MembroEdicao>(
+      `${environment.apiUrl}/membros/${encodeURIComponent(id)}`, { params, withCredentials: true }
+    );
+  }
+
+  atualizarMembro(id: string, dados: MembroEdicao): Observable<MembroEdicao> {
+    return this.http.patch<MembroEdicao>(
+      `${environment.apiUrl}/membros/${encodeURIComponent(id)}`,
+      {
+        vinculoId: dados.vinculoId, unidadeId: dados.unidadeId,
+        nome: dados.nome, nomePreferido: dados.nomePreferido,
+        cpf: dados.cpf, rg: dados.rg, dataNascimento: dados.dataNascimento,
+        email: dados.email, celular: dados.celular, telefone: dados.telefone,
+        dtRecrutamento: dados.dtRecrutamento, dtIngresso: dados.dtIngresso,
+        dtCompromisso: dados.dtCompromisso, formacaoEscolar: dados.formacaoEscolar,
+        aposentado: dados.aposentado, pretoriano: dados.pretoriano,
+        adjutor: dados.adjutor, mesc: dados.mesc, catequista: dados.catequista,
+        coroinha: dados.coroinha, status: dados.status, observacao: dados.observacao,
+        categoriaCodigo: dados.categoriaCodigo, cargoCodigo: dados.cargoCodigo,
+        numeroMandato: dados.numeroMandato, principal: dados.principal,
+        dataInicio: dados.dataInicio
+      }, { withCredentials: true }
     );
   }
 

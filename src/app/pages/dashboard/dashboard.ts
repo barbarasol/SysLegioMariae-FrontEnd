@@ -109,12 +109,36 @@ export class Dashboard implements OnInit, OnDestroy {
   }
   get totalMembros(): number { return this.totalAtivos + this.totalAuxiliares; }
 
+  get totalPretorianos(): number { return this.resumo?.totais.qtd_pretorianos ?? 0; }
+  get totalAdjutores(): number { return this.resumo?.totais.qtd_adjutores ?? 0; }
+  get ativosSemPretorianos(): number { return Math.max(0, this.totalAtivos - this.totalPretorianos); }
+  get auxiliaresSemAdjutores(): number { return Math.max(0, this.totalAuxiliares - this.totalAdjutores); }
+  get percentualPretorianos(): number {
+    return this.totalAtivos > 0 ? 100 * this.totalPretorianos / this.totalAtivos : 0;
+  }
+  get percentualAdjutores(): number {
+    return this.totalAuxiliares > 0 ? 100 * this.totalAdjutores / this.totalAuxiliares : 0;
+  }
+  /** Percentual de cada fatia sobre o total exibido no doughnut. */
+  percentualDoTotal(quantidade: number): number {
+    return this.totalMembros > 0 ? 100 * quantidade / this.totalMembros : 0;
+  }
+  get mediaAtivosPorPraesidium(): number | null {
+    const praesidia = this.resumo?.totais.qtd_praesidia_total ?? 0;
+    return praesidia > 0 ? this.totalAtivos / praesidia : null;
+  }
+  get mediaAuxiliaresPorPraesidium(): number | null {
+    const praesidia = this.resumo?.totais.qtd_praesidia_total ?? 0;
+    return praesidia > 0 ? this.totalAuxiliares / praesidia : null;
+  }
+
+
   readonly estruturaCategorias = [
     { titulo: 'Senatus', chave: 'qtd_senatus' as const },
     { titulo: 'Regiae', chave: 'qtd_regiae' as const },
     { titulo: 'Comitia (incl. juvenis)', chave: 'qtd_comitia' as const, juvenil: 'qtd_comitia_juv' as const },
     { titulo: 'Curiae (incl. juvenis)', chave: 'qtd_curiae' as const, juvenil: 'qtd_curiae_juv' as const },
-    { titulo: 'Praesidia (incl. juvenis)', chave: 'qtd_praesidia' as const, juvenil: 'qtd_praesidia_juv' as const }
+    { titulo: 'Praesidia (total informado)', chave: 'qtd_praesidia_total' as const }
   ];
 
   get estruturaValores(): number[] {
@@ -226,13 +250,36 @@ export class Dashboard implements OnInit, OnDestroy {
       new Chart(this.membrosCanvas!.nativeElement, {
         type: 'doughnut',
         data: {
-          labels: ['Ativos', 'Auxiliares'],
+          labels: ['Ativos (demais)', 'Pretorianos', 'Auxiliares (demais)', 'Adjutores'],
           datasets: [{
-            data: [this.totalAtivos, this.totalAuxiliares],
-            backgroundColor: ['#14265c', '#c9a227']
+            data: [this.ativosSemPretorianos, this.totalPretorianos,
+              this.auxiliaresSemAdjutores, this.totalAdjutores],
+            backgroundColor: ['#14265c', '#5278cb', '#c9a227', '#e4bd57'],
+            borderWidth: 2
           }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const quantidade = Number(context.parsed ?? 0);
+                  const percentual = this.percentualDoTotal(quantidade);
+                  const quantidadeFormatada = quantidade.toLocaleString('pt-BR', {
+                    maximumFractionDigits: 0
+                  });
+                  const percentualFormatado = percentual.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  });
+                  return `${context.label}: ${quantidadeFormatada} membros (${percentualFormatado}% do total)`;
+                }
+              }
+            }
+          }
+        }
       })
     );
 

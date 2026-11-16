@@ -125,3 +125,19 @@ export interface CatalogosMembro {
   cargos: CargoLegionario[];
   unidades: UnidadeCatalogo[];
 }
+/** Cadastro completo, retornado pelo GET /membros/:id. */
+export interface MembroEdicao extends CriarMembroRequest {
+  id: string;
+  pessoaId: string;
+  vinculoId: string;
+  status: MembroStatus;
+  aposentado: boolean;
+  pretoriano: boolean;
+  adjutor: boolean;
+  mesc: boolean;
+  catequista: boolean;
+  coroinha: boolean;
+  principal: boolean;
+  unidadeId: string;
+  categoriaCodigo: string;
+}

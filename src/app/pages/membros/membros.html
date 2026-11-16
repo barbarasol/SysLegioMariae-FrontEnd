@@ -300,6 +300,62 @@
     </div>
   </div>
 
+
+  <!-- Edição completa do membro: somente operadores e administradores autorizados. -->
+  @if (carregandoEdicao) {
+    <div class="filter-card" role="status">Carregando cadastro completo para edição...</div>
+  }
+  @if (membroEmEdicao; as edicao) {
+    <section id="formulario-edicao-membro" class="filter-card edicao-membro" aria-label="Editar membro">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h3 class="card-title mb-0">Editar membro — {{ edicao.nome }}</h3>
+        <button type="button" class="btn btn-outline-secondary" (click)="cancelarEdicao()" [disabled]="salvandoEdicao">Fechar</button>
+      </div>
+      @if (erroEdicao) { <div class="alert alert-danger" role="alert">{{ erroEdicao }}</div> }
+      <h4>Dados pessoais</h4>
+      <div class="filters-grid">
+        <div class="filter-field"><label for="ed-nome">Nome completo *</label><input id="ed-nome" class="form-control" [(ngModel)]="edicao.nome" [disabled]="salvandoEdicao" /></div>
+        <div class="filter-field"><label for="ed-preferido">Nome preferido</label><input id="ed-preferido" class="form-control" [(ngModel)]="edicao.nomePreferido" [disabled]="salvandoEdicao" /></div>
+        <div class="filter-field"><label for="ed-cpf">CPF</label><input id="ed-cpf" class="form-control" [(ngModel)]="edicao.cpf" [disabled]="salvandoEdicao" /></div>
+        <div class="filter-field"><label for="ed-rg">RG</label><input id="ed-rg" class="form-control" [(ngModel)]="edicao.rg" [disabled]="salvandoEdicao" /></div>
+        <div class="filter-field"><label for="ed-nascimento">Nascimento</label><input id="ed-nascimento" type="date" class="form-control" [(ngModel)]="edicao.dataNascimento" [disabled]="salvandoEdicao" /></div>
+        <div class="filter-field"><label for="ed-email">E-mail</label><input id="ed-email" type="email" class="form-control" [(ngModel)]="edicao.email" [disabled]="salvandoEdicao" /></div>
+        <div class="filter-field"><label for="ed-celular">Celular</label><input id="ed-celular" class="form-control" [(ngModel)]="edicao.celular" [disabled]="salvandoEdicao" /></div>
+        <div class="filter-field"><label for="ed-telefone">Telefone</label><input id="ed-telefone" class="form-control" [(ngModel)]="edicao.telefone" [disabled]="salvandoEdicao" /></div>
+      </div>
+      <h4 class="mt-4">Dados legionários</h4>
+      <div class="filters-grid">
+        <div class="filter-field"><label for="ed-status">Status</label><select id="ed-status" class="form-select" [(ngModel)]="edicao.status" [disabled]="salvandoEdicao"><option value="ATIVO">Ativo</option><option value="INATIVO">Inativo</option><option value="FALECIDO">Falecido</option></select></div>
+        <div class="filter-field"><label for="ed-recrutamento">Data de recrutamento</label><input id="ed-recrutamento" type="date" class="form-control" [(ngModel)]="edicao.dtRecrutamento" [disabled]="salvandoEdicao" /></div>
+        <div class="filter-field"><label for="ed-ingresso">Data de ingresso</label><input id="ed-ingresso" type="date" class="form-control" [(ngModel)]="edicao.dtIngresso" [disabled]="salvandoEdicao" /></div>
+        <div class="filter-field"><label for="ed-promessa">Data da promessa</label><input id="ed-promessa" type="date" class="form-control" [(ngModel)]="edicao.dtCompromisso" [disabled]="salvandoEdicao" /></div>
+        <div class="filter-field"><label for="ed-formacao">Formação escolar</label><input id="ed-formacao" class="form-control" maxlength="80" [(ngModel)]="edicao.formacaoEscolar" [disabled]="salvandoEdicao" /></div>
+      </div>
+      <div class="edicao-opcoes mt-3">
+        <label><input type="checkbox" [(ngModel)]="edicao.aposentado" [disabled]="salvandoEdicao" /> Aposentado</label>
+        <label><input type="checkbox" [(ngModel)]="edicao.pretoriano" [disabled]="salvandoEdicao" /> Pretoriano</label>
+        <label><input type="checkbox" [(ngModel)]="edicao.adjutor" [disabled]="salvandoEdicao" /> Adjutor</label>
+        <label><input type="checkbox" [(ngModel)]="edicao.mesc" [disabled]="salvandoEdicao" /> MESC</label>
+        <label><input type="checkbox" [(ngModel)]="edicao.catequista" [disabled]="salvandoEdicao" /> Catequista</label>
+        <label><input type="checkbox" [(ngModel)]="edicao.coroinha" [disabled]="salvandoEdicao" /> Coroinha</label>
+      </div>
+      <h4 class="mt-4">Vínculo e estrutura</h4>
+      <div class="filters-grid">
+        <div class="filter-field"><label for="ed-unidade">Praesidium *</label><select id="ed-unidade" class="form-select" [(ngModel)]="edicao.unidadeId" [disabled]="salvandoEdicao"><option value="">Selecione</option>@for (unidade of catalogos.unidades; track unidade.id) { <option [value]="unidade.id">{{ unidade.nome }}</option> }</select></div>
+        <div class="filter-field"><label for="ed-categoria">Categoria *</label><select id="ed-categoria" class="form-select" [(ngModel)]="edicao.categoriaCodigo" [disabled]="salvandoEdicao"><option value="">Selecione</option>@for (categoria of catalogos.categorias; track categoria.codigo) { <option [value]="categoria.codigo">{{ categoria.nome }}</option> }</select></div>
+        <div class="filter-field"><label for="ed-cargo">Cargo</label><select id="ed-cargo" class="form-select" [(ngModel)]="edicao.cargoCodigo" [disabled]="salvandoEdicao"><option value="">Nenhum</option>@for (cargo of catalogos.cargos; track cargo.codigo) { <option [value]="cargo.codigo">{{ cargo.nome }}</option> }</select></div>
+        <div class="filter-field"><label for="ed-mandato">Número do mandato</label><input id="ed-mandato" type="number" min="1" class="form-control" [(ngModel)]="edicao.numeroMandato" [disabled]="salvandoEdicao || !edicao.cargoCodigo" /></div>
+        <div class="filter-field"><label for="ed-data-vinculo">Data de início do vínculo</label><input id="ed-data-vinculo" type="date" class="form-control" [(ngModel)]="edicao.dataInicio" [disabled]="salvandoEdicao" /></div>
+        <div class="filter-field"><label><input type="checkbox" [(ngModel)]="edicao.principal" [disabled]="salvandoEdicao" /> Vínculo principal</label></div>
+      </div>
+      <div class="filter-field mt-3"><label for="ed-observacao">Observação</label><textarea id="ed-observacao" rows="3" class="form-control" [(ngModel)]="edicao.observacao" [disabled]="salvandoEdicao"></textarea></div>
+      <div class="filter-actions mt-3">
+        <button type="button" class="btn btn-outline-secondary" (click)="cancelarEdicao()" [disabled]="salvandoEdicao">Cancelar</button>
+        <button type="button" class="btn btn-success" (click)="salvarEdicao()" [disabled]="salvandoEdicao || !edicao.nome.trim() || !edicao.unidadeId || !edicao.categoriaCodigo">{{ salvandoEdicao ? 'Salvando...' : 'Salvar alterações' }}</button>
+      </div>
+    </section>
+  }
+
   <!-- Tabela -->
   <div class="table-card">
     <div class="card-title">
@@ -394,7 +450,7 @@
               </td>
 
               <td>
-                <button class="btn btn-sm btn-light me-2">
+                <button type="button" class="btn btn-sm btn-light me-2" (click)="editarMembro(membro)" [disabled]="carregandoEdicao || salvandoEdicao" title="Editar membro" aria-label="Editar membro">
                   <i class="bi bi-pencil"></i>
                 </button>
 

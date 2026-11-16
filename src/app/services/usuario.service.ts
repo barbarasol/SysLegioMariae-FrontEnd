@@ -39,7 +39,7 @@ export class UsuarioService {
 
   criar(
     payload:
-      CriarUsuarioRequest & { unidadeSolicitadaId?: string; perfilSolicitadoCodigo?: string }
+      CriarUsuarioRequest & { unidadeSolicitadaId?: string; perfilSolicitadoCodigo?: string; paisId: string; municipioId?: string | null; subdivisaoLocalId?: string | null }
   ): Observable<UsuarioCriadoResponse> {
 
     return this.http
@@ -68,6 +68,9 @@ export class UsuarioService {
           celular:
             payload.celular
               ?.trim() || null,
+          paisId: payload.paisId || null,
+          municipioId: payload.municipioId || null,
+          subdivisaoLocalId: payload.subdivisaoLocalId || null,
 
           unidadeSolicitadaId: payload.unidadeSolicitadaId || null,
           perfilSolicitadoCodigo: payload.perfilSolicitadoCodigo || null
@@ -83,10 +86,21 @@ export class UsuarioService {
   listarCatalogoCadastro(): Observable<{
     unidades: UnidadeDisponivel[];
     perfis: PerfilDisponivel[];
+    paises: PaisCadastro[];
   }> {
-    return this.http.get<{ unidades: UnidadeDisponivel[]; perfis: PerfilDisponivel[] }>(
+    return this.http.get<{ unidades: UnidadeDisponivel[]; perfis: PerfilDisponivel[]; paises: PaisCadastro[] }>(
       `${environment.apiUrl}/usuarios/catalogos-cadastro`
     );
+  }
+
+  listarLocalidadesCadastro(paisId: string): Observable<LocalidadeCadastro[]> {
+    return this.http.get<LocalidadeCadastro[]>(`${environment.apiUrl}/usuarios/localidades-cadastro`,
+      { params: new HttpParams().set('paisId', paisId) });
+  }
+
+  listarSubdivisoesCadastro(municipioId: string): Observable<SubdivisaoCadastro[]> {
+    return this.http.get<SubdivisaoCadastro[]>(`${environment.apiUrl}/usuarios/subdivisoes-cadastro`,
+      { params: new HttpParams().set('municipioId', municipioId) });
   }
 
   /** Apenas PLATFORM_OWNER pode aprovar uma solicitação de acesso. */
@@ -342,3 +356,8 @@ export function mensagemDeErro(
     fallback
   );
 }
+
+export interface PaisCadastro { id: string; nome: string; sigla: string | null; }
+
+export interface LocalidadeCadastro { id: string; nome: string; ufNome: string; ufSigla: string | null; }
+export interface SubdivisaoCadastro { id: string; nome: string; tipo: string | null; }

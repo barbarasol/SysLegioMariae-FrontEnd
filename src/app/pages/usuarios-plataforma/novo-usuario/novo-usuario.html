@@ -42,31 +42,70 @@
             />
           </div>
 
+          <div class="full-width">
+            <label for="paisCadastro">País *</label>
+            <select id="paisCadastro" class="form-select" name="paisId"
+              [(ngModel)]="paisId" (ngModelChange)="paisAlterado()" [disabled]="carregando || carregandoCatalogo" required>
+              <option value="">Selecione o país</option>
+              @for (pais of paisesCadastro; track pais.id) {
+                <option [value]="pais.id">{{ pais.nome }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="full-width">
+            <label for="municipioCadastro">Município / Localidade *</label>
+            <select id="municipioCadastro" class="form-select" name="municipioId"
+              [(ngModel)]="municipioId" (ngModelChange)="municipioAlterado()" [disabled]="carregando || !paisId" required>
+              <option value="">Selecione o município</option>
+              @for (localidade of localidadesCadastro; track localidade.id) {
+                <option [value]="localidade.id">{{ localidade.nome }} — {{ localidade.ufNome }}</option>
+              }
+            </select>
+          </div>
+          @if (municipioNoDF) {
+          <div class="full-width">
+            <label for="subdivisaoCadastro">Região Administrativa do DF (opcional)</label>
+            <select id="subdivisaoCadastro" class="form-select" name="subdivisaoLocalId"
+              [(ngModel)]="subdivisaoLocalId" [disabled]="carregando || !municipioId">
+              <option value="">Não informada</option>
+              @for (subdivisao of subdivisoesCadastro; track subdivisao.id) {
+                <option [value]="subdivisao.id">{{ subdivisao.nome }}</option>
+              }
+            </select>
+          </div>
+          }
+
           <div>
-            <label>CPF</label>
+            <label>CPF {{ brasileiro ? '*' : '(opcional)' }}</label>
 
             <input
               type="text"
               class="form-control"
               name="cpf"
-              placeholder="000.000.000-00"
+              placeholder="Somente números"
+              [required]="brasileiro"
+              inputmode="numeric"
               [(ngModel)]="cpf"
               [disabled]="carregando"
             />
           </div>
 
           <div>
-            <label>Celular</label>
-
+            <label>Celular *</label>
             <input
               type="tel"
               class="form-control"
               name="celular"
-              placeholder="(00) 00000-0000"
+              [placeholder]="brasileiro ? '61999999999 ou +5561999999999' : '+351912345678'"
               autocomplete="tel"
               [(ngModel)]="celular"
+              required
               [disabled]="carregando"
             />
+            <small>{{ brasileiro
+              ? 'Sem máscara: informe DDD + número ou +55 + DDD + número.'
+              : 'Sem máscara: informe +DDI seguido do número internacional.' }}</small>
           </div>
 
           <div>
@@ -196,7 +235,11 @@
               disabled
             />
           </div>
-<div>
+          <div>
+            <label>País</label>
+            <input class="form-control" [value]="paisSelecionado?.nome || 'Não informado'" disabled />
+          </div>
+          <div>
             <label>CPF</label>
 
             <input

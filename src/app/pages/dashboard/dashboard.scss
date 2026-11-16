@@ -305,3 +305,47 @@
 @media (max-width: 600px) {
   .dashboard-container .evolucao-meses { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* Rodapé do gráfico: categorias e médias por Praesidium. */
+.dashboard-container .membros-resumo {
+  display: grid;
+  gap: 9px;
+}
+.dashboard-container .membros-resumo-linha {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+}
+@media (max-width: 600px) {
+  .dashboard-container .membros-resumo-linha {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Rodapé principal: preserva totais gerais, percentuais por categoria e médias. */
+.dashboard-container .membros-resumo {
+  margin-top: 18px;
+  display: grid;
+  gap: 16px;
+  color: #382f36;
+}
+.dashboard-container .membros-resumo-destaques {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 20px;
+}
+.dashboard-container .membros-indicador {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.dashboard-container .membros-indicador-rotulo { font-size: 13px; color: #76676a; }
+.dashboard-container .membros-indicador-numero { font-size: 23px; line-height: 1.2; color: #192957; }
+.dashboard-container .membros-indicador small { color: #81767a; font-size: 12px; }
+.dashboard-container .membros-medias { border-top: 1px solid #eadfdf; padding-top: 14px; }
+.dashboard-container .membros-medias h4 { margin: 0 0 12px; font-size: 14px; color: #58292d; }
+@media (max-width: 600px) {
+  .dashboard-container .membros-resumo-destaques { grid-template-columns: minmax(0, 1fr); }
+}
