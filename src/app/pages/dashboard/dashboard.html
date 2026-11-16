@@ -1,133 +1,89 @@
 <div class="dashboard-container">
-  <!-- Cabeçalho -->
-  <div class="page-header">
-    <h2>Dashboard</h2>
-
-    <p>Visão geral da Legião de Maria e seus principais indicadores.</p>
-  </div>
-
-  <!-- Cards de indicadores -->
-  <section class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-icon">
-        <i class="bi bi-people-fill"></i>
-      </div>
-
-      <div class="stat-content">
-        <h3>{{ dashboard.membros }}</h3>
-        <span>Total de Membros</span>
-      </div>
+  <header class="page-header">
+    <h2>Dashboard — Concilium Legionis</h2>
+    <p>Consolidado dos últimos registros de unidade_numeros das unidades diretamente vinculadas ao Concilium Legionis.</p>
+    <div class="dashboard-meta">
+      @if (resumo) {
+        <span>Ano de evolução: <strong>{{ resumo.ano }}</strong></span>
+        <span>Última atualização geral: <strong>{{ resumo.ultima_atualizacao ? (resumo.ultima_atualizacao | date:'dd/MM/yyyy HH:mm') : 'Não informada' }}</strong></span>
+      }
+      <button type="button" (click)="atualizar()" [disabled]="carregando">Atualizar dados</button>
     </div>
+  </header>
 
-    <div class="stat-card">
-      <div class="stat-icon">
-        <i class="bi bi-building"></i>
-      </div>
+  @if (carregando) {
+    <p role="status">Carregando dados reais...</p>
+  } @else if (erro) {
+    <div class="dashboard-error" role="alert">{{ erro }}</div>
+  } @else if (resumo) {
+    @if (avisoGraficos) {
+      <p role="alert" class="dashboard-error">{{ avisoGraficos }}</p>
+    }
+    <section class="stats-grid" aria-label="Indicadores consolidados">
+      <article class="stat-card destaque">
+        <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+        <div class="stat-content"><h3>{{ totalMembros | number:'1.0-0' }}</h3><span>Total de membros (ativos + auxiliares)</span></div>
+      </article>
+      @for (campo of campos; track campo.chave) {
+        <article class="stat-card">
+          <div class="stat-icon"><i class="bi" [ngClass]="campo.icone"></i></div>
+          <div class="stat-content">
+            <h3>{{ resumo.totais[campo.chave] | number:'1.0-0' }}</h3>
+            <span>{{ campo.titulo }}</span>
+          </div>
+        </article>
+      }
+    </section>
 
-      <div class="stat-content">
-        <h3>{{ dashboard.curias }}</h3>
-        <span>Cúrias</span>
-      </div>
-    </div>
+    <section class="charts-grid">
+      <article class="chart-card">
+        <div class="card-title">Membros por categoria</div>
+        <div class="chart-area"><canvas #membrosChart aria-label="Membros ativos e auxiliares" role="img"></canvas></div>
+        <div class="chart-values"><span><strong>Ativos:</strong> {{ totalAtivos | number:'1.0-0' }}</span><span><strong>Auxiliares:</strong> {{ totalAuxiliares | number:'1.0-0' }}</span></div>
+      </article>
+      <article class="chart-card">
+        <div class="card-title">Estrutura organizacional informada</div>
+        <div class="chart-area"><canvas #estruturaChart aria-label="Quantidades por nível" role="img"></canvas></div>
+        <div class="chart-values">
+          @for (categoria of estruturaCategorias; track categoria.titulo; let i = $index) {
+            <span><strong>{{ categoria.titulo }}:</strong> {{ estruturaValores[i] | number:'1.0-0' }}</span>
+          }
+        </div>
+      </article>
+    </section>
 
-    <div class="stat-card">
-      <div class="stat-icon">
-        <i class="bi bi-bank"></i>
-      </div>
-
-      <div class="stat-content">
-        <h3>{{ dashboard.comitium }}</h3>
-        <span>Comitium</span>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon">
-        <i class="bi bi-diagram-3-fill"></i>
-      </div>
-
-      <div class="stat-content">
-        <h3>{{ dashboard.presidios }}</h3>
-        <span>Praesidia</span>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon">
-        <i class="bi bi-check-circle-fill"></i>
-      </div>
-
-      <div class="stat-content">
-        <h3>{{ dashboard.ativos }}</h3>
-        <span>Membros Ativos</span>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon">
-        <i class="bi bi-heart-fill"></i>
-      </div>
-
-      <div class="stat-content">
-        <h3>{{ dashboard.auxiliares }}</h3>
-        <span>Auxiliares</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- Área dos gráficos -->
-  <section class="charts-grid">
-    <div class="chart-card">
-      <div class="card-title">Membros por Categoria</div>
-
-      <canvas id="membrosChart"></canvas>
-    </div>
-
-    <div class="chart-card">
-      <div class="card-title">Estrutura Organizacional</div>
-
-      <canvas id="estruturaChart"></canvas>
-    </div>
-  </section>
-
-  <!-- Gráfico maior -->
-  <section class="chart-card full-width">
-    <div class="card-title">Evolução de Membros</div>
-
-    <canvas id="evolucaoChart"></canvas>
-  </section>
-
-  <!-- Últimos membros -->
-  <section class="table-card">
-    <div class="card-title">Últimos Membros Cadastrados</div>
-
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Função</th>
-          <th>Praesidium</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        @for (membro of ultimosMembros; track membro.nome) {
-          <tr>
-            <td>{{ membro.nome }}</td>
-
-            <td>{{ membro.funcao }}</td>
-
-            <td>{{ membro.presidium }}</td>
-
-            <td>
-              <span class="status-badge">
-                {{ membro.status }}
-              </span>
-            </td>
-          </tr>
+    <section class="chart-card full-width">
+      <div class="card-title">Evolução de membros — {{ resumo.ano }}</div>
+      <p class="chart-note">12 meses do ano corrente; meses sem registros suficientes não são estimados.</p>
+      <div class="chart-area"><canvas #evolucaoChart aria-label="Evolução mensal de membros" role="img"></canvas></div>
+      <div class="evolucao-meses" aria-label="Valores mensais da evolução">
+        @for (item of evolucaoAno; track item.mes) {
+          <div class="evolucao-mes" [class.com-dados]="item.membros !== null">
+            <strong>{{ meses[item.mes - 1] }}</strong>
+            <span>{{ item.membros === null ? 'Sem dados' : (item.membros | number:'1.0-0') }}</span>
+          </div>
         }
-      </tbody>
-    </table>
-  </section>
+      </div>
+    </section>
+
+    <section class="table-card">
+      <div class="card-title">Últimas atualizações por unidade vinculada diretamente</div>
+      <div class="table-responsive">
+        <table class="table">
+          <thead><tr><th>Unidade</th><th>Tipo</th><th>Última atualização</th></tr></thead>
+          <tbody>
+            @for (unidade of resumo.unidades; track unidade.id) {
+              <tr>
+                <td>{{ unidade.nome }}</td>
+                <td>{{ unidade.tipo }}</td>
+                <td>{{ unidade.ultima_atualizacao ? (unidade.ultima_atualizacao | date:'dd/MM/yyyy HH:mm') : 'Sem registros' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="3">Nenhuma unidade diretamente vinculada com dados disponíveis.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
 </div>

@@ -257,3 +257,51 @@
     font-size: 24px;
   }
 }
+/* Complementos para os dados consolidados */
+.dashboard-container .dashboard-meta { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-top: 12px; color: #7e6668; font-size: 14px; }
+.dashboard-container .dashboard-meta button { border: 1px solid #7a2024; border-radius: 8px; padding: 8px 14px; background: #7a2024; color: white; cursor: pointer; }
+.dashboard-container .dashboard-meta button:disabled { opacity: .6; cursor: not-allowed; }
+.dashboard-container .dashboard-error { border: 1px solid #d75b5b; border-radius: 8px; padding: 16px; color: #8a1d1d; background: #fff5f5; }
+.dashboard-container .stat-card.destaque { border-color: #c9a227; }
+.dashboard-container .chart-area { position: relative; height: 320px; }
+.dashboard-container .chart-note { color: #7e6668; font-size: 13px; margin: -8px 0 14px; }
+
+/* Legendas numéricas sempre visíveis, mesmo se o navegador não suportar canvas. */
+.dashboard-container .chart-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin-top: 12px;
+  color: #5c4b4d;
+  font-size: 13px;
+}
+.dashboard-container .evolucao-meses {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 18px;
+}
+.dashboard-container .evolucao-mes {
+  min-width: 0;
+  padding: 10px 5px;
+  border-radius: 8px;
+  border: 1px solid #eadada;
+  background: #fafafa;
+  color: #827677;
+  text-align: center;
+  display: grid;
+  gap: 6px;
+  font-size: 11px;
+}
+.dashboard-container .evolucao-mes.com-dados {
+  color: #14265c;
+  background: #fff9e9;
+  border-color: #c9a227;
+}
+.dashboard-container .evolucao-mes span { overflow-wrap: anywhere; }
+@media (max-width: 1100px) {
+  .dashboard-container .evolucao-meses { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .dashboard-container .evolucao-meses { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
