@@ -1,4 +1,3 @@
-
 <div class="oficiais-container">
   <app-breadcrumb [itens]="itens" />
 
@@ -185,6 +184,7 @@
                 <th>Aniversário</th>
                 <th>Mandato</th>
                 <th>Status</th>
+                <th class="col-acoes">A&ccedil;&otilde;es</th>
               </tr>
             </thead>
 
@@ -209,11 +209,13 @@
                     }
                   </td>
 
-                  <td>
-                    {{ oficial.cargoNome }}
+                  <td class="col-cargo">
+                    <span class="cargo-container">
+                      {{ oficial.cargoNome }}
+                    </span>
 
                     @if (oficial.numeroMandato) {
-                      <span class="badge-extra">
+                      <span class="badge-cargo">
                         {{ oficial.numeroMandato }}º mandato
                       </span>
                     }
@@ -295,9 +297,42 @@
                     <span
                       class="status-badge"
                       [class.inativo]="oficial.status === 'INATIVO'"
-                    >
+                    > 
                       {{ oficial.status }}
                     </span>
+                  </td>
+
+                  <td class="col-acoes">
+                    <div class="acoes-linha">
+                      @if (oficial.celular || oficial.telefone) {
+                        <button
+                          type="button"
+                          class="btn-acao btn-whatsapp-linha"
+                          title="Enviar mensagem pelo WhatsApp"
+                          (click)="abrirWhatsappOficial(oficial)"
+                        >
+                          <i class="bi bi-whatsapp"></i>
+                        </button>
+                      }
+
+                      <button
+                        type="button"
+                        class="btn-acao btn-editar"
+                        title="Editar oficial"
+                        (click)="editarOficial(oficial)"
+                      >
+                        <i class="bi bi-pencil"></i>
+                      </button>
+
+                      <button
+                        type="button"
+                        class="btn-acao btn-excluir"
+                        title="Excluir oficial"
+                        (click)="excluirOficial(oficial)"
+                      >
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               }
@@ -306,7 +341,6 @@
         </div>
       }
     </div>
-
   }
 
   <!-- ================= ABA CALENDÁRIO ================= -->
@@ -393,7 +427,7 @@
           </div>
         }
 
-        @if (
+       @if (
           !carregandoAniversariantes &&
           aniversariantes.length === 0
         ) {
@@ -405,52 +439,103 @@
 
         <!-- Aniversariantes agrupados por dia -->
         @if (!carregandoAniversariantes) {
-          @for (bloco of aniversariantesPorDia; track bloco.dia) {
-            <div class="aniversario-bloco">
-
-              <div class="aniversario-dia">
-                <span class="aniversario-numero">
-                  {{ bloco.dia }}
-                </span>
-
-                <span class="aniversario-mes">
-                  {{ nomeMesSelecionado }}
-                </span>
+          <!-- Template da mensagem -->
+          <div class="template-card">
+            <div class="template-header">
+              <i class="bi bi-chat-heart"></i>
+              <div>
+                <h4>Mensagem de parab&eacute;ns</h4>
+                <p>
+                  @if (editandoTemplate) {
+                    Use as vari&aacute;veis abaixo. Elas s&atilde;o trocadas pelos dados de cada
+                    oficial no momento do envio.
+                  } @else {
+                    Esta &eacute; a mensagem que ser&aacute; enviada, j&aacute; com os dados de cada
+                    oficial.
+                  }
+                </p>
               </div>
 
-              <div class="aniversario-pessoas">
-                @for (pessoa of bloco.pessoas; track pessoa.oficialId) {
-                  <div class="aniversario-pessoa">
-                    <strong>
-                      {{ pessoa.nomePreferido || pessoa.nome }}
-                    </strong>
+              @if (editandoTemplate) {
+                <button type="button" class="btn-restaurar" (click)="restaurarTemplate()">
+                  Restaurar padr&atilde;o
+                </button>
 
-                    <span class="unidade-meta">
-                      {{ pessoa.cargoNome }}
-                      — {{ pessoa.unidadeTipo }}
-                      {{ pessoa.unidadeNome }}
-                    </span>
+                <button type="button" class="btn-concluir" (click)="salvarTemplate()">
+                  <i class="bi bi-check-lg"></i>
+                  Concluir
+                </button>
+              } @else {
+                <button type="button" class="btn-editar-template" (click)="editarTemplate()">
+                  <i class="bi bi-pencil"></i>
+                  Editar
+                </button>
+              }
+            </div>
 
-                    <span class="aniversario-contato">
-                      @if (pessoa.celular) {
-                        <i class="bi bi-phone"></i>
-                        {{ pessoa.celular }}
-                      } @else if (pessoa.telefone) {
-                        <i class="bi bi-telephone"></i>
-                        {{ pessoa.telefone }}
-                      } @else if (pessoa.email) {
-                        <i class="bi bi-envelope"></i>
-                        {{ pessoa.email }}
-                      } @else {
-                        Sem contato cadastrado
-                      }
+            @if (!editandoTemplate) {
+              <div class="template-preview">
+                {{ previaMensagem(aniversariantes[0] ?? null) }}
+              </div>
+            } @else {
+              <textarea class="template-textarea" rows="5" [(ngModel)]="templateMensagem"></textarea>
 
-                      <span class="aniversario-idade">
+              <div class="template-variaveis">
+                @for (v of variaveisTemplate; track v) {
+                  <button type="button" (click)="inserirVariavel(v)">
+                    {{ v }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+        @for (bloco of aniversariantesPorDia; track bloco.dia) {
+          <div class="aniversario-bloco">
+
+            <div class="aniversario-dia">
+              <span class="aniversario-numero">
+                {{ bloco.dia }}
+              </span>
+
+              <span class="aniversario-mes">
+                {{ nomeMesSelecionado }}
+              </span>
+            </div>
+
+            <div class="aniversario-pessoas">
+              @for (pessoa of bloco.pessoas; track pessoa.oficialId) {
+                <div class="aniversario-pessoa">
+                  <strong>
+                    {{ pessoa.nomePreferido || pessoa.nome }}
+                  </strong>
+
+                  <span class="unidade-meta">
+                    {{ pessoa.cargoNome }}
+                     — {{ pessoa.unidadeTipo }}
+                    {{ pessoa.unidadeNome }}
+                  </span>
+
+                  <span class="aniversario-contato">
+                    @if (pessoa.celular) {
+                      <i class="bi bi-phone"></i>
+                      {{ pessoa.celular }}
+                    } @else if (pessoa.telefone) {
+                      <i class="bi bi-telephone"></i>
+                      {{ pessoa.telefone }}
+                    } @else if (pessoa.email) {
+                      <i class="bi bi-envelope"></i>
+                      {{ pessoa.email }}
+                    } @else {
+                      Sem contato cadastrado
+                    }
+
+                    <span class="aniversario-idade">
                         {{ pessoa.idadeCompleta }} anos
                       </span>
-                    </span>
+                  </span>
 
-                    @if (
+                  @if (
                       (pessoa.celular || pessoa.telefone) &&
                       ehAniversarioHoje(pessoa)
                     ) {
@@ -471,7 +556,7 @@
             </div>
           }
         }
-
+        
         <!-- Template da mensagem: somente após o carregamento -->
         @if (!carregandoAniversariantes && aniversarianteDeHoje) {
           <div class="template-card">

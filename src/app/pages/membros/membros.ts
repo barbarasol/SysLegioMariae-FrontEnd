@@ -7,6 +7,7 @@ import { CatalogosMembro, MembroListado, MembroEdicao, ResumoMembros } from '../
 import { mensagemDeErro } from '../../services/usuario.service';
 import { MembroService, type MeuCadastroMembro, type AtualizarMeuCadastroInput, type MembroPendenteValidacao } from '../../services/membro.service';
 import { ToastService } from '../../services/toast.service';
+import { Breadcrumb, ItemBreadcrumb } from '../../components/breadcrumb/breadcrumb';
 
 const ROTULO_STATUS: Record<string, string> = {
   ATIVO: 'Ativo',
@@ -20,7 +21,7 @@ function catalogosVazios(): CatalogosMembro {
 }
 
 @Component({
-  imports: [FormsModule],
+  imports: [FormsModule, Breadcrumb],
   selector: 'app-membros',
   styleUrl: './membros.scss',
   templateUrl: './membros.html'
@@ -72,6 +73,11 @@ export class Membros implements OnInit, OnDestroy {
   private requisicaoCatalogos?: Subscription;
   private requisicaoMeuCadastro?: Subscription;
   private requisicaoPendentes?: Subscription;
+
+  itens: ItemBreadcrumb[] = [
+    { label: 'Início', routerLink: '/home', icone: 'bi-house' },
+    { label: 'Membros', routerLink: '/oficiais', icone: 'bi-people' }
+  ];
 
   constructor(
     private membroService: MembroService,

@@ -1,5 +1,6 @@
 @if (acessoNegado) {
   <div class="membros-container">
+    <app-breadcrumb [itens]="itens" />
     <div class="empty-state" role="alert">
       <i class="bi bi-shield-lock"></i>
       <h2>Acesso restrito ao módulo Membros</h2>
@@ -8,6 +9,7 @@
   </div>
 } @else if (somenteMeuCadastro) {
   <div class="membros-container">
+    <app-breadcrumb [itens]="itens" />
     <div class="page-header">
       <div>
         <h2>Meu cadastro de membro</h2>
@@ -104,6 +106,7 @@
   </div>
 } @else {
 <div class="membros-container">
+  <app-breadcrumb [itens]="itens" />
   <div class="page-header">
     <div>
       <h2>Membros</h2>

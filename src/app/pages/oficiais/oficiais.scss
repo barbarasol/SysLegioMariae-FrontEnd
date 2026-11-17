@@ -315,6 +315,17 @@ $legio-birthday-bg: #fff8e3;
   font-weight: 600;
 }
 
+.badge-cargo{
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: $legio-rose-100;
+  color: $legio-red-800;
+  font-size: 11px;
+  font-weight: 600;
+}
+
 .badge-vigente {
   display: inline-block;
   margin-top: 6px;
@@ -812,6 +823,10 @@ $legio-birthday-bg: #fff8e3;
   }
 }
 
+.btn-editar {
+  border: 1px solid #a13b40;
+}
+
 .btn-concluir {
   border: 1px solid $legio-success;
   background: $legio-success;
@@ -888,4 +903,78 @@ $legio-birthday-bg: #fff8e3;
   .btn-solicitacoes, .btn-novo-oficial {
     flex: 1;
   }
+}
+
+
+/* ==========================================
+   ACOES DA LINHA
+   ========================================== */
+
+.cargo-container{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.badge-extra{
+   display: inline-block;
+}
+
+.col-acoes {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.acoes-linha {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.btn-acao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+
+  border: 1px solid $legio-border;
+  border-radius: 7px;
+  background: $legio-white;
+
+  color: $legio-text-muted;
+  font-size: 14px;
+
+  cursor: pointer;
+
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    background: $legio-rose-050;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(161, 59, 64, 0.25);
+    outline-offset: 1px;
+  }
+}
+
+.btn-whatsapp-linha:hover {
+  border-color: #25D366;
+  color: #1eb355;
+  background: #f2fbf5;
+}
+
+.btn-editar:hover {
+  border-color: $legio-red-600;
+  color: $legio-red-600;
+  background: $legio-rose-100;
+}
+
+.btn-excluir:hover {
+  border-color: $legio-red-800;
+  color: $legio-red-800;
+  background: $legio-rose-100;
 }

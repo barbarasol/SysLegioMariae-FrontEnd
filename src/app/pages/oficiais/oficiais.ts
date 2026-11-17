@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import {
   Aniversariante,
@@ -13,7 +14,6 @@ import {
 import { OficialService } from '../../services/oficial.service';
 import { ToastService } from '../../services/toast.service';
 import { mensagemDeErro } from '../../services/usuario.service';
-import { RouterLink } from '@angular/router';
 import { Breadcrumb, ItemBreadcrumb } from '../../components/breadcrumb/breadcrumb';
 
 type Aba = 'oficiais' | 'calendario';
@@ -82,11 +82,21 @@ export class Oficiais implements OnInit {
     { label: 'Início', routerLink: '/home', icone: 'bi-house' },
     { label: 'Oficiais', routerLink: '/oficiais', icone: 'bi-people' }
   ];
+  
+  /** Chips de vari\u00E1veis exibidos abaixo do campo de texto. */
+  readonly variaveisTemplate = [
+    '{nome}',
+    '{cargo}',
+    '{unidade}',
+    '{idade}',
+    '{ano}'
+  ];
 
   constructor(
     private oficialService: OficialService,
     private toastService: ToastService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -362,6 +372,29 @@ export class Oficiais implements OnInit {
     );
   }
 
+  /** Explica por que o envio esta bloqueado. */
+  motivoBloqueio(pessoa: Aniversariante): string {
+    if (this.ehAniversarioHoje(pessoa)) {
+      return '';
+    }
+
+    const hoje = new Date();
+
+    const atual =
+      hoje.getFullYear() * 10000 +
+      (hoje.getMonth() + 1) * 100 +
+      hoje.getDate();
+
+    const alvo =
+      hoje.getFullYear() * 10000 +
+      pessoa.mes * 100 +
+      pessoa.dia;
+
+    return alvo > atual
+      ? 'Anivers\u00E1rio ainda n\u00E3o chegou'
+      : 'A data j\u00E1 passou';
+  }
+
   /** Troca as vari\u00E1veis do template pelos dados do oficial. */
   montarMensagem(pessoa: Aniversariante | null): string {
     if (!pessoa) {
@@ -434,6 +467,76 @@ export class Oficiais implements OnInit {
   /** Insere uma vari\u00E1vel na posi\u00E7\u00E3o atual do cursor. */
   inserirVariavel(variavel: string): void {
     this.templateMensagem = `${this.templateMensagem} ${variavel}`;
+  }
+
+  // ==================================================
+  // ACOES DA LINHA (aba Oficiais)
+  // ==================================================
+
+  /**
+   * Abre o WhatsApp com uma mensagem simples de contato.
+   *
+   * Diferente do envio de parabens (que usa o template
+   * editavel), aqui a mensagem e direta, sem variaveis.
+   */
+  abrirWhatsappOficial(oficial: Oficial): void {
+    const telefone = this.normalizarTelefone(
+      oficial.celular || oficial.telefone
+    );
+
+    if (!telefone) {
+      this.toastService.erro(
+        'Este oficial n\u00E3o possui celular ou telefone cadastrado.'
+      );
+      return;
+    }
+
+    const nome = oficial.nomePreferido || oficial.nome;
+
+    const mensagem =
+      `Ol\u00E1, ${nome}! Falamos do Sys Legio Mariae.`;
+
+    const url =
+      `https://wa.me/${telefone}` +
+      `?text=${encodeURIComponent(mensagem)}`;
+
+    window.open(url, '_blank', 'noopener');
+  }
+
+  editarOficial(oficial: Oficial): void {
+    this.router.navigate([`/oficiais/${oficial.id}/editar`]);
+  }
+
+  excluirOficial(oficial: Oficial): void {
+    const nome = oficial.nomePreferido || oficial.nome;
+
+    const confirmado = window.confirm(
+      `Excluir o mandato de "${nome}"?\n\n` +
+      'O v\u00EDnculo de cargo ser\u00E1 encerrado. A pessoa e o membro ' +
+      'continuam cadastrados.'
+    );
+
+    if (!confirmado) {
+      return;
+    }
+
+    this.oficialService.encerrar(oficial.id).subscribe({
+      next: () => {
+        this.toastService.sucesso(
+          'Mandato encerrado com sucesso.'
+        );
+
+        this.carregar();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.toastService.erro(
+          mensagemDeErro(
+            error,
+            'Nao foi possivel encerrar o mandato.'
+          )
+        );
+      }
+    });
   }
 
   trocarMes(valor: number): void {

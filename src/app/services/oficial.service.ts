@@ -85,4 +85,17 @@ export class OficialService {
       { withCredentials: true }
     );
   }
+
+  /**
+   * Encerra o mandato de um oficial.
+   *
+   * O id e o do vinculo em membro_cargo_unidade, nao o do membro.
+   * A exclusao e logica: o vinculo vira inativo no back.
+   */
+  encerrar(vinculoId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${environment.apiUrl}/oficiais/${vinculoId}`,
+      { withCredentials: true }
+    );
+  }
 }

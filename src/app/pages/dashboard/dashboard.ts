@@ -8,6 +8,7 @@ import {
   Chart, CategoryScale, LinearScale, BarElement, ArcElement, LineElement,
   PointElement, LineController, BarController, DoughnutController, Tooltip, Legend
 } from 'chart.js';
+import { Breadcrumb, ItemBreadcrumb } from '../../components/breadcrumb/breadcrumb';
 
 Chart.register(CategoryScale, LinearScale, BarElement, ArcElement, LineElement,
   PointElement, LineController, BarController, DoughnutController, Tooltip, Legend);
@@ -54,7 +55,7 @@ export interface ResumoDashboard {
 
 @Component({
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, Breadcrumb],
   selector: 'app-dashboard',
   styleUrl: './dashboard.scss',
   templateUrl: './dashboard.html',
@@ -92,6 +93,11 @@ export class Dashboard implements OnInit, OnDestroy {
     { chave: 'qtd_mescs', titulo: 'MESCs', icone: 'bi-person-workspace' },
     { chave: 'qtd_catequistas', titulo: 'Catequistas', icone: 'bi-book' },
     { chave: 'qtd_coroinhas', titulo: 'Coroinhas', icone: 'bi-person' },
+  ];
+
+  itens: ItemBreadcrumb[] = [
+    { label: 'Início', routerLink: '/home', icone: 'bi-house' },
+    { label: 'Dashboard', routerLink: '/dashboard', icone: 'bi-grid-1x2' }
   ];
 
   resumo: ResumoDashboard | null = null;
