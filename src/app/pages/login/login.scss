@@ -429,3 +429,16 @@
   border-color: #8f2b2f !important;
   color: #8f2b2f !important;
 }
+
+/* Informações institucionais fixadas na parte inferior esquerda da área de login. */
+.login-page .login-content { position: relative; padding-bottom: 112px; }
+.login-page .login-support-footer {
+  position: absolute; left: 40px; bottom: 22px;
+  font-size: 12px; line-height: 1.7; color: #595959; text-align: left;
+}
+.login-page .login-support-footer a { color: #7a2024; text-decoration: none; overflow-wrap: anywhere; }
+.login-page .login-support-footer a:hover { text-decoration: underline; }
+@media (max-width: 768px) {
+  .login-page .login-content { padding-bottom: 110px; }
+  .login-page .login-support-footer { left: 24px; right: 20px; bottom: 16px; }
+}

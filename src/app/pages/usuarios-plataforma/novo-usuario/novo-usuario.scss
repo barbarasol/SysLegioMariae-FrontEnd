@@ -165,3 +165,20 @@
     width: 100%;
   }
 }
+/* Cloudflare Turnstile: componente permanente durante as três etapas. */
+.turnstile-security { margin: 18px 0; display: grid; gap: 8px; }
+.turnstile-security small { color: #64748b; }
+
+/* Pesquisa acessível e ordenada dos municípios. */
+.municipio-busca-linha { display: flex; gap: 10px; align-items: stretch; }
+.municipio-busca-linha .form-control { flex: 1; min-width: 0; }
+.municipio-busca-linha .btn { flex: 0 0 auto; }
+.municipio-resultados { margin-top: 8px; max-height: 248px; overflow-y: auto; border: 1px solid #ded6d6; border-radius: 8px; background: #fff; }
+.municipio-resultado { display: block; width: 100%; padding: 10px 12px; text-align: left; border: 0; border-bottom: 1px solid #eee; background: transparent; color: #424242; cursor: pointer; }
+.municipio-resultado:last-child { border-bottom: none; }
+.municipio-resultado:hover, .municipio-resultado:focus-visible { background: #fff3f3; outline: 2px solid #a13b40; outline-offset: -2px; }
+.municipio-resultado span { color: #64748b; }
+.municipio-confirmado { display: block; margin-top: 6px; color: #176b3c; font-weight: 600; }
+@media (max-width: 520px) { .municipio-busca-linha { flex-direction: column; } }
+
+.validacao-campo { color: #a52222; font-weight: 600; display: block; margin-top: 4px; }

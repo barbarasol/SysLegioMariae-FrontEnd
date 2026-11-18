@@ -53,26 +53,52 @@
             </select>
           </div>
 
-          <div class="full-width">
-            <label for="municipioCadastro">Município / Localidade *</label>
-            <select id="municipioCadastro" class="form-select" name="municipioId"
-              [(ngModel)]="municipioId" (ngModelChange)="municipioAlterado()" [disabled]="carregando || !paisId" required>
-              <option value="">Selecione o município</option>
-              @for (localidade of localidadesCadastro; track localidade.id) {
-                <option [value]="localidade.id">{{ localidade.nome }} — {{ localidade.ufNome }}</option>
+          <div class="full-width municipio-busca">
+            <label for="municipioPesquisa">Município / Localidade *</label>
+            <div class="municipio-busca-linha">
+              <input id="municipioPesquisa" type="search" class="form-control" name="pesquisaMunicipio"
+                [(ngModel)]="pesquisaMunicipio" (ngModelChange)="municipiosEncontrados = []; pesquisaRealizada = false"
+                (keydown.enter)="$event.preventDefault(); pesquisarMunicipio()"
+                placeholder="Digite o nome da cidade" autocomplete="off"
+                [disabled]="carregando || verificandoCadastro || !paisId || !!municipioId" />
+              @if (!municipioId) {
+                <button class="btn btn-outline-primary" type="button" (click)="pesquisarMunicipio()"
+                  [disabled]="carregando || verificandoCadastro || !paisId || !pesquisaMunicipio.trim()">
+                  Pesquisar
+                </button>
+              } @else {
+                <button class="btn btn-outline-secondary" type="button" (click)="limparMunicipioSelecionado()"
+                  [disabled]="carregando || verificandoCadastro">Alterar</button>
               }
-            </select>
+            </div>
+            @if (municipioId) {
+              <small class="municipio-confirmado" role="status">Município selecionado: {{ pesquisaMunicipio }}</small>
+            } @else if (pesquisaRealizada) {
+              @if (municipiosEncontrados.length > 0) {
+                <div class="municipio-resultados" role="group" aria-label="Municípios encontrados">
+                  @for (localidade of municipiosEncontrados; track localidade.id) {
+                    <button type="button" class="municipio-resultado" (click)="selecionarMunicipio(localidade)">
+                      {{ localidade.nome }} <span>— {{ localidade.ufNome }}</span>
+                    </button>
+                  }
+                </div>
+                <small>Resultados em ordem alfabética. Se não encontrar, digite um nome mais específico.</small>
+              } @else {
+                <small role="status">Nenhum município encontrado. Verifique o nome e tente novamente.</small>
+              }
+            }
           </div>
           @if (municipioNoDF) {
           <div class="full-width">
             <label for="subdivisaoCadastro">Região Administrativa do DF (opcional)</label>
             <select id="subdivisaoCadastro" class="form-select" name="subdivisaoLocalId"
-              [(ngModel)]="subdivisaoLocalId" [disabled]="carregando || !municipioId">
+              [(ngModel)]="subdivisaoLocalId" [disabled]="carregando || carregandoSubdivisoes || !municipioId">
               <option value="">Não informada</option>
               @for (subdivisao of subdivisoesCadastro; track subdivisao.id) {
                 <option [value]="subdivisao.id">{{ subdivisao.nome }}</option>
               }
             </select>
+            @if (carregandoSubdivisoes) { <small role="status">Carregando Regiões Administrativas...</small> }
           </div>
           }
 
@@ -86,9 +112,10 @@
               placeholder="Somente números"
               [required]="brasileiro"
               inputmode="numeric"
-              [(ngModel)]="cpf"
+              [(ngModel)]="cpf" (ngModelChange)="limparErroCadastro()"
               [disabled]="carregando"
             />
+            @if (cpf.trim() && !cpfValido) { <small class="validacao-campo" role="alert">CPF inválido. Verifique os 11 dígitos e os dígitos verificadores.</small> }
           </div>
 
           <div>
@@ -103,6 +130,7 @@
               required
               [disabled]="carregando"
             />
+            @if (celular.trim() && !celularValido) { <small class="validacao-campo" role="alert">Celular inválido para o país selecionado.</small> }
             <small>{{ brasileiro
               ? 'Sem máscara: informe DDD + número ou +55 + DDD + número.'
               : 'Sem máscara: informe +DDI seguido do número internacional.' }}</small>
@@ -117,7 +145,7 @@
               name="email"
               placeholder="usuario@exemplo.com"
               autocomplete="email"
-              [(ngModel)]="email"
+              [(ngModel)]="email" (ngModelChange)="limparErroCadastro()"
               required
               email
               [disabled]="carregando"
@@ -294,6 +322,17 @@
         </div>
       }
 
+      <div class="turnstile-security" aria-label="Verificação anti-robôs">
+        <label>Verificação de segurança *</label>
+        <div #turnstileContainer></div>
+        @if (!turnstileToken) {
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="refazerVerificacao()"
+            [disabled]="carregando || verificandoCadastro">Refazer verificação de segurança</button>
+        }
+        @if (turnoErro) { <p class="form-alert" role="alert">{{ turnoErro }}</p> }
+        <small>O CAPTCHA é exigido para consultar o cadastro e, novamente, para concluir o pedido. Se expirar, utilize Refazer verificação.</small>
+      </div>
+
       <div class="form-actions">
         <button
           type="button"
@@ -309,9 +348,9 @@
             type="button"
             class="btn btn-primary"
             (click)="proximo()"
-            [disabled]="!etapaValida"
+            [disabled]="carregando || verificandoCadastro"
           >
-            Próximo
+            {{ verificandoCadastro ? 'Verificando cadastro...' : 'Próximo' }}
           </button>
         }
 
@@ -319,7 +358,7 @@
           <button
             type="submit"
             class="btn btn-success"
-            [disabled]="carregando || usuarioForm.invalid"
+            [disabled]="carregando || verificandoCadastro || usuarioForm.invalid"
           >
             @if (carregando) {
               Criando...

@@ -774,7 +774,7 @@
 
                 <span>
                   <strong>Município / Localidade:</strong>
-                  {{ municipioSelecionado?.nome || '-' }}
+                  {{ nomeMunicipioRevisao }}
                 </span>
               </div>
             </div>
@@ -1345,18 +1345,28 @@
           </div>
 
           <div>
-            <label>E-mail</label>
+            <label>E-mail(s) da Unidade</label>
 
             <input
-              type="email"
+              type="text"
               class="form-control"
               name="emailUnidade"
               maxlength="254"
-              autocomplete="email"
-              placeholder="exemplo@dominio.org"
+              autocomplete="off"
+              placeholder="senatus@legiaodemaria.org.br;comunicacao@legiaodemaria.org.br"
               [(ngModel)]="solicitacao.email"
               [disabled]="carregando"
+              [class.is-invalid]="!emailsUnidadeValidos"
+              aria-describedby="ajudaEmailsUnidade"
             >
+            <small id="ajudaEmailsUnidade" class="campo-ajuda">
+              Aceita vários e-mails separados por ponto e vírgula (;), até 254 caracteres no total.
+            </small>
+            @if (!emailsUnidadeValidos) {
+              <div class="text-danger" role="alert">
+                Verifique os e-mails: separe-os por ponto e vírgula (;) e não deixe endereços vazios ou inválidos.
+              </div>
+            }
           </div>
 
           <div>
@@ -1591,6 +1601,12 @@
       <div class="form-section">
         <h4>Revisão da Solicitação</h4>
 
+        @if (modo === 'editar' && carregandoUnidade) {
+          <p class="text-muted" role="status">Carregando dados da unidade para revisão...</p>
+        }
+        @if (modo === 'editar' && !carregandoUnidade) {
+          <p class="campo-ajuda">Os campos sem informação cadastrada são apresentados como "Não informado". Confira os dados antes de salvar.</p>
+        }
         <div class="review-card">
           <p>
             <strong>Tipo:</strong>
@@ -1609,32 +1625,32 @@
 
           <p>
             <strong>País:</strong>
-            {{ paisSelecionado?.nome || '-' }}
+            {{ nomePaisRevisao }}
           </p>
 
           <p>
             <strong>{{ rotuloCodigoPostal }}:</strong>
-            {{ solicitacao.codigoPostal || '-' }}
+            {{ textoRevisao(solicitacao.codigoPostal) }}
           </p>
 
           <p>
             <strong>{{ rotuloDivisaoAdministrativa }}:</strong>
-            {{ ufSelecionada?.nome || '-' }}
+            {{ nomeUfRevisao }}
           </p>
 
           <p>
             <strong>Município / Localidade:</strong>
-            {{ municipioSelecionado?.nome || '-' }}
+            {{ nomeMunicipioRevisao }}
           </p>
 
           <p>
             <strong>Subdivisão Local:</strong>
-            {{ subdivisaoSelecionada?.nome || 'Não informada' }}
+            {{ nomeSubdivisaoRevisao }}
           </p>
 
           <p>
             <strong>Igreja / Paróquia / Sede:</strong>
-            {{ igrejaSelecionada?.nome || '-' }}
+            {{ nomeIgrejaRevisao }}
           </p>
 
           <p>
@@ -1644,29 +1660,29 @@
               {{ solicitacao.sedeNumeroLogradouro || 'S/N' }} —
               {{ solicitacao.sedeCodigoPostal || 'Sem código postal' }}
             } @else {
-              {{ igrejaSelecionada?.codigoPostal || 'Sem código postal' }}
-              {{ enderecoIgrejaSelecionada }}
+              {{ igrejaSelecionada?.codigoPostal || solicitacao.codigoPostal || 'Sem código postal' }}
+              {{ igrejaSelecionada ? enderecoIgrejaSelecionada : 'Endereço da paróquia ainda não disponível no catálogo' }}
             }
           </p>
 
           <p>
             <strong>E-mail da Unidade:</strong>
-            {{ solicitacao.email || 'Não informado' }}
+            {{ textoRevisao(solicitacao.email) }}
           </p>
 
           <p>
             <strong>Celular da Unidade:</strong>
-            {{ solicitacao.celular || 'Não informado' }}
+            {{ textoRevisao(solicitacao.celular) }}
           </p>
 
           <p>
             <strong>Telefone da Unidade:</strong>
-            {{ solicitacao.telefone || 'Não informado' }}
+            {{ textoRevisao(solicitacao.telefone) }}
           </p>
 
           <p>
             <strong>Site da Unidade:</strong>
-            {{ solicitacao.site || 'Não informado' }}
+            {{ textoRevisao(solicitacao.site) }}
           </p>
 
           <p>
@@ -1698,7 +1714,7 @@
 
           <p>
             <strong>Fuso horário:</strong>
-            {{ solicitacao.fusoHorario || 'Não informado' }}
+            {{ textoRevisao(solicitacao.fusoHorario) }}
           </p>
 
           <p>

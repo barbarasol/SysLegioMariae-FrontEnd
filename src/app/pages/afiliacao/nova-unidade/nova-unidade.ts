@@ -52,6 +52,44 @@ export class NovaUnidade implements OnInit {
   private fusoPesquisaSeq = 0;
   private igrejasConsultaSeq = 0;
 
+  /** Nomes obtidos junto ao detalhe da unidade; independem dos catálogos assíncronos. */
+  private nomesDetalheEdicao: {
+    paisId: string; ufId: string; municipioId: string; igrejaId: string;
+    subdivisaoId: string; pais: string; uf: string; municipio: string;
+    subdivisao: string; igreja: string;
+  } | null = null;
+
+  /** Exibe o valor real quando existe e sinaliza ausência de cadastro. */
+  textoRevisao(valor: unknown): string {
+    const texto = String(valor ?? '').trim();
+    return texto || 'Não informado';
+  }
+
+  get nomePaisRevisao(): string {
+    return this.paisSelecionado?.nome || (this.nomesDetalheEdicao?.paisId === this.solicitacao.paisId
+      ? this.nomesDetalheEdicao.pais : '') || 'Não informado';
+  }
+
+  get nomeUfRevisao(): string {
+    return this.ufSelecionada?.nome || (this.nomesDetalheEdicao?.ufId === this.solicitacao.ufId
+      ? this.nomesDetalheEdicao.uf : '') || 'Não informado';
+  }
+
+  get nomeMunicipioRevisao(): string {
+    return this.municipioSelecionado?.nome || (this.nomesDetalheEdicao?.municipioId === this.solicitacao.municipioId
+      ? this.nomesDetalheEdicao.municipio : '') || 'Não informado';
+  }
+
+  get nomeSubdivisaoRevisao(): string {
+    return this.subdivisaoSelecionada?.nome || (this.nomesDetalheEdicao?.subdivisaoId === this.solicitacao.subdivisaoLocalId
+      ? this.nomesDetalheEdicao.subdivisao : '') || 'Não informada';
+  }
+
+  get nomeIgrejaRevisao(): string {
+    return this.igrejaSelecionada?.nome || (this.nomesDetalheEdicao?.igrejaId === this.solicitacao.igrejaId
+      ? this.nomesDetalheEdicao.igreja : '') || 'Não informado';
+  }
+
   solicitacao = this.novaSolicitacao();
   novaParoquia = this.novaParoquiaVazia();
   exibirEdicaoParoquia = false;
@@ -447,6 +485,23 @@ export class NovaUnidade implements OnInit {
     return r ? `${r[3]}/${r[2]}/${r[1]}` : '-';
   }
 
+  /** Contato da unidade: permite um ou vários e-mails separados por ponto e vírgula. */
+  private normalizarEmailsUnidade(valor: string): string {
+    return String(valor ?? '')
+      .split(';')
+      .map((email) => email.trim().toLowerCase())
+      .join(';');
+  }
+
+  get emailsUnidadeValidos(): boolean {
+    const valor = this.normalizarEmailsUnidade(this.solicitacao.email);
+    if (!valor) return true; // e-mail da unidade permanece opcional
+    if (valor.length > 254) return false;
+    const emails = valor.split(';');
+    const padrao = /^[^\s@;]+@[^\s@;]+\.[^\s@;]+$/;
+    return emails.every((email) => padrao.test(email));
+  }
+
   get etapaValida(): boolean {
     if (this.etapa === 1) {
       return (
@@ -474,6 +529,8 @@ export class NovaUnidade implements OnInit {
       );
     }
 
+    if (this.etapa === 3) return this.emailsUnidadeValidos;
+
     return true;
   }
 
@@ -488,6 +545,7 @@ export class NovaUnidade implements OnInit {
   }
 
   aoTrocarPais(): void {
+    this.nomesDetalheEdicao = null;
     this.fecharEdicaoParoquia();
     this.solicitacao.codigoPostal = '';
     this.solicitacao.codigoPostalSelecaoId = '';
@@ -522,6 +580,7 @@ export class NovaUnidade implements OnInit {
   }
 
   aoTrocarUf(): void {
+    this.nomesDetalheEdicao = null;
     this.solicitacao.municipioId = '';
     this.solicitacao.subdivisaoLocalId = '';
     this.solicitacao.sedeSubdivisaoLocalId = '';
@@ -548,6 +607,7 @@ export class NovaUnidade implements OnInit {
   }
 
   aoTrocarMunicipio(): void {
+    this.nomesDetalheEdicao = null;
     this.fecharEdicaoParoquia();
     this.solicitacao.subdivisaoLocalId = '';
     this.solicitacao.sedeSubdivisaoLocalId = '';
@@ -1745,6 +1805,12 @@ export class NovaUnidade implements OnInit {
   }
 
   enviarSolicitacao(): void {
+    if (!this.emailsUnidadeValidos) {
+      this.erro = 'Informe e-mails válidos, separados por ponto e vírgula (;), até 254 caracteres no total.';
+      this.toastService.erro(this.erro);
+      this.cdr.detectChanges();
+      return;
+    }
     if (this.carregando || !this.etapaValida) {
       return;
     }
@@ -1757,7 +1823,7 @@ export class NovaUnidade implements OnInit {
         nomeReduzido:
           this.solicitacao.nomeReduzido.trim().toUpperCase() || null,
         email:
-          this.solicitacao.email.trim() || null,
+          this.normalizarEmailsUnidade(this.solicitacao.email) || null,
         celular:
           this.solicitacao.celular.trim() || null,
         telefone:
@@ -1893,6 +1959,21 @@ export class NovaUnidade implements OnInit {
       )
       .subscribe({
         next: (unidade: UnidadeDetalhe) => {
+          // Os nomes já vêm no GET /unidades/:id e não dependem do término
+          // das consultas de UFs, municípios, subdivisões e igrejas.
+          const detalhe = unidade as UnidadeDetalhe & {
+            paisNome?: string | null; ufNome?: string | null;
+            municipioNome?: string | null; igrejaNome?: string | null;
+            subdivisaoLocalNome?: string | null;
+          };
+          this.nomesDetalheEdicao = {
+            paisId: unidade.paisId, ufId: unidade.ufId,
+            municipioId: unidade.municipioId, igrejaId: unidade.igrejaId,
+            subdivisaoId: unidade.sedeSubdivisaoLocalId ?? unidade.subdivisaoLocalId ?? '',
+            pais: detalhe.paisNome ?? '', uf: detalhe.ufNome ?? '',
+            municipio: detalhe.municipioNome ?? '', igreja: detalhe.igrejaNome ?? '',
+            subdivisao: detalhe.subdivisaoLocalNome ?? ''
+          };
           this.statusAprovacao = unidade.statusAprovacao;
           this.solicitacao.tipo = unidade.tipoCodigo;
           this.solicitacao.nome = unidade.nome;

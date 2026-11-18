@@ -39,7 +39,7 @@ export class UsuarioService {
 
   criar(
     payload:
-      CriarUsuarioRequest & { unidadeSolicitadaId?: string; perfilSolicitadoCodigo?: string; paisId: string; municipioId?: string | null; subdivisaoLocalId?: string | null }
+      CriarUsuarioRequest & { unidadeSolicitadaId?: string; perfilSolicitadoCodigo?: string; paisId: string; municipioId?: string | null; subdivisaoLocalId?: string | null; turnstileToken: string }
   ): Observable<UsuarioCriadoResponse> {
 
     return this.http
@@ -71,6 +71,7 @@ export class UsuarioService {
           paisId: payload.paisId || null,
           municipioId: payload.municipioId || null,
           subdivisaoLocalId: payload.subdivisaoLocalId || null,
+          turnstileToken: payload.turnstileToken,
 
           unidadeSolicitadaId: payload.unidadeSolicitadaId || null,
           perfilSolicitadoCodigo: payload.perfilSolicitadoCodigo || null
@@ -80,6 +81,18 @@ export class UsuarioService {
             true
         }
       );
+  }
+
+  /** Verificação prévia de duplicidade (mensagem única, sem identificação do campo). */
+  verificarCadastroExistente(payload: { cpf?: string | null; email: string; turnstileToken: string }): Observable<{ disponivel: boolean }> {
+    return this.http.post<{ disponivel: boolean }>(
+      `${environment.apiUrl}/usuarios/verificar-cadastro`,
+      { cpf: payload.cpf?.replace(/\D/g, '') || null, email: payload.email.trim().toLowerCase(), turnstileToken: payload.turnstileToken }
+    );
+  }
+
+  configuracaoTurnstile(): Observable<{ siteKey: string }> {
+    return this.http.get<{ siteKey: string }>(`${environment.apiUrl}/usuarios/turnstile-config`);
   }
 
   /** Catálogo de solicitação: não exige token, não concede permissão. */
