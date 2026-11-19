@@ -12,6 +12,7 @@ import {
   ResumoOficiais
 } from '../../models/oficial.model';
 import { OficialService } from '../../services/oficial.service';
+import { type UnidadeOficialAcessivel } from '../../services/oficial.service';
 import { ToastService } from '../../services/toast.service';
 import { mensagemDeErro } from '../../services/usuario.service';
 import { Breadcrumb, ItemBreadcrumb } from '../../components/breadcrumb/breadcrumb';
@@ -47,6 +48,50 @@ export class Oficiais implements OnInit {
   };
 
   carregando = false;
+  tiposUnidades: Array<{codigo: string; nome: string}> = [];
+  unidadesDisponiveis: UnidadeOficialAcessivel[] = [];
+  tipoUnidadeSelecionado = '';
+  unidadeIdSelecionada = '';
+  carregandoUnidades = false;
+
+  get unidadesFiltradasPorTipo(): UnidadeOficialAcessivel[] {
+    return this.unidadesDisponiveis.filter(u => !this.tipoUnidadeSelecionado || u.tipo === this.tipoUnidadeSelecionado);
+  }
+
+  aoTrocarTipoUnidade(): void {
+    this.unidadeIdSelecionada = '';
+    this.cdr.detectChanges();
+  }
+
+  carregarUnidadesParaFiltro(): void {
+    this.carregandoUnidades = true;
+    this.oficialService.unidadesAcessiveis()
+      .pipe(finalize(() => { this.carregandoUnidades = false; this.cdr.detectChanges(); }))
+      .subscribe({
+        next: (unidades) => {
+          this.unidadesDisponiveis = [...unidades].sort((a,b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+          const tipos = new Map<string,string>();
+          for (const u of unidades) tipos.set(u.tipo, u.tipoNome);
+          this.tiposUnidades = [...tipos].map(([codigo,nome]) => ({codigo,nome}))
+            .sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'));
+          this.cdr.detectChanges();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.toastService.erro(mensagemDeErro(error, 'Não foi possível consultar as unidades autorizadas.'));
+        }
+      });
+  }
+
+  private filtrosUnidades(): { unidadeId?: string; tipoUnidade?: string } {
+    return {
+      unidadeId: this.unidadeIdSelecionada || undefined,
+      tipoUnidade: this.tipoUnidadeSelecionado || undefined
+    };
+  }
+
+  podeEditarOficial(oficial: Oficial): boolean {
+    return this.unidadesDisponiveis.some(u => u.id === oficial.unidadeId && u.podeEditar);
+  }
 
   // ---- Calend\u00E1rio ----
   aniversariantes: Aniversariante[] = [];
@@ -80,6 +125,7 @@ export class Oficiais implements OnInit {
 
   itens: ItemBreadcrumb[] = [
     { label: 'Início', routerLink: '/home', icone: 'bi-house' },
+    { label: 'Conselhos-Praesidia', routerLink: '/afiliacao', icone: 'bi-diagram-3' },
     { label: 'Oficiais', routerLink: '/oficiais', icone: 'bi-people' }
   ];
   
@@ -100,6 +146,7 @@ export class Oficiais implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.carregarUnidadesParaFiltro();
     this.carregarCargos();
     this.carregar();
     this.carregarResumo();
@@ -131,7 +178,7 @@ export class Oficiais implements OnInit {
     this.carregando = true;
 
     this.oficialService
-      .listar(this.filtros)
+      .listar({ ...this.filtros, ...this.filtrosUnidades() })
       .pipe(
         finalize(() => {
           this.carregando = false;
@@ -157,7 +204,7 @@ export class Oficiais implements OnInit {
 
   private carregarResumo(): void {
     this.oficialService
-      .resumo()
+      .resumo(undefined, this.filtrosUnidades())
       .subscribe({
         next: (resumo) => {
           this.resumo = resumo;
@@ -214,9 +261,13 @@ export class Oficiais implements OnInit {
 
   filtrar(): void {
     this.carregar();
+    this.carregarResumo();
+    if (this.aba === 'calendario') this.carregarAniversariantes();
   }
 
   limparFiltros(): void {
+    this.tipoUnidadeSelecionado = '';
+    this.unidadeIdSelecionada = '';
     this.filtros = {
       busca: '',
       cargo: '',
@@ -224,13 +275,15 @@ export class Oficiais implements OnInit {
     };
 
     this.carregar();
+    this.carregarResumo();
+    if (this.aba === 'calendario') this.carregarAniversariantes();
   }
 
   carregarAniversariantes(): void {
     this.carregandoAniversariantes = true;
 
     this.oficialService
-      .aniversariantes(this.mesSelecionado)
+      .aniversariantes(this.mesSelecionado, undefined, this.filtrosUnidades())
       .pipe(
         finalize(() => {
           this.carregandoAniversariantes = false;

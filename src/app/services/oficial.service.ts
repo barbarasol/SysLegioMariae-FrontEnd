@@ -2,6 +2,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+
+export interface UnidadeOficialAcessivel { id: string; nome: string; tipo: string; tipoNome: string; podeEditar: boolean; }
 import {
   Aniversariante,
   CargoOficial,
@@ -24,6 +26,10 @@ export class OficialService {
 
     if (filtros.busca?.trim()) {
       params = params.set('busca', filtros.busca.trim());
+    }
+
+    if (filtros.tipoUnidade) {
+      params = params.set('tipoUnidade', filtros.tipoUnidade);
     }
 
     if (filtros.unidadeId) {
@@ -50,7 +56,8 @@ export class OficialService {
    */
   aniversariantes(
     mes?: number | null,
-    dias?: number
+    dias?: number,
+    filtros: Pick<FiltrosOficiais, 'unidadeId' | 'tipoUnidade'> = {}
   ): Observable<Aniversariante[]> {
     let params = new HttpParams();
 
@@ -60,22 +67,35 @@ export class OficialService {
       params = params.set('dias', String(dias));
     }
 
+    if (filtros.unidadeId) params = params.set('unidadeId', filtros.unidadeId);
+    if (filtros.tipoUnidade) params = params.set('tipoUnidade', filtros.tipoUnidade);
+
     return this.http.get<Aniversariante[]>(
       `${environment.apiUrl}/oficiais/aniversariantes`,
       { params, withCredentials: true }
     );
   }
 
-  resumo(mes?: number): Observable<ResumoOficiais> {
+  resumo(mes?: number, filtros: Pick<FiltrosOficiais, 'unidadeId' | 'tipoUnidade'> = {}): Observable<ResumoOficiais> {
     let params = new HttpParams();
 
     if (mes) {
       params = params.set('mes', String(mes));
     }
 
+    if (filtros.unidadeId) params = params.set('unidadeId', filtros.unidadeId);
+    if (filtros.tipoUnidade) params = params.set('tipoUnidade', filtros.tipoUnidade);
+
     return this.http.get<ResumoOficiais>(
       `${environment.apiUrl}/oficiais/resumo`,
       { params, withCredentials: true }
+    );
+  }
+
+  unidadesAcessiveis(): Observable<UnidadeOficialAcessivel[]> {
+    return this.http.get<UnidadeOficialAcessivel[]>(
+      `${environment.apiUrl}/oficiais/unidades-acessiveis`,
+      { withCredentials: true }
     );
   }
 

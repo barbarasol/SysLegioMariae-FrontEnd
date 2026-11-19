@@ -62,16 +62,6 @@
 
     </a>
 
-    <a
-      routerLink="/oficiais"
-      routerLinkActive="active"
-      class="menu-item">
-
-      <i class="bi bi-person-badge"></i>
-      <span>Oficiais</span>
-
-    </a>
-
     <!-- Conselhos-Praesidia, com subitens sempre abertos -->
     <div class="menu-grupo">
       <a
@@ -84,6 +74,10 @@
       </a>
 
       <div class="submenu">
+        <a routerLink="/oficiais" routerLinkActive="active" class="menu-item subitem">
+          <i class="bi bi-person-badge"></i>
+          <span>Oficiais</span>
+        </a>
         <a
           routerLink="/numeros-unidades"
           routerLinkActive="active"

@@ -93,6 +93,27 @@
     <!-- Filtros -->
     <div class="filter-card">
       <div class="filters-grid">
+        <div class="filter-field">
+          <label for="tipoUnidadeOficial">Tipo da unidade</label>
+          <select id="tipoUnidadeOficial" class="form-select"
+            [(ngModel)]="tipoUnidadeSelecionado" (ngModelChange)="aoTrocarTipoUnidade()"
+            [disabled]="carregandoUnidades">
+            <option value="">Todos os tipos</option>
+            @for (tipo of tiposUnidades; track tipo.codigo) {
+              <option [value]="tipo.codigo">{{ tipo.nome }}</option>
+            }
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="unidadeOficial">Unidade legionária</label>
+          <select id="unidadeOficial" class="form-select" [(ngModel)]="unidadeIdSelecionada"
+            [disabled]="carregandoUnidades">
+            <option value="">Todas as unidades</option>
+            @for (unidade of unidadesFiltradasPorTipo; track unidade.id) {
+              <option [value]="unidade.id">{{ unidade.tipoNome }} — {{ unidade.nome }}</option>
+            }
+          </select>
+        </div>
 
         <div class="filter-field">
           <label for="busca">Buscar</label>
@@ -315,6 +336,7 @@
                         </button>
                       }
 
+                      @if (podeEditarOficial(oficial)) {
                       <button
                         type="button"
                         class="btn-acao btn-editar"
@@ -332,6 +354,7 @@
                       >
                         <i class="bi bi-trash"></i>
                       </button>
+                      }
                     </div>
                   </td>
                 </tr>

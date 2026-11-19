@@ -74,6 +74,7 @@ export interface CargoOficial {
 export interface FiltrosOficiais {
   busca?: string | null;
   unidadeId?: string | null;
+  tipoUnidade?: string | null;
   cargo?: string | null;
   somenteVigentes?: boolean;
 }
