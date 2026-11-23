@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { UsuarioAtualService } from '../../services/usuario-atual.service';
 
-/** Menu só aparece depois de confirmar PLATFORM_OWNER na sessão real. */
+/** Menu administrativo: funções globais restritas a perfis globais ativos. */
 @Component({
   selector: 'app-platform-owner-menu', standalone: true,
   imports: [RouterLink, RouterLinkActive],
@@ -17,13 +17,19 @@ import { UsuarioAtualService } from '../../services/usuario-atual.service';
         </button>
         @if (aberto) {
           <div class="platform-owner-submenu" style="padding-left:17px;display:grid;gap:8px;">
-            <a routerLink="/gerenciamento-platform-owner/versoes"
+            <a routerLink="/listagem-usuarios"
               routerLinkActive="active" style="color:inherit;">
-              <i class="bi bi-tags"></i> Versão
+              <i class="bi bi-people-fill"></i> Gerenciamento Usuários Plataforma
             </a>
-            <span style="opacity:.65;" title="Em desenvolvimento"><i class="bi bi-globe"></i> Países (em breve)</span>
-            <span style="opacity:.65;" title="Em desenvolvimento"><i class="bi bi-map"></i> Estados (em breve)</span>
-            <span style="opacity:.65;" title="Em desenvolvimento"><i class="bi bi-geo-alt"></i> Municípios (em breve)</span>
+            @if (ehPlatformOwner) {
+              <a routerLink="/gerenciamento-platform-owner/versoes"
+                routerLinkActive="active" style="color:inherit;">
+                <i class="bi bi-tags"></i> Versão
+              </a>
+              <span style="opacity:.65;" title="Em desenvolvimento"><i class="bi bi-globe"></i> Países (em breve)</span>
+              <span style="opacity:.65;" title="Em desenvolvimento"><i class="bi bi-map"></i> Estados (em breve)</span>
+              <span style="opacity:.65;" title="Em desenvolvimento"><i class="bi bi-geo-alt"></i> Municípios (em breve)</span>
+            }
           </div>
         }
       </div>
@@ -32,12 +38,18 @@ import { UsuarioAtualService } from '../../services/usuario-atual.service';
 })
 export class PlatformOwnerMenu implements OnInit {
   podeVisualizar = false;
+  ehPlatformOwner = false;
   aberto = false;
   constructor(private readonly usuarioAtual: UsuarioAtualService, private readonly cdr: ChangeDetectorRef) {}
   ngOnInit(): void {
     this.usuarioAtual.obter().subscribe({
-      next: resposta => { this.podeVisualizar = resposta.perfisGlobais?.includes('PLATFORM_OWNER') === true; this.cdr.detectChanges(); },
-      error: () => { this.podeVisualizar = false; this.cdr.detectChanges(); }
+      next: resposta => {
+        const perfis = resposta.perfisGlobais ?? [];
+        this.ehPlatformOwner = perfis.includes('PLATFORM_OWNER');
+        this.podeVisualizar = this.ehPlatformOwner || perfis.includes('PLATFORM_ADMIN');
+        this.cdr.detectChanges();
+      },
+      error: () => { this.podeVisualizar = false; this.ehPlatformOwner = false; this.cdr.detectChanges(); }
     });
   }
 }

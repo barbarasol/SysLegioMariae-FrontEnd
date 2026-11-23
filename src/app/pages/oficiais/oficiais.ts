@@ -1,10 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import {
   Aniversariante,
+  AtualizarOficial,
   CargoOficial,
   MESES,
   Oficial,
@@ -70,10 +71,7 @@ export class Oficiais implements OnInit {
       .subscribe({
         next: (unidades) => {
           this.unidadesDisponiveis = [...unidades].sort((a,b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-          const tipos = new Map<string,string>();
-          for (const u of unidades) tipos.set(u.tipo, u.tipoNome);
-          this.tiposUnidades = [...tipos].map(([codigo,nome]) => ({codigo,nome}))
-            .sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'));
+          // Catálogo completo vem de legio.tipo_unidade; as unidades são escopadas.
           this.cdr.detectChanges();
         },
         error: (error: HttpErrorResponse) => {
@@ -91,6 +89,56 @@ export class Oficiais implements OnInit {
 
   podeEditarOficial(oficial: Oficial): boolean {
     return this.unidadesDisponiveis.some(u => u.id === oficial.unidadeId && u.podeEditar);
+  }
+
+
+  carregarTiposUnidades(): void {
+    this.oficialService.tiposUnidades().subscribe({
+      next: tipos => { this.tiposUnidades = tipos; this.cdr.detectChanges(); },
+      error: (error: HttpErrorResponse) => {
+        this.toastService.erro(mensagemDeErro(error, 'Falha ao consultar os tipos de unidade.'));
+      }
+    });
+  }
+
+  oficialEditando: (Oficial & { podeEditar: boolean }) | null = null;
+  formularioEdicao: AtualizarOficial | null = null;
+  carregandoEdicao = false;
+  salvandoEdicao = false;
+
+  get unidadesEditaveis(): UnidadeOficialAcessivel[] {
+    return this.unidadesDisponiveis.filter(u => u.podeEditar);
+  }
+
+  fecharEdicao(): void {
+    if (this.salvandoEdicao) return;
+    this.oficialEditando = null;
+    this.formularioEdicao = null;
+  }
+
+  salvarEdicao(): void {
+    if (!this.oficialEditando || !this.formularioEdicao || this.salvandoEdicao) return;
+    const dados = this.formularioEdicao;
+    if (!dados.nome.trim() || !dados.unidadeId || !dados.cargo || !dados.dataInicio) {
+      this.toastService.erro('Preencha nome, unidade, cargo e data de início.');
+      return;
+    }
+    this.salvandoEdicao = true;
+    this.oficialService.atualizar(this.oficialEditando.id, dados).pipe(
+      finalize(() => { this.salvandoEdicao = false; this.cdr.detectChanges(); })
+    ).subscribe({
+      next: () => {
+        this.toastService.sucesso('Dados do oficial atualizados com sucesso.');
+        this.oficialEditando = null;
+        this.formularioEdicao = null;
+        this.carregar();
+        this.carregarResumo();
+        this.carregarAniversariantes();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.toastService.erro(mensagemDeErro(error, 'Não foi possível atualizar o oficial.'));
+      }
+    });
   }
 
   // ---- Calend\u00E1rio ----
@@ -141,12 +189,12 @@ export class Oficiais implements OnInit {
   constructor(
     private oficialService: OficialService,
     private toastService: ToastService,
-    private cdr: ChangeDetectorRef,
-    private router: Router
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.carregarUnidadesParaFiltro();
+    this.carregarTiposUnidades();
     this.carregarCargos();
     this.carregar();
     this.carregarResumo();
@@ -557,7 +605,36 @@ export class Oficiais implements OnInit {
   }
 
   editarOficial(oficial: Oficial): void {
-    this.router.navigate([`/oficiais/${oficial.id}/editar`]);
+    if (!this.podeEditarOficial(oficial)) return;
+    this.carregandoEdicao = true;
+    this.oficialService.obter(oficial.id).pipe(
+      finalize(() => { this.carregandoEdicao = false; this.cdr.detectChanges(); })
+    ).subscribe({
+      next: dados => {
+        if (!dados.podeEditar) {
+          this.toastService.erro('Sem permissão para editar este oficial.');
+          return;
+        }
+        this.oficialEditando = dados;
+        this.formularioEdicao = {
+          nome: dados.nome,
+          nomePreferido: dados.nomePreferido,
+          email: dados.email,
+          celular: dados.celular,
+          telefone: dados.telefone,
+          dataNascimento: dados.dataNascimento,
+          unidadeId: dados.unidadeId,
+          cargo: dados.cargo,
+          numeroMandato: dados.numeroMandato,
+          dataInicio: dados.dataInicio,
+          dataFim: dados.dataFim
+        };
+        this.cdr.detectChanges();
+      },
+      error: (error: HttpErrorResponse) => this.toastService.erro(
+        mensagemDeErro(error, 'Não foi possível obter os dados do oficial.')
+      )
+    });
   }
 
   excluirOficial(oficial: Oficial): void {

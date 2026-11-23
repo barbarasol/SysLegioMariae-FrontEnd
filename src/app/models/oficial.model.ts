@@ -94,3 +94,17 @@ export const MESES = [
   'Novembro',
   'Dezembro'
 ];
+/** Campos editáveis autorizados da pessoa e do vínculo de mandato. */
+export interface AtualizarOficial {
+  nome: string;
+  nomePreferido: string | null;
+  email: string | null;
+  celular: string | null;
+  telefone: string | null;
+  dataNascimento: string | null;
+  unidadeId: string;
+  cargo: string;
+  numeroMandato: number | null;
+  dataInicio: string;
+  dataFim: string | null;
+}

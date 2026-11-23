@@ -92,6 +92,15 @@ export interface CriarSolicitacaoOficial {
   pessoaEmail?: string | null;
   pessoaCelular?: string | null;
   pessoaTelefone?: string | null;
+  pessoaDtOrdenacaoPresbiteral?: string | null;
+  pessoaMunicipioId?: string | null;
+  pessoaSubdivisaoLocalId?: string | null;
+  pessoaCep?: string | null;
+  pessoaLogradouro?: string | null;
+  pessoaNumeroLogradouro?: string | null;
+  pessoaComplemento?: string | null;
+  pessoaBairro?: string | null;
+  pessoaLocalidade?: string | null;
 
   dtIngresso?: string | null;
   dtCompromisso?: string | null;

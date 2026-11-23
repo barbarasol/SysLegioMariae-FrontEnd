@@ -281,6 +281,24 @@
       }
     }
 
+    @if (etapa === 1 && origem === 'PESSOA_NOVA') {
+        <div class="form-section" style="margin-top:20px;">
+          <h4>Endereço da pessoa</h4>
+          <div class="form-grid">
+            <div><label>País</label><select class="form-select" [(ngModel)]="paisId" (ngModelChange)="aoTrocarPais()"><option value="">Selecione</option>@for (p of paises; track p.id) { <option [value]="p.id">{{ p.nome }}</option> }</select></div>
+            <div><label>CEP / Código postal</label><div style="display:flex;gap:8px"><input class="form-control" [(ngModel)]="dados.pessoaCep" /><button class="btn btn-outline-primary" type="button" (click)="consultarCep()" [disabled]="buscandoCep || !paisId">{{ buscandoCep ? 'Consultando...' : 'Consultar' }}</button></div></div>
+            <div><label>UF / Divisão administrativa</label><select class="form-select" [(ngModel)]="ufId" (ngModelChange)="aoTrocarUf()" [disabled]="!paisId"><option value="">Selecione</option>@for (u of ufs; track u.id) { <option [value]="u.id">{{u.sigla || u.nome}} — {{u.nome}}</option> }</select></div>
+            <div><label>Município</label><select class="form-select" [(ngModel)]="dados.pessoaMunicipioId" (ngModelChange)="aoTrocarMunicipio()" [disabled]="!ufId"><option value="">Selecione</option>@for (m of municipios; track m.id) {<option [value]="m.id">{{m.nome}}</option>}</select></div>
+            <div><label>Localidade</label><input class="form-control" [(ngModel)]="dados.pessoaLocalidade" /></div>
+            <div><label>Subdivisão local (RA)</label><select class="form-select" [(ngModel)]="dados.pessoaSubdivisaoLocalId" [disabled]="!dados.pessoaMunicipioId"><option value="">Não informada</option>@for (ra of subdivisoes; track ra.id) {<option [value]="ra.id">{{ra.nome}}</option>}</select></div>
+            <div><label>Logradouro</label><input class="form-control" [(ngModel)]="dados.pessoaLogradouro" /></div>
+            <div><label>Número</label><input class="form-control" [(ngModel)]="dados.pessoaNumeroLogradouro" /></div>
+            <div><label>Complemento</label><input class="form-control" [(ngModel)]="dados.pessoaComplemento" /></div>
+            <div><label>Bairro</label><input class="form-control" [(ngModel)]="dados.pessoaBairro" /></div>
+          </div>
+        </div>
+    }
+
     <!-- ETAPA 2 -->
     @if (etapa === 2) {
       <div class="form-section">
@@ -311,6 +329,13 @@
               }
             </select>
           </div>
+
+          @if (diretorEspiritual) {
+            <div>
+              <label>Data de Ordenação Presbiteral</label>
+              <input type="date" class="form-control" [(ngModel)]="dados.pessoaDtOrdenacaoPresbiteral" />
+            </div>
+          }
 
           <div>
             <label>N&uacute;mero do mandato</label>

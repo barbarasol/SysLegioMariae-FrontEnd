@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import type { AtualizarOficial } from '../models/oficial.model';
 
 export interface UnidadeOficialAcessivel { id: string; nome: string; tipo: string; tipoNome: string; podeEditar: boolean; }
 import {
@@ -96,6 +97,26 @@ export class OficialService {
     return this.http.get<UnidadeOficialAcessivel[]>(
       `${environment.apiUrl}/oficiais/unidades-acessiveis`,
       { withCredentials: true }
+    );
+  }
+
+  tiposUnidades(): Observable<Array<{ codigo: string; nome: string }>> {
+    return this.http.get<Array<{ codigo: string; nome: string }>>(
+      `${environment.apiUrl}/oficiais/tipos-unidades`, { withCredentials: true }
+    );
+  }
+
+  obter(vinculoId: string): Observable<Oficial & { podeEditar: boolean }> {
+    return this.http.get<Oficial & { podeEditar: boolean }>(
+      `${environment.apiUrl}/oficiais/${encodeURIComponent(vinculoId)}`,
+      { withCredentials: true }
+    );
+  }
+
+  atualizar(vinculoId: string, dados: AtualizarOficial): Observable<void> {
+    return this.http.put<void>(
+      `${environment.apiUrl}/oficiais/${encodeURIComponent(vinculoId)}`,
+      dados, { withCredentials: true }
     );
   }
 

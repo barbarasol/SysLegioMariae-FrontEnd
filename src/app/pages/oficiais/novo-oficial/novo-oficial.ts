@@ -14,6 +14,7 @@ import { SolicitacaoOficialService } from '../../../services/solicitacao-oficial
 import { ToastService } from '../../../services/toast.service';
 import { mensagemDeErro } from '../../../services/usuario.service';
 import { Breadcrumb, ItemBreadcrumb } from '../../../components/breadcrumb/breadcrumb';
+import { CadastroUnidadeService, PaisOpcao, UfOpcao, MunicipioOpcao, SubdivisaoLocalOpcao, CodigoPostalOpcao } from '../../../services/cadastro-unidade.service';
 
 @Component({
   selector: 'app-novo-oficial',
@@ -29,6 +30,55 @@ export class NovoOficial implements OnInit {
 
   unidades: UnidadeOpcao[] = [];
   cargos: CargoOpcao[] = [];
+  paises: PaisOpcao[] = [];
+  ufs: UfOpcao[] = [];
+  municipios: MunicipioOpcao[] = [];
+  subdivisoes: SubdivisaoLocalOpcao[] = [];
+  paisId = '';
+  ufId = '';
+  buscandoCep = false;
+  get diretorEspiritual(): boolean {
+    const cargo = this.cargos.find(c => c.id === Number(this.dados.cargoId));
+    return !!cargo && (/DIRETOR[_\s-]*ESPIRITUAL/i.test(cargo.codigo) || /DIRETOR\s+ESPIRITUAL/i.test(cargo.nome));
+  }
+  aoTrocarPais(): void {
+    this.ufId = ''; this.dados.pessoaMunicipioId = ''; this.dados.pessoaSubdivisaoLocalId = '';
+    this.ufs = []; this.municipios = []; this.subdivisoes = [];
+    if (this.paisId) this.cadastro.listarUfs(this.paisId).subscribe({next: v => {this.ufs=v;this.cdr.detectChanges();}, error:()=>this.toastService.erro('Falha ao consultar divisões administrativas.')});
+  }
+  aoTrocarUf(): void {
+    this.dados.pessoaMunicipioId = ''; this.dados.pessoaSubdivisaoLocalId = '';
+    this.municipios=[]; this.subdivisoes=[];
+    if (this.ufId) this.cadastro.listarMunicipios(this.ufId).subscribe({next:v=>{this.municipios=v;this.cdr.detectChanges();},error:()=>this.toastService.erro('Falha ao consultar municípios.')});
+  }
+  aoTrocarMunicipio(): void {
+    this.dados.pessoaSubdivisaoLocalId = ''; this.subdivisoes=[];
+    if (this.dados.pessoaMunicipioId) this.cadastro.listarSubdivisoesLocais(this.dados.pessoaMunicipioId).subscribe({next:v=>{this.subdivisoes=v;this.cdr.detectChanges();},error:()=>this.toastService.erro('Falha ao consultar subdivisões locais.')});
+  }
+  consultarCep(): void {
+    const cep = this.dados.pessoaCep.trim();
+    if (!this.paisId || !cep) return;
+    this.buscandoCep = true;
+    this.cadastro.buscarCodigosPostais(this.paisId, cep).pipe(finalize(()=>{this.buscandoCep=false;this.cdr.detectChanges();})).subscribe({
+      next: resposta => {
+        const r: CodigoPostalOpcao | undefined = resposta.resultados[0];
+        if (!r) { this.toastService.erro('CEP não encontrado. Preencha o endereço manualmente.'); return; }
+        if (r.ufId) {
+          this.ufId = r.ufId;
+          this.cadastro.listarUfs(this.paisId).subscribe(v=>{this.ufs=v;this.cdr.detectChanges();});
+          this.cadastro.listarMunicipios(r.ufId).subscribe(v=>{this.municipios=v;this.cdr.detectChanges();});
+        }
+        this.dados.pessoaMunicipioId = r.municipioId || '';
+        this.dados.pessoaSubdivisaoLocalId = r.subdivisaoLocalId || '';
+        if (r.municipioId) this.cadastro.listarSubdivisoesLocais(r.municipioId).subscribe(v=>{this.subdivisoes=v;this.cdr.detectChanges();});
+        this.dados.pessoaLogradouro = r.logradouro || this.dados.pessoaLogradouro;
+        this.dados.pessoaBairro = r.bairro || this.dados.pessoaBairro;
+        this.dados.pessoaLocalidade = r.localidade || this.dados.pessoaLocalidade;
+        this.cdr.detectChanges();
+      }, error:()=>this.toastService.erro('Falha ao consultar o CEP.')
+    });
+  }
+
 
   // ---- Membro existente ----
   termoBusca = '';
@@ -47,6 +97,16 @@ export class NovoOficial implements OnInit {
     pessoaEmail: '',
     pessoaCelular: '',
     pessoaTelefone: '',
+    pessoaDtOrdenacaoPresbiteral: '',
+    pessoaMunicipioId: '',
+    pessoaSubdivisaoLocalId: '',
+    pessoaCep: '',
+    pessoaLogradouro: '',
+    pessoaNumeroLogradouro: '',
+    pessoaComplemento: '',
+    pessoaBairro: '',
+    pessoaLocalidade: '',
+
 
     dtIngresso: '',
     dtCompromisso: '',
@@ -76,6 +136,7 @@ export class NovoOficial implements OnInit {
 
   constructor(
     private service: SolicitacaoOficialService,
+    private cadastro: CadastroUnidadeService,
     private toastService: ToastService,
     private router: Router,
     private cdr: ChangeDetectorRef
@@ -83,6 +144,10 @@ export class NovoOficial implements OnInit {
 
   ngOnInit(): void {
     this.carregarCatalogos();
+    this.cadastro.listarPaises().subscribe({
+      next: lista => {this.paises=lista; const brasil=lista.find(p=>p.sigla?.toUpperCase()==='BR'); if(brasil){this.paisId=brasil.id;this.aoTrocarPais();} this.cdr.detectChanges();},
+      error:()=>this.toastService.erro('Falha ao consultar países.')
+    });
 
     this.busca$
       .pipe(
@@ -221,6 +286,15 @@ export class NovoOficial implements OnInit {
       pessoaEmail: this.dados.pessoaEmail,
       pessoaCelular: this.dados.pessoaCelular,
       pessoaTelefone: this.dados.pessoaTelefone,
+      pessoaDtOrdenacaoPresbiteral: this.diretorEspiritual ? (this.dados.pessoaDtOrdenacaoPresbiteral || null) : null,
+      pessoaMunicipioId: this.dados.pessoaMunicipioId || null,
+      pessoaSubdivisaoLocalId: this.dados.pessoaSubdivisaoLocalId || null,
+      pessoaCep: this.dados.pessoaCep || null,
+      pessoaLogradouro: this.dados.pessoaLogradouro || null,
+      pessoaNumeroLogradouro: this.dados.pessoaNumeroLogradouro || null,
+      pessoaComplemento: this.dados.pessoaComplemento || null,
+      pessoaBairro: this.dados.pessoaBairro || null,
+      pessoaLocalidade: this.dados.pessoaLocalidade || null,
 
       dtIngresso: this.dados.dtIngresso || null,
       dtCompromisso: this.dados.dtCompromisso || null,

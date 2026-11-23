@@ -649,4 +649,45 @@
 
   }
 
+
+  <!-- Edição do oficial carregada do backend; somente unidades com permissão de edição. -->
+  @if (oficialEditando && formularioEdicao) {
+    <div class="modal-oficial-backdrop" role="presentation" (click)="fecharEdicao()">
+      <section class="modal-oficial" role="dialog" aria-modal="true" aria-labelledby="titulo-edicao-oficial" (click)="$event.stopPropagation()">
+        <div class="modal-oficial-cabecalho">
+          <h3 id="titulo-edicao-oficial">Editar oficial</h3>
+          <button type="button" class="btn btn-outline-secondary" (click)="fecharEdicao()">Fechar</button>
+        </div>
+        <p class="modal-oficial-info">CPF: {{ oficialEditando.cpf || 'Não informado' }} — alteração do CPF não permitida nesta tela.</p>
+        <div class="modal-oficial-grid">
+          <label>Nome completo <input class="form-control" [(ngModel)]="formularioEdicao.nome" maxlength="255" /></label>
+          <label>Nome preferido <input class="form-control" [(ngModel)]="formularioEdicao.nomePreferido" /></label>
+          <label>E-mail <input class="form-control" type="email" [(ngModel)]="formularioEdicao.email" /></label>
+          <label>Celular <input class="form-control" [(ngModel)]="formularioEdicao.celular" /></label>
+          <label>Telefone <input class="form-control" [(ngModel)]="formularioEdicao.telefone" /></label>
+          <label>Data de nascimento <input class="form-control" type="date" [(ngModel)]="formularioEdicao.dataNascimento" /></label>
+          <label>Unidade legionária
+            <select class="form-select" [(ngModel)]="formularioEdicao.unidadeId">
+              @for (u of unidadesEditaveis; track u.id) { <option [value]="u.id">{{ u.tipoNome }} — {{ u.nome }}</option> }
+            </select>
+          </label>
+          <label>Cargo
+            <select class="form-select" [(ngModel)]="formularioEdicao.cargo">
+              @for (cargo of cargos; track cargo.codigo) { <option [value]="cargo.codigo">{{ cargo.nome }}</option> }
+            </select>
+          </label>
+          <label>Nº mandato <input class="form-control" type="number" min="1" max="100" [(ngModel)]="formularioEdicao.numeroMandato" /></label>
+          <label>Início do mandato <input class="form-control" type="date" [(ngModel)]="formularioEdicao.dataInicio" /></label>
+          <label>Fim do mandato <input class="form-control" type="date" [(ngModel)]="formularioEdicao.dataFim" /></label>
+        </div>
+        <p class="modal-oficial-info">Os dados pessoais são compartilhados com o cadastro do membro. A alteração será refletida nos demais módulos.</p>
+        <div class="modal-oficial-acoes">
+          <button type="button" class="btn btn-outline-secondary" (click)="fecharEdicao()" [disabled]="salvandoEdicao">Cancelar</button>
+          <button type="button" class="btn btn-primary" (click)="salvarEdicao()" [disabled]="salvandoEdicao">
+            {{ salvandoEdicao ? 'Salvando...' : 'Salvar alterações' }}
+          </button>
+        </div>
+      </section>
+    </div>
+  }
 </div>
