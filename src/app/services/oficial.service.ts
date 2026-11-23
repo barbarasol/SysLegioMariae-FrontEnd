@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import type { AtualizarOficial } from '../models/oficial.model';
+import type { AtualizarOficial, OficialDetalhe } from '../models/oficial.model';
 
 export interface UnidadeOficialAcessivel { id: string; nome: string; tipo: string; tipoNome: string; podeEditar: boolean; }
 import {
@@ -106,8 +106,8 @@ export class OficialService {
     );
   }
 
-  obter(vinculoId: string): Observable<Oficial & { podeEditar: boolean }> {
-    return this.http.get<Oficial & { podeEditar: boolean }>(
+  obter(vinculoId: string): Observable<OficialDetalhe> {
+    return this.http.get<OficialDetalhe>(
       `${environment.apiUrl}/oficiais/${encodeURIComponent(vinculoId)}`,
       { withCredentials: true }
     );

@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { debounceTime, finalize, Subject, switchMap } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, finalize, of, Subject, switchMap } from 'rxjs';
 import {
   CargoOpcao,
   CriarSolicitacaoOficial,
@@ -37,6 +37,7 @@ export class NovoOficial implements OnInit {
   paisId = '';
   ufId = '';
   buscandoCep = false;
+  readonly dataAtualISO = new Date().toISOString().slice(0, 10);
   get diretorEspiritual(): boolean {
     const cargo = this.cargos.find(c => c.id === Number(this.dados.cargoId));
     return !!cargo && (/DIRETOR[_\s-]*ESPIRITUAL/i.test(cargo.codigo) || /DIRETOR\s+ESPIRITUAL/i.test(cargo.nome));
@@ -83,6 +84,8 @@ export class NovoOficial implements OnInit {
   // ---- Membro existente ----
   termoBusca = '';
   buscando = false;
+  erroBusca = '';
+  buscaRealizada = false;
   membros: MembroEncontrado[] = [];
   membroSelecionado: MembroEncontrado | null = null;
 
@@ -152,10 +155,24 @@ export class NovoOficial implements OnInit {
     this.busca$
       .pipe(
         debounceTime(400),
+        distinctUntilChanged(),
         switchMap((termo) => {
+          if (termo.length < 3 || this.origem !== 'MEMBRO_EXISTENTE') {
+            this.buscando = false;
+            this.buscaRealizada = false;
+            return of([] as MembroEncontrado[]);
+          }
+
           this.buscando = true;
+          this.erroBusca = '';
+          this.buscaRealizada = false;
+          this.cdr.detectChanges();
 
           return this.service.buscarMembros(termo).pipe(
+            catchError((error: HttpErrorResponse) => {
+              this.erroBusca = mensagemDeErro(error, 'Não foi possível consultar os membros cadastrados.');
+              return of([] as MembroEncontrado[]);
+            }),
             finalize(() => {
               this.buscando = false;
               this.cdr.detectChanges();
@@ -163,13 +180,10 @@ export class NovoOficial implements OnInit {
           );
         })
       )
-      .subscribe({
-        next: (membros) => {
-          this.membros = membros;
-        },
-        error: () => {
-          this.membros = [];
-        }
+      .subscribe((membros) => {
+        this.membros = Array.isArray(membros) ? membros : [];
+        this.buscaRealizada = this.termoBusca.trim().length >= 3 && this.origem === 'MEMBRO_EXISTENTE';
+        this.cdr.detectChanges();
       });
   }
 
@@ -232,29 +246,51 @@ export class NovoOficial implements OnInit {
     this.membroSelecionado = null;
     this.membros = [];
     this.termoBusca = '';
+    this.erroBusca = '';
+    this.buscaRealizada = false;
+    this.busca$.next('');
   }
 
   aoDigitarBusca(): void {
     const termo = this.termoBusca.trim();
-
-    if (termo.length < 3) {
-      this.membros = [];
-      return;
-    }
-
-    this.busca$.next(termo);
+    this.erroBusca = '';
+    this.buscaRealizada = false;
+    this.membros = [];
+    this.buscando = termo.length >= 3;
+    // Enviar também a string vazia permite cancelar pesquisas anteriores.
+    this.busca$.next(termo.length >= 3 ? termo : '');
   }
 
   selecionarMembro(membro: MembroEncontrado): void {
     this.membroSelecionado = membro;
     this.membros = [];
     this.termoBusca = membro.nome;
+    // Dados previamente cadastrados, sem alterar a pessoa no banco.
+    this.dados.pessoaNome = membro.nome;
+    this.dados.pessoaNomePreferido = membro.nomePreferido ?? '';
+    this.dados.pessoaCpf = membro.cpf ?? '';
+    this.dados.pessoaEmail = membro.email ?? '';
+    this.dados.pessoaCelular = membro.celular ?? '';
+    this.dados.pessoaTelefone = membro.telefone ?? '';
+    this.dados.pessoaDataNascimento = membro.dataNascimento?.slice(0, 10) ?? '';
+    this.dados.pessoaDtOrdenacaoPresbiteral = membro.dtOrdenacaoPresbiteral?.slice(0, 10) ?? '';
+    this.dados.pessoaMunicipioId = membro.municipioId ?? '';
+    this.dados.pessoaSubdivisaoLocalId = membro.subdivisaoLocalId ?? '';
+    this.dados.pessoaCep = membro.cep ?? '';
+    this.dados.pessoaLogradouro = membro.logradouro ?? '';
+    this.dados.pessoaNumeroLogradouro = membro.numeroLogradouro ?? '';
+    this.dados.pessoaComplemento = membro.complemento ?? '';
+    this.dados.pessoaBairro = membro.bairro ?? '';
+    this.dados.pessoaLocalidade = membro.localidade ?? '';
   }
 
   limparMembro(): void {
     this.membroSelecionado = null;
     this.termoBusca = '';
     this.membros = [];
+    this.erroBusca = '';
+    this.buscaRealizada = false;
+    this.busca$.next('');
   }
 
   proximaEtapa(): void {
@@ -275,12 +311,15 @@ export class NovoOficial implements OnInit {
     const payload: CriarSolicitacaoOficial = {
       origem: this.origem,
 
+      pessoaId: this.origem === 'MEMBRO_EXISTENTE'
+        ? this.membroSelecionado?.pessoaId ?? null
+        : null,
       membroId: this.origem === 'MEMBRO_EXISTENTE'
         ? this.membroSelecionado?.membroId ?? null
         : null,
 
-      pessoaNome: this.dados.pessoaNome,
-      pessoaNomePreferido: this.dados.pessoaNomePreferido,
+      pessoaNome: this.dados.pessoaNome.trim().toLocaleUpperCase('pt-BR'),
+      pessoaNomePreferido: this.dados.pessoaNomePreferido.trim().toLocaleUpperCase('pt-BR'),
       pessoaCpf: this.dados.pessoaCpf,
       pessoaDataNascimento: this.dados.pessoaDataNascimento || null,
       pessoaEmail: this.dados.pessoaEmail,

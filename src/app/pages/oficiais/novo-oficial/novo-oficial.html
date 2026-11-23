@@ -63,9 +63,9 @@
             (click)="trocarOrigem('MEMBRO_EXISTENTE')"
           >
             <i class="bi bi-search"></i>
-            <strong>Membro j&aacute; cadastrado</strong>
+            <strong>Pessoa j&aacute; cadastrada</strong>
             <span>
-              Procura na base e vincula o cargo a um membro existente.
+              Pesquisa todas as pessoas. Se ainda n&atilde;o for membro, o v&iacute;nculo ser&aacute; criado na aprova&ccedil;&atilde;o.
             </span>
           </button>
 
@@ -75,7 +75,7 @@
       @if (origem === 'MEMBRO_EXISTENTE') {
 
         <div class="form-section">
-          <h4>Buscar membro</h4>
+          <h4>Buscar pessoa cadastrada</h4>
 
           @if (!membroSelecionado) {
 
@@ -85,7 +85,7 @@
               <input
                 type="text"
                 class="form-control"
-                placeholder="Nome, CPF ou e-mail (m&iacute;nimo 3 letras)"
+                placeholder="Nome, nome preferido, CPF ou e-mail (m&iacute;nimo 3 caracteres)"
                 [(ngModel)]="termoBusca"
                 (ngModelChange)="aoDigitarBusca()"
               />
@@ -97,7 +97,7 @@
 
             @if (membros.length > 0) {
               <div class="busca-resultados">
-                @for (membro of membros; track membro.membroId) {
+                @for (membro of membros; track membro.pessoaId) {
                   <button
                     type="button"
                     class="busca-item"
@@ -118,6 +118,9 @@
                       @if (membro.celular) { &middot; {{ membro.celular }} }
                     </span>
 
+                    @if (!membro.jaEhMembro) {
+                      <span class="busca-meta">Pessoa cadastrada (ainda n&atilde;o &eacute; membro)</span>
+                    }
                     @if (membro.jaEhOficial) {
                       <span class="selo-oficial">J&aacute; &eacute; oficial</span>
                     }
@@ -126,9 +129,13 @@
               </div>
             }
 
-            @if (termoBusca.trim().length >= 3 && !buscando && membros.length === 0) {
+            @if (erroBusca) {
+              <p class="busca-vazia" role="alert">{{ erroBusca }}</p>
+            }
+
+            @if (buscaRealizada && !buscando && !erroBusca && membros.length === 0) {
               <p class="busca-vazia">
-                Nenhum membro encontrado. Se a pessoa n&atilde;o estiver
+                Nenhuma pessoa encontrada. Se a pessoa n&atilde;o estiver
                 cadastrada, use a op&ccedil;&atilde;o "Pessoa nova".
               </p>
             }
@@ -146,6 +153,7 @@
                 <span>
                   @if (membroSelecionado.cpf) { CPF {{ membroSelecionado.cpf }} }
                   @if (membroSelecionado.celular) { &middot; {{ membroSelecionado.celular }} }
+                  &middot; {{ membroSelecionado.jaEhMembro ? 'Membro existente' : 'Pessoa existente; membro criado na aprovação' }}
                 </span>
               </div>
 
@@ -168,7 +176,8 @@
               <input
                 type="text"
                 class="form-control"
-                [(ngModel)]="dados.pessoaNome"
+                [ngModel]="dados.pessoaNome"
+                (ngModelChange)="dados.pessoaNome = ($event || '').toLocaleUpperCase('pt-BR')"
               />
             </div>
 
@@ -177,7 +186,8 @@
               <input
                 type="text"
                 class="form-control"
-                [(ngModel)]="dados.pessoaNomePreferido"
+                [ngModel]="dados.pessoaNomePreferido"
+                (ngModelChange)="dados.pessoaNomePreferido = ($event || '').toLocaleUpperCase('pt-BR')"
               />
             </div>
 
@@ -332,8 +342,9 @@
 
           @if (diretorEspiritual) {
             <div>
-              <label>Data de Ordenação Presbiteral</label>
-              <input type="date" class="form-control" [(ngModel)]="dados.pessoaDtOrdenacaoPresbiteral" />
+              <label>Data de ordenação presbiteral</label>
+              <input type="date" class="form-control" [(ngModel)]="dados.pessoaDtOrdenacaoPresbiteral" [max]="dataAtualISO" />
+              <small class="campo-ajuda">Exclusiva do Diretor Espiritual. Informação opcional.</small>
             </div>
           }
 
@@ -390,7 +401,7 @@
             <span>Origem</span>
             <strong>
               {{ origem === 'MEMBRO_EXISTENTE'
-                  ? 'Membro j&aacute; cadastrado'
+                  ? 'Pessoa j&aacute; cadastrada'
                   : 'Pessoa nova' }}
             </strong>
           </div>

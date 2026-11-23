@@ -53,12 +53,25 @@ export interface ResumoOficialPendente {
 }
 
 export interface MembroEncontrado {
-  membroId: string;
+  pessoaId: string;
+  membroId: string | null;
   nome: string;
   nomePreferido: string | null;
   cpf: string | null;
   email: string | null;
   celular: string | null;
+  telefone: string | null;
+  dataNascimento: string | null;
+  dtOrdenacaoPresbiteral: string | null;
+  municipioId: string | null;
+  subdivisaoLocalId: string | null;
+  cep: string | null;
+  logradouro: string | null;
+  numeroLogradouro: string | null;
+  complemento: string | null;
+  bairro: string | null;
+  localidade: string | null;
+  jaEhMembro: boolean;
   jaEhOficial: boolean;
 }
 
@@ -84,6 +97,7 @@ export interface CriarSolicitacaoOficial {
   origem: OrigemOficial;
 
   membroId?: string | null;
+  pessoaId?: string | null;
 
   pessoaNome?: string | null;
   pessoaNomePreferido?: string | null;

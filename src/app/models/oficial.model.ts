@@ -96,6 +96,15 @@ export const MESES = [
 ];
 /** Campos editáveis autorizados da pessoa e do vínculo de mandato. */
 export interface AtualizarOficial {
+  dtOrdenacaoPresbiteral: string | null;
+  municipioId: string | null;
+  subdivisaoLocalId: string | null;
+  cep: string | null;
+  localidade: string | null;
+  logradouro: string | null;
+  numeroLogradouro: string | null;
+  complemento: string | null;
+  bairro: string | null;
   nome: string;
   nomePreferido: string | null;
   email: string | null;
@@ -107,4 +116,15 @@ export interface AtualizarOficial {
   numeroMandato: number | null;
   dataInicio: string;
   dataFim: string | null;
+}
+
+/** Detalhes de endereço resolvidos pela referência ao município. */
+export interface OficialDetalhe extends Oficial, AtualizarOficial {
+  paisId: string | null;
+  ufId: string | null;
+  paisNome: string | null;
+  ufNome: string | null;
+  municipioNome: string | null;
+  subdivisaoLocalNome: string | null;
+  podeEditar: boolean;
 }

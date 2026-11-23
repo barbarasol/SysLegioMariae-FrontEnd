@@ -2,13 +2,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin, of } from 'rxjs';
 import {
   Aniversariante,
   AtualizarOficial,
   CargoOficial,
   MESES,
   Oficial,
+  OficialDetalhe,
   FiltrosOficiais,
   ResumoOficiais
 } from '../../models/oficial.model';
@@ -16,6 +17,7 @@ import { OficialService } from '../../services/oficial.service';
 import { type UnidadeOficialAcessivel } from '../../services/oficial.service';
 import { ToastService } from '../../services/toast.service';
 import { mensagemDeErro } from '../../services/usuario.service';
+import { CadastroUnidadeService, PaisOpcao, UfOpcao, MunicipioOpcao, SubdivisaoLocalOpcao, CodigoPostalOpcao } from '../../services/cadastro-unidade.service';
 import { Breadcrumb, ItemBreadcrumb } from '../../components/breadcrumb/breadcrumb';
 
 type Aba = 'oficiais' | 'calendario';
@@ -101,7 +103,93 @@ export class Oficiais implements OnInit {
     });
   }
 
-  oficialEditando: (Oficial & { podeEditar: boolean }) | null = null;
+  oficialEditando: OficialDetalhe | null = null;
+  oficialExcluindo: OficialDetalhe | null = null;
+  excluindo = false;
+  paisesEdicao: PaisOpcao[] = [];
+  ufsEdicao: UfOpcao[] = [];
+  municipiosEdicao: MunicipioOpcao[] = [];
+  subdivisoesEdicao: SubdivisaoLocalOpcao[] = [];
+  paisIdEdicao = '';
+  ufIdEdicao = '';
+  buscandoCepEdicao = false;
+
+  get diretorEspiritualEdicao(): boolean {
+    const cargo = this.cargos.find(c => c.codigo === this.formularioEdicao?.cargo);
+    return !!cargo && (/DIRETOR[_\s-]*ESPIRITUAL/i.test(cargo.codigo) || /DIRETOR\s+ESPIRITUAL/i.test(cargo.nome));
+  }
+
+  trocarPaisEdicao(): void {
+    this.ufIdEdicao = '';
+    if (this.formularioEdicao) { this.formularioEdicao.municipioId = null; this.formularioEdicao.subdivisaoLocalId = null; }
+    this.ufsEdicao = []; this.municipiosEdicao = []; this.subdivisoesEdicao = [];
+    if (this.paisIdEdicao) this.cadastro.listarUfs(this.paisIdEdicao).subscribe({
+      next: itens => { this.ufsEdicao = itens; this.cdr.detectChanges(); },
+      error: () => this.toastService.erro('Não foi possível consultar as divisões administrativas.')
+    });
+  }
+  trocarUfEdicao(): void {
+    if (this.formularioEdicao) { this.formularioEdicao.municipioId = null; this.formularioEdicao.subdivisaoLocalId = null; }
+    this.municipiosEdicao = []; this.subdivisoesEdicao = [];
+    if (this.ufIdEdicao) this.cadastro.listarMunicipios(this.ufIdEdicao).subscribe({
+      next: itens => { this.municipiosEdicao = itens; this.cdr.detectChanges(); },
+      error: () => this.toastService.erro('Não foi possível consultar os municípios.')
+    });
+  }
+  trocarMunicipioEdicao(): void {
+    if (!this.formularioEdicao) return;
+    this.formularioEdicao.subdivisaoLocalId = null;
+    this.subdivisoesEdicao = [];
+    if (this.formularioEdicao.municipioId) this.cadastro.listarSubdivisoesLocais(this.formularioEdicao.municipioId).subscribe({
+      next: itens => { this.subdivisoesEdicao = itens; this.cdr.detectChanges(); },
+      error: () => this.toastService.erro('Não foi possível consultar as subdivisões.')
+    });
+  }
+  consultarCepEdicao(): void {
+    const dados = this.formularioEdicao;
+    if (!dados || !this.paisIdEdicao || !dados.cep) return;
+    this.buscandoCepEdicao = true;
+    this.cadastro.buscarCodigosPostais(this.paisIdEdicao, dados.cep).pipe(
+      finalize(() => { this.buscandoCepEdicao = false; this.cdr.detectChanges(); })
+    ).subscribe({ next: resposta => {
+      const item: CodigoPostalOpcao | undefined = resposta.resultados[0];
+      if (!item) { this.toastService.erro('CEP não encontrado. Preencha manualmente.'); return; }
+      dados.logradouro = item.logradouro || dados.logradouro;
+      dados.bairro = item.bairro || dados.bairro;
+      dados.localidade = item.localidade || dados.localidade;
+      if (item.ufId) {
+        this.ufIdEdicao = item.ufId;
+        this.cadastro.listarUfs(this.paisIdEdicao).subscribe(v => { this.ufsEdicao = v; this.cdr.detectChanges(); });
+        this.cadastro.listarMunicipios(item.ufId).subscribe(v => { this.municipiosEdicao = v; this.cdr.detectChanges(); });
+      }
+      dados.municipioId = item.municipioId || null;
+      dados.subdivisaoLocalId = item.subdivisaoLocalId || null;
+      if (item.municipioId) this.cadastro.listarSubdivisoesLocais(item.municipioId).subscribe(v => {this.subdivisoesEdicao = v; this.cdr.detectChanges();});
+      this.cdr.detectChanges();
+    }, error: () => this.toastService.erro('Falha na consulta do CEP.') });
+  }
+
+  private carregarCatalogosEndereco(dados: OficialDetalhe): void {
+    this.paisIdEdicao = dados.paisId || '';
+    this.ufIdEdicao = dados.ufId || '';
+    this.cadastro.listarPaises().subscribe({
+      next: paises => {
+        this.paisesEdicao = paises;
+        if (!this.paisIdEdicao) this.paisIdEdicao = paises.find(p => p.sigla === 'BR')?.id || '';
+        if (this.paisIdEdicao) this.cadastro.listarUfs(this.paisIdEdicao).subscribe({
+          next: ufs => { this.ufsEdicao = ufs; this.cdr.detectChanges(); }
+        });
+        if (this.ufIdEdicao) this.cadastro.listarMunicipios(this.ufIdEdicao).subscribe({
+          next: municipios => { this.municipiosEdicao = municipios; this.cdr.detectChanges(); }
+        });
+        if (dados.municipioId) this.cadastro.listarSubdivisoesLocais(dados.municipioId).subscribe({
+          next: subdivisoes => { this.subdivisoesEdicao = subdivisoes; this.cdr.detectChanges(); }
+        });
+        this.cdr.detectChanges();
+      }, error: () => this.toastService.erro('Não foi possível carregar os países.')
+    });
+  }
+
   formularioEdicao: AtualizarOficial | null = null;
   carregandoEdicao = false;
   salvandoEdicao = false;
@@ -188,6 +276,7 @@ export class Oficiais implements OnInit {
 
   constructor(
     private oficialService: OficialService,
+    private cadastro: CadastroUnidadeService,
     private toastService: ToastService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -623,12 +712,18 @@ export class Oficiais implements OnInit {
           celular: dados.celular,
           telefone: dados.telefone,
           dataNascimento: dados.dataNascimento,
+          dtOrdenacaoPresbiteral: dados.dtOrdenacaoPresbiteral,
+          municipioId: dados.municipioId,
+          subdivisaoLocalId: dados.subdivisaoLocalId,
+          cep: dados.cep, localidade: dados.localidade, logradouro: dados.logradouro,
+          numeroLogradouro: dados.numeroLogradouro, complemento: dados.complemento, bairro: dados.bairro,
           unidadeId: dados.unidadeId,
           cargo: dados.cargo,
           numeroMandato: dados.numeroMandato,
           dataInicio: dados.dataInicio,
           dataFim: dados.dataFim
         };
+        this.carregarCatalogosEndereco(dados);
         this.cdr.detectChanges();
       },
       error: (error: HttpErrorResponse) => this.toastService.erro(
@@ -638,34 +733,27 @@ export class Oficiais implements OnInit {
   }
 
   excluirOficial(oficial: Oficial): void {
-    const nome = oficial.nomePreferido || oficial.nome;
-
-    const confirmado = window.confirm(
-      `Excluir o mandato de "${nome}"?\n\n` +
-      'O v\u00EDnculo de cargo ser\u00E1 encerrado. A pessoa e o membro ' +
-      'continuam cadastrados.'
-    );
-
-    if (!confirmado) {
-      return;
-    }
-
-    this.oficialService.encerrar(oficial.id).subscribe({
+    if (!this.podeEditarOficial(oficial)) return;
+    this.oficialService.obter(oficial.id).subscribe({
+      next: dados => {
+        if (!dados.podeEditar) { this.toastService.erro('Sem autorização para excluir.'); return; }
+        this.oficialExcluindo = dados;
+        this.cdr.detectChanges();
+      }, error: erro => this.toastService.erro(mensagemDeErro(erro, 'Não foi possível consultar o oficial.'))
+    });
+  }
+  confirmarExclusao(): void {
+    const oficial = this.oficialExcluindo;
+    if (!oficial || this.excluindo) return;
+    this.excluindo = true;
+    this.oficialService.encerrar(oficial.id).pipe(finalize(() => {
+      this.excluindo = false; this.cdr.detectChanges();
+    })).subscribe({
       next: () => {
-        this.toastService.sucesso(
-          'Mandato encerrado com sucesso.'
-        );
-
-        this.carregar();
-      },
-      error: (error: HttpErrorResponse) => {
-        this.toastService.erro(
-          mensagemDeErro(
-            error,
-            'Nao foi possivel encerrar o mandato.'
-          )
-        );
-      }
+        this.oficialExcluindo = null;
+        this.toastService.sucesso('Mandato encerrado. Dados pessoais e membro preservados.');
+        this.carregar(); this.carregarResumo(); this.carregarAniversariantes();
+      }, error: erro => this.toastService.erro(mensagemDeErro(erro, 'Não foi possível encerrar o mandato.'))
     });
   }
 

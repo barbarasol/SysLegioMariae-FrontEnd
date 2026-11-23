@@ -658,7 +658,7 @@
           <h3 id="titulo-edicao-oficial">Editar oficial</h3>
           <button type="button" class="btn btn-outline-secondary" (click)="fecharEdicao()">Fechar</button>
         </div>
-        <p class="modal-oficial-info">CPF: {{ oficialEditando.cpf || 'Não informado' }} — alteração do CPF não permitida nesta tela.</p>
+        <p class="modal-oficial-info">CPF: {{ oficialEditando.cpf || 'Não informado' }} · RG: {{ oficialEditando.rg || 'Não informado' }} — documentos em consulta nesta tela.</p>
         <div class="modal-oficial-grid">
           <label>Nome completo <input class="form-control" [(ngModel)]="formularioEdicao.nome" maxlength="255" /></label>
           <label>Nome preferido <input class="form-control" [(ngModel)]="formularioEdicao.nomePreferido" /></label>
@@ -666,6 +666,44 @@
           <label>Celular <input class="form-control" [(ngModel)]="formularioEdicao.celular" /></label>
           <label>Telefone <input class="form-control" [(ngModel)]="formularioEdicao.telefone" /></label>
           <label>Data de nascimento <input class="form-control" type="date" [(ngModel)]="formularioEdicao.dataNascimento" /></label>
+          @if (diretorEspiritualEdicao) {
+            <label>Data de ordenação presbiteral <input class="form-control" type="date" [(ngModel)]="formularioEdicao.dtOrdenacaoPresbiteral" /></label>
+          }
+          <div class="full-width"><h4>Endereço do oficial</h4></div>
+          <label>País
+            <select class="form-select" [(ngModel)]="paisIdEdicao" (ngModelChange)="trocarPaisEdicao()">
+              <option value="">Selecione</option>
+              @for (pais of paisesEdicao; track pais.id) { <option [value]="pais.id">{{ pais.nome }}</option> }
+            </select>
+          </label>
+          <label>CEP / Código postal
+            <span style="display:flex;gap:8px"><input class="form-control" [(ngModel)]="formularioEdicao.cep" />
+              <button type="button" class="btn btn-outline-primary" (click)="consultarCepEdicao()" [disabled]="buscandoCepEdicao || !paisIdEdicao">Consultar</button>
+            </span>
+          </label>
+          <label>UF / Divisão administrativa
+            <select class="form-select" [(ngModel)]="ufIdEdicao" (ngModelChange)="trocarUfEdicao()" [disabled]="!paisIdEdicao">
+              <option value="">Selecione</option>
+              @for (uf of ufsEdicao; track uf.id) { <option [value]="uf.id">{{ uf.sigla || uf.nome }} — {{ uf.nome }}</option> }
+            </select>
+          </label>
+          <label>Município
+            <select class="form-select" [(ngModel)]="formularioEdicao.municipioId" (ngModelChange)="trocarMunicipioEdicao()" [disabled]="!ufIdEdicao">
+              <option [ngValue]="null">Selecione</option>
+              @for (municipio of municipiosEdicao; track municipio.id) { <option [value]="municipio.id">{{ municipio.nome }}</option> }
+            </select>
+          </label>
+          <label>Localidade <input class="form-control" [(ngModel)]="formularioEdicao.localidade" /></label>
+          <label>Subdivisão local (RA)
+            <select class="form-select" [(ngModel)]="formularioEdicao.subdivisaoLocalId" [disabled]="!formularioEdicao.municipioId">
+              <option [ngValue]="null">Não informada</option>
+              @for (ra of subdivisoesEdicao; track ra.id) { <option [value]="ra.id">{{ ra.nome }}</option> }
+            </select>
+          </label>
+          <label>Logradouro <input class="form-control" [(ngModel)]="formularioEdicao.logradouro" /></label>
+          <label>Número do logradouro <input class="form-control" [(ngModel)]="formularioEdicao.numeroLogradouro" /></label>
+          <label>Complemento <input class="form-control" [(ngModel)]="formularioEdicao.complemento" /></label>
+          <label>Bairro <input class="form-control" [(ngModel)]="formularioEdicao.bairro" /></label>
           <label>Unidade legionária
             <select class="form-select" [(ngModel)]="formularioEdicao.unidadeId">
               @for (u of unidadesEditaveis; track u.id) { <option [value]="u.id">{{ u.tipoNome }} — {{ u.nome }}</option> }
@@ -686,6 +724,40 @@
           <button type="button" class="btn btn-primary" (click)="salvarEdicao()" [disabled]="salvandoEdicao">
             {{ salvandoEdicao ? 'Salvando...' : 'Salvar alterações' }}
           </button>
+        </div>
+      </section>
+    </div>
+  }
+  @if (oficialExcluindo) {
+    <div class="modal-oficial-backdrop" role="presentation" (click)="oficialExcluindo = null">
+      <section class="modal-oficial" role="dialog" aria-modal="true" aria-labelledby="titulo-exclusao-oficial" (click)="$event.stopPropagation()">
+        <div class="modal-oficial-cabecalho"><h3 id="titulo-exclusao-oficial">Confirmar encerramento do mandato</h3></div>
+        <p>Confira os dados antes de confirmar. A pessoa e o membro não serão excluídos.</p>
+        <div class="modal-oficial-grid">
+          <div><strong>Nome:</strong> {{ oficialExcluindo.nome }}</div>
+          <div><strong>CPF:</strong> {{ oficialExcluindo.cpf || '—' }}</div>
+          <div><strong>RG:</strong> {{ oficialExcluindo.rg || '—' }}</div>
+          <div><strong>Nascimento:</strong> {{ oficialExcluindo.dataNascimento || '—' }}</div>
+          <div><strong>E-mail:</strong> {{ oficialExcluindo.email || '—' }}</div>
+          <div><strong>Celular:</strong> {{ oficialExcluindo.celular || '—' }}</div>
+          <div><strong>Cargo:</strong> {{ oficialExcluindo.cargoNome }}</div>
+          <div><strong>Unidade:</strong> {{ oficialExcluindo.unidadeNome }}</div>
+          <div><strong>Mandato:</strong> {{ oficialExcluindo.dataInicio }} a {{ oficialExcluindo.dataFim || 'sem data final' }}</div>
+          <div><strong>Ordenação presbiteral:</strong> {{ oficialExcluindo.dtOrdenacaoPresbiteral || '—' }}</div>
+          <div><strong>País:</strong> {{ oficialExcluindo.paisNome || '—' }}</div>
+          <div><strong>UF:</strong> {{ oficialExcluindo.ufNome || '—' }}</div>
+          <div><strong>Município:</strong> {{ oficialExcluindo.municipioNome || '—' }}</div>
+          <div><strong>Subdivisão local:</strong> {{ oficialExcluindo.subdivisaoLocalNome || '—' }}</div>
+          <div><strong>CEP:</strong> {{ oficialExcluindo.cep || '—' }}</div>
+          <div><strong>Localidade:</strong> {{ oficialExcluindo.localidade || '—' }}</div>
+          <div><strong>Logradouro:</strong> {{ oficialExcluindo.logradouro || '—' }}</div>
+          <div><strong>Número:</strong> {{ oficialExcluindo.numeroLogradouro || '—' }}</div>
+          <div><strong>Complemento:</strong> {{ oficialExcluindo.complemento || '—' }}</div>
+          <div><strong>Bairro:</strong> {{ oficialExcluindo.bairro || '—' }}</div>
+        </div>
+        <div class="modal-oficial-acoes">
+          <button type="button" class="btn btn-outline-secondary" (click)="oficialExcluindo = null" [disabled]="excluindo">Cancelar</button>
+          <button type="button" class="btn btn-danger" (click)="confirmarExclusao()" [disabled]="excluindo">{{ excluindo ? 'Encerrando...' : 'Confirmar encerramento' }}</button>
         </div>
       </section>
     </div>
