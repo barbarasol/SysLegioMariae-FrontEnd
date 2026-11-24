@@ -64,6 +64,8 @@ export interface MembroEncontrado {
   dataNascimento: string | null;
   dtOrdenacaoPresbiteral: string | null;
   municipioId: string | null;
+  ufId: string | null;
+  paisId: string | null;
   subdivisaoLocalId: string | null;
   cep: string | null;
   logradouro: string | null;

@@ -291,9 +291,12 @@
       }
     }
 
-    @if (etapa === 1 && origem === 'PESSOA_NOVA') {
+    @if (etapa === 1 && (origem === 'PESSOA_NOVA' || membroSelecionado)) {
         <div class="form-section" style="margin-top:20px;">
           <h4>Endereço da pessoa</h4>
+          @if (origem === 'MEMBRO_EXISTENTE') {
+            <p class="campo-ajuda">Confira e complete o endereço cadastrado. As informações serão atualizadas em Pessoa somente após a aprovação da solicitação.</p>
+          }
           <div class="form-grid">
             <div><label>País</label><select class="form-select" [(ngModel)]="paisId" (ngModelChange)="aoTrocarPais()"><option value="">Selecione</option>@for (p of paises; track p.id) { <option [value]="p.id">{{ p.nome }}</option> }</select></div>
             <div><label>CEP / Código postal</label><div style="display:flex;gap:8px"><input class="form-control" [(ngModel)]="dados.pessoaCep" /><button class="btn btn-outline-primary" type="button" (click)="consultarCep()" [disabled]="buscandoCep || !paisId">{{ buscandoCep ? 'Consultando...' : 'Consultar' }}</button></div></div>
@@ -415,12 +418,17 @@
             </strong>
           </div>
 
-          @if (origem === 'PESSOA_NOVA' && dados.pessoaCpf) {
+          @if (dados.pessoaCpf) {
             <div class="review-linha">
               <span>CPF</span>
               <strong>{{ dados.pessoaCpf }}</strong>
             </div>
           }
+
+          <div class="review-linha">
+            <span>Endereço</span>
+            <strong>{{ [dados.pessoaLogradouro, dados.pessoaNumeroLogradouro, dados.pessoaBairro, dados.pessoaCep].join(' · ') }}</strong>
+          </div>
 
           <div class="review-linha">
             <span>Unidade</span>

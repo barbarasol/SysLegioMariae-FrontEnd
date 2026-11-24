@@ -148,7 +148,7 @@ export class NovoOficial implements OnInit {
   ngOnInit(): void {
     this.carregarCatalogos();
     this.cadastro.listarPaises().subscribe({
-      next: lista => {this.paises=lista; const brasil=lista.find(p=>p.sigla?.toUpperCase()==='BR'); if(brasil){this.paisId=brasil.id;this.aoTrocarPais();} this.cdr.detectChanges();},
+      next: lista => {this.paises=lista; const brasil=lista.find(p=>p.sigla?.toUpperCase()==='BR'); if(brasil && !this.paisId){this.paisId=brasil.id;this.aoTrocarPais();} this.cdr.detectChanges();},
       error:()=>this.toastService.erro('Falha ao consultar países.')
     });
 
@@ -282,6 +282,44 @@ export class NovoOficial implements OnInit {
     this.dados.pessoaComplemento = membro.complemento ?? '';
     this.dados.pessoaBairro = membro.bairro ?? '';
     this.dados.pessoaLocalidade = membro.localidade ?? '';
+    // Reconstituir a hierarquia geográfica para exibir os valores do cadastro.
+    // Respostas de pesquisas anteriores não devem substituir a pessoa atual.
+    const selecionadoId = membro.pessoaId;
+    this.paisId = membro.paisId || this.paisId;
+    this.ufId = membro.ufId || '';
+    this.ufs = [];
+    this.municipios = [];
+    this.subdivisoes = [];
+    if (this.paisId) {
+      this.cadastro.listarUfs(this.paisId).subscribe({
+        next: lista => {
+          if (this.membroSelecionado?.pessoaId !== selecionadoId) return;
+          this.ufs = lista;
+          this.cdr.detectChanges();
+        },
+        error: () => this.toastService.erro('Não foi possível carregar as divisões administrativas.')
+      });
+    }
+    if (this.ufId) {
+      this.cadastro.listarMunicipios(this.ufId).subscribe({
+        next: lista => {
+          if (this.membroSelecionado?.pessoaId !== selecionadoId) return;
+          this.municipios = lista;
+          this.cdr.detectChanges();
+        },
+        error: () => this.toastService.erro('Não foi possível carregar os municípios.')
+      });
+    }
+    if (this.dados.pessoaMunicipioId) {
+      this.cadastro.listarSubdivisoesLocais(this.dados.pessoaMunicipioId).subscribe({
+        next: lista => {
+          if (this.membroSelecionado?.pessoaId !== selecionadoId) return;
+          this.subdivisoes = lista;
+          this.cdr.detectChanges();
+        },
+        error: () => this.toastService.erro('Não foi possível carregar as subdivisões locais.')
+      });
+    }
   }
 
   limparMembro(): void {
