@@ -1,0 +1,116 @@
+<main class="mapa-page">
+  <header class="mapa-header">
+    <div>
+      <span class="mapa-kicker">Presença mundial</span>
+      <h1>Mapa Mundial da Legião de Maria</h1>
+      <p>Explore as unidades ativas e aprovadas dentro do seu escopo de acesso.</p>
+    </div>
+    <a routerLink="/dashboard" class="voltar"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+  </header>
+
+  @if (carregandoPaises) {
+    <div class="estado" role="status">Consultando países cadastrados...</div>
+  }
+  @if (erroPaises) {
+    <div class="estado erro" role="alert">{{ erroPaises }} O mapa permanece disponível; os países cadastrados não puderam ser destacados.</div>
+  }
+  @if (erroVetor) {
+    <div class="estado erro" role="alert">{{ erroVetor }} Confira o caminho /assets/mapas/world-mill.json.</div>
+  }
+    <section class="indicadores" aria-label="Indicadores gerais">
+      <div><small>Países com unidades visíveis</small><strong>{{ totalPaises }}</strong></div>
+      <div><small>Unidades ativas e aprovadas</small><strong>{{ totalGeral }}</strong></div>
+      <div><small>País selecionado</small><strong class="pais-valor">{{ paisSelecionado?.paisNome || 'Selecione no mapa' }}</strong></div>
+    </section>
+
+    <section class="mapa-painel">
+      <div class="mapa-toolbar">
+        <h2>Distribuição geográfica</h2>
+        <div class="zoom-actions" aria-label="Controles de zoom">
+          <button type="button" (click)="alterarZoom(-0.25)" [disabled]="zoom <= 1" aria-label="Diminuir zoom">−</button>
+          <button type="button" (click)="zoom = 1" aria-label="Restaurar zoom">{{ (zoom * 100).toFixed(0) }}%</button>
+          <button type="button" (click)="alterarZoom(0.25)" [disabled]="zoom >= 3" aria-label="Aumentar zoom">+</button>
+        </div>
+      </div>
+      @if (carregandoMapa) {
+        <div class="estado" role="status">Carregando contornos do mapa...</div>
+      } @else if (caminhos.length === 0) {
+        <div class="estado erro">Não foi possível exibir os contornos geográficos.</div>
+      } @else {
+      <div class="mapa-scroll">
+        <svg class="mundo" [attr.viewBox]="viewBox" role="group"
+          aria-label="Mapa vetorial do mundo. Selecione países destacados para consultar suas unidades.">
+          @for (pais of caminhos; track pais.code) {
+            <path [attr.d]="pais.path" [attr.fill]="corPais(pais.code)"
+              [class.selecionado]="paisSelecionado?.paisSigla === pais.code"
+              [class.tem-unidades]="corPais(pais.code) !== '#e2e8f0'"
+              (click)="selecionarSigla(pais.code)">
+              <title>{{ pais.name }}</title>
+            </path>
+          }
+        </svg>
+      </div>
+      }
+      <p class="mapa-ajuda">O mapa-múndi completo permanece visível. Selecione um país destacado para consultar suas unidades. Azul mais escuro = maior quantidade de unidades; países cinzentos não têm unidades visíveis cadastradas.</p>
+      <div class="legenda-tipos">
+        @for (item of totaisTipo; track item.codigo) {
+          <span><i [style.background]="item.cor"></i>{{ item.nome }} <b>{{ item.quantidade }}</b></span>
+        }
+      </div>
+    </section>
+
+    <section class="pais-painel">
+      <div class="pais-barra">
+        <label for="paisMapa">País</label>
+        <select id="paisMapa" [ngModel]="paisId" (ngModelChange)="selecionarPais($event)">
+          <option value="">Selecione um país</option>
+          @for (pais of paisesOrdenados; track pais.paisId) {
+            <option [value]="pais.paisId">{{ pais.paisNome }} ({{ pais.total }})</option>
+          }
+        </select>
+        <label for="tipoMapa">Tipo de unidade</label>
+        <select id="tipoMapa" [(ngModel)]="tipo" (ngModelChange)="selecionarTipo()" [disabled]="!paisId">
+          <option value="">Todos os tipos</option>
+          @for (item of tipos; track item.codigo) { <option [value]="item.codigo">{{ item.nome }}</option> }
+        </select>
+        <label for="unidadeMapa">Unidade Legionária</label>
+        <select id="unidadeMapa" [ngModel]="unidadeId" (ngModelChange)="selecionarUnidade($event)"
+                [disabled]="!paisId || carregandoUnidades || !!erroUnidades">
+          <option value="">{{ carregandoUnidades ? 'Carregando unidades...' : 'Selecione uma unidade' }}</option>
+          @for (u of opcoesUnidades; track u.id) {
+            <option [value]="u.id">{{ u.nome }} — {{ u.municipio }} / {{ u.uf }}</option>
+          }
+        </select>
+      </div>
+      @if (!paisId) {
+        <div class="estado">Clique em um país destacado ou selecione-o na lista acima.</div>
+      } @else if (carregandoUnidades) {
+        <div class="estado" role="status">Consultando unidades...</div>
+      } @else if (erroUnidades) {
+        <div class="estado erro" role="alert">{{ erroUnidades }}</div>
+      } @else {
+        <h2>{{ paisSelecionado?.paisNome }} <small>{{ totalUnidades }} unidade(s) disponíveis para o tipo selecionado</small></h2>
+        @if (!opcoesUnidades.length) {
+          <div class="estado">Nenhuma unidade cadastrada para esse país e tipo dentro do seu escopo de acesso.</div>
+        } @else if (!unidadeId) {
+          <div class="estado">Selecione uma unidade legionária acima para visualizar seus dados.</div>
+        } @else {
+          <div class="tabela-scroll">
+            <table>
+              <thead><tr><th>Unidade</th><th>Tipo</th><th>Município / UF</th><th>Conselho Superior</th></tr></thead>
+              <tbody>
+                @for (u of unidades; track u.id) {
+                  <tr>
+                    <td><a [routerLink]="['/nova-unidade']" [queryParams]="{id: u.id, modo: 'editar'}">{{ u.nome }}</a></td>
+                    <td><span class="tipo"><i [style.background]="corTipo(u.tipoCodigo)"></i>{{ u.tipoNome }}</span></td>
+                    <td>{{ u.municipio }} / {{ u.uf }}</td>
+                    <td>{{ u.unidadeSuperiorNome || (u.unidadeSuperiorId ? 'Não identificado' : 'Sem unidade superior') }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+    </section>
+</main>

@@ -9,6 +9,7 @@ import {
   PointElement, LineController, BarController, DoughnutController, Tooltip, Legend
 } from 'chart.js';
 import { Breadcrumb, ItemBreadcrumb } from '../../components/breadcrumb/breadcrumb';
+import { MapaMundialResumo } from '../mapa-mundial/mapa-mundial-resumo';
 
 Chart.register(CategoryScale, LinearScale, BarElement, ArcElement, LineElement,
   PointElement, LineController, BarController, DoughnutController, Tooltip, Legend);
@@ -55,7 +56,7 @@ export interface ResumoDashboard {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, Breadcrumb],
+  imports: [CommonModule, Breadcrumb, MapaMundialResumo],
   selector: 'app-dashboard',
   styleUrl: './dashboard.scss',
   templateUrl: './dashboard.html',

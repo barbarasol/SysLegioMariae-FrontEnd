@@ -112,6 +112,12 @@ export const routes: Routes = [
         component: SolicitacoesOficiais
       },
       {
+        path: 'mapa-mundial',
+        loadComponent: () =>
+          import('./pages/mapa-mundial/mapa-mundial')
+            .then(m => m.MapaMundial)
+      },
+      {
         path: 'numeros-unidades',
         loadComponent: () =>
           import('./pages/numeros-unidades/numeros-unidades')
