@@ -1,0 +1,190 @@
+<main class="tesouraria">
+  <header class="cabecalho"><div><h1>Tesouraria</h1><p>Receitas, despesas e saldos das reuniões das unidades autorizadas</p></div></header>
+  @if (erro) { <div class="alerta erro" role="alert">{{erro}}</div> }
+  @if (aviso) { <div class="alerta">{{aviso}}</div> }
+  <section class="filtros">
+    <label>Unidade autorizada
+      <select [(ngModel)]="unidadeId" (ngModelChange)="trocarUnidade()">
+        @for (u of unidades; track u.id) { <option [value]="u.id">{{u.nome}} — {{u.tipo}}</option> }
+      </select>
+    </label>
+    <div class="filtro-acoes">
+      @if (podeLancar) {<button type="button" (click)="mostrarReuniao=!mostrarReuniao">+ Nova reunião</button>}
+      @if (gestor) {<button type="button" class="secundario" (click)="mostrarConta=!mostrarConta">+ Nova conta</button>}
+    </div>
+  </section>
+  @if (carregando) {<p>Carregando...</p>}
+  @if (!carregando && unidades.length===0) {
+    <section class="cartao"><p>Você ainda não possui autorização financeira para uma unidade legionária. Solicite ao gestor o cadastro em <code>legio.tesouraria_permissao_unidade</code>.</p></section>
+  }
+  @if (unidadeId && gestor) {
+    <section class="cartao saldo-anterior">
+      <div class="linha-titulo">
+        <div>
+          <h2>Saldo anterior — ponto de partida</h2>
+          <p>Informe a data e o saldo final da última reunião anterior ao início da Tesouraria no sistema.</p>
+        </div>
+        @if (podeCadastrarSaldoInicial) {
+          <button type="button" (click)="abrirSaldoImplantacao()">{{mostrarSaldoImplantacao ? 'Ocultar formulário' : '+ Informar saldo anterior'}}</button>
+        }
+      </div>
+      @if (carregandoSaldoImplantacao) {
+        <p role="status">Verificando o saldo anterior desta unidade...</p>
+      } @else if (erroSaldoImplantacao) {
+        <div class="alerta erro" role="alert">{{erroSaldoImplantacao}}</div>
+        <button type="button" class="secundario" (click)="carregarSaldoImplantacao()">Tentar novamente</button>
+      } @else if (saldoImplantacao?.registro; as registro) {
+        <p>Saldo final da última reunião anterior:
+          <strong>{{moeda(registro.saldoAnterior)}}</strong>
+          — data: <strong>{{registro.dataReferencia | date:'dd/MM/yyyy':'UTC'}}</strong>.
+          Esse saldo já está considerado no cálculo das reuniões seguintes.</p>
+      } @else if (motivoBloqueioSaldo) {
+        <p class="orientacao-data">{{motivoBloqueioSaldo}}</p>
+      } @else if (podeCadastrarSaldoInicial) {
+        <p class="orientacao-data">O saldo será registrado uma única vez e transportado automaticamente para a primeira reunião cadastrada.</p>
+      }
+      @if (mostrarSaldoImplantacao && podeCadastrarSaldoInicial) {
+        <form class="formulario" (ngSubmit)="salvarSaldoImplantacao()">
+          <div class="campos">
+            <label>Data da última reunião anterior
+              <input type="date" required name="dataAnterior" [(ngModel)]="formSaldoImplantacao.dataReferencia"
+                     [max]="saldoImplantacao?.primeiraDataReuniao || ''" />
+            </label>
+            <label>Saldo final da última reunião anterior (R$)
+              <input type="number" min="0" step="0.01" required name="saldoAnterior"
+                     [(ngModel)]="formSaldoImplantacao.saldoAnterior" />
+            </label>
+            <label class="largo">Observação / origem do saldo
+              <input maxlength="2000" name="obsSaldoAnterior" [(ngModel)]="formSaldoImplantacao.observacao" />
+            </label>
+          </div>
+          <div class="acoes">
+            <button type="submit" [disabled]="salvando || !formSaldoImplantacao.dataReferencia || formSaldoImplantacao.saldoAnterior === ''">Salvar saldo anterior</button>
+            <button type="button" class="secundario" (click)="mostrarSaldoImplantacao=false">Cancelar</button>
+          </div>
+        </form>
+      }
+    </section>
+  }
+  @if (mostrarConta && gestor) {
+    <form class="cartao formulario" (ngSubmit)="salvarConta()">
+      <h2>Nova conta financeira</h2>
+      <div class="campos"><label>Nome<input required maxlength="140" [(ngModel)]="conta.nome" name="contaNome" /></label>
+      <label>Tipo<select name="contaTipo" [(ngModel)]="conta.tipo"><option value="CAIXA">Caixa</option><option value="BANCO">Banco</option><option value="APLICACAO">Aplicação</option><option value="OUTRA">Outra</option></select></label>
+      <label>Data-base<input required type="date" name="dataBase" [(ngModel)]="conta.dataSaldoInicial" /></label>
+      <label>Saldo inicial<input required type="number" min="0" step="0.01" name="saldoInicial" [(ngModel)]="conta.saldoInicial" /></label>
+      @if (conta.tipo==='BANCO') {<label>Banco<input name="bancoNome" [(ngModel)]="conta.bancoNome" /></label><label>Agência<input name="agencia" [(ngModel)]="conta.agencia" /></label><label>Conta<input name="contaNumero" [(ngModel)]="conta.contaNumero" /></label>}
+      </div><div class="acoes"><button type="submit" [disabled]="salvando">Salvar conta</button><button type="button" class="secundario" (click)="mostrarConta=false">Cancelar</button></div>
+    </form>
+  }
+  @if (mostrarReuniao && podeLancar) {
+    <form class="cartao formulario" (ngSubmit)="salvarReuniao()">
+      <h2>Nova reunião</h2><div class="campos"><label>Data da reunião<input type="date" required name="dataReuniao" [(ngModel)]="dataReuniao" /></label>
+      <label>Observação<input name="observacaoReuniao" [(ngModel)]="observacaoReuniao" /></label></div>
+      <div class="acoes"><button type="submit" [disabled]="salvando">Salvar reunião</button><button type="button" class="secundario" (click)="mostrarReuniao=false">Cancelar</button></div>
+    </form>
+  }
+  @if (unidadeId) {
+    <section class="cartao"><h2>Reuniões — mais recente primeiro</h2>
+      <div class="tabela"><table><thead><tr><th>Data</th><th>Status</th><th>Saldo inicial</th><th>Receitas</th><th>Despesas</th><th>Saldo final</th><th></th></tr></thead>
+      <tbody>@for (r of reunioes;track r.id) {<tr [class.selecionada]="reuniaoId===r.id"><td>{{r.dataReuniao | date:'dd/MM/yyyy':'UTC'}}</td><td>{{r.status}}</td>
+        <td>{{moeda(r.saldoInicial)}}</td><td class="receita">{{moeda(r.totalReceitas)}}</td><td class="despesa">{{moeda(r.totalDespesas)}}</td><td><strong>{{moeda(r.saldoFinal)}}</strong></td>
+        <td><button type="button" class="secundario" (click)="selecionarReuniao(r.id)">Selecionar</button></td></tr>}
+      @if (reunioes.length===0){<tr><td colspan="7">Nenhuma reunião registrada para esta unidade.</td></tr>}</tbody></table></div>
+    </section>
+    @if (reuniao) {
+      <section class="cartao"><div class="linha-titulo"><h2>Lançamentos — reunião de {{reuniao.dataReuniao | date:'dd/MM/yyyy':'UTC'}}</h2>
+        <div class="acoes">@if (podeSalvarLancamento){<button type="button" (click)="alternarFormularioLancamento()">+ Nova Tesouraria</button>}
+          @if (gestor && reuniao.status==='ABERTA'){<button type="button" class="secundario" (click)="fechar()">Fechar reunião</button>}</div>
+      </div>
+      @if (mostrarLancamento && podeSalvarLancamento) {
+        <form class="formulario" (ngSubmit)="salvarLancamento()"><h3>Nova receita ou despesa</h3>
+          <p class="orientacao-data">Informe a data real do movimento, inclusive de meses anteriores. O valor será contabilizado no caixa desta reunião ({{reuniao.dataReuniao | date:'dd/MM/yyyy':'UTC'}}). Não são permitidas datas posteriores à reunião.</p>
+          <div class="campos">
+            <label>Data<input required type="date" name="dataLancamento" [(ngModel)]="form.dataLancamento" [max]="dataMaximaLancamento" /></label>
+            <label>Tipo<select name="tipo" [(ngModel)]="form.tipo" (ngModelChange)="form.categoriaId=''" required><option value="RECEITA">Receita</option><option value="DESPESA">Despesa</option></select></label>
+            <label>Conta<select name="contaId" [(ngModel)]="form.contaId" required><option value="">Selecione a conta</option>@for(c of catalogos.contas;track c.id){<option [value]="c.id">{{c.nome}}</option>}</select></label>
+            <label>Categoria<select name="categoriaId" [(ngModel)]="form.categoriaId" required><option value="">Selecione a categoria</option>@for(c of categorias;track c.id){<option [value]="c.id">{{c.grupo}} — {{c.nome}}</option>}</select></label>
+            <label>Fonte pagadora / recebedora<select name="origem" [(ngModel)]="form.origem"><option value="CADASTRADA">Fonte já cadastrada</option><option value="UNIDADE">Unidade legionária (superior ou subordinada)</option><option value="FORNECEDOR">Fornecedor externo</option></select></label>
+            @if (form.origem==='CADASTRADA'){<label>Fonte cadastrada<select name="contraparteId" [(ngModel)]="form.contraparteId" required><option value="">Selecione</option>@for(c of catalogos.contrapartes;track c.id){<option [value]="c.id">{{c.nome}}</option>}</select></label>}
+            @if (form.origem==='UNIDADE'){<label>Unidade relacionada<select name="unidadeRelacionadaId" [(ngModel)]="form.unidadeRelacionadaId" required><option value="">Selecione</option>@for(u of catalogos.unidades;track u.id){<option [value]="u.id">{{u.nome}}</option>}</select></label>}
+            @if (form.origem==='FORNECEDOR') {
+              <label>Fornecedor cadastrado
+                <select name="fornecedorSelecionadoId" [(ngModel)]="fornecedorSelecionadoId" required>
+                  <option value="">Selecione o fornecedor</option>
+                  @for(f of fornecedores;track f.id){<option [value]="f.id">{{f.nome}}</option>}
+                </select>
+              </label>
+              <div class="largo fornecedor-acoes">
+                <button type="button" class="secundario" (click)="novoFornecedor()">+ Novo fornecedor</button>
+                @if (fornecedorSelecionadoId && fornecedores.length) {
+                  <button type="button" class="secundario" (click)="editarFornecedorSelecionado()">Editar fornecedor selecionado</button>
+                }
+              </div>
+              @if (erroFornecedor && !mostrarFornecedor) {<div class="largo alerta erro" role="alert">{{erroFornecedor}}</div>}
+              @if (mostrarFornecedor) {
+                <div class="largo cadastro-fornecedor">
+                  <h3>{{fornecedorEditandoId ? 'Editar fornecedor externo' : 'Novo fornecedor externo'}}</h3>
+                  <p>Cadastro vinculado à unidade autorizada. Este fornecedor poderá ser utilizado no futuro controle de Contas a Pagar.</p>
+                  @if (erroFornecedor) {<div class="alerta erro" role="alert">{{erroFornecedor}}</div>}
+                  <div class="campos">
+                    <label>Nome / razão social<input name="fornecedorNome" required maxlength="200" [(ngModel)]="fornecedorForm.nome" /></label>
+                    <label>Nome fantasia<input name="fornecedorFantasia" maxlength="200" [(ngModel)]="fornecedorForm.nomeFantasia" /></label>
+                    <label>Tipo<select name="fornecedorTipo" [(ngModel)]="fornecedorForm.tipo"><option value="EMPRESA">Empresa</option><option value="PESSOA">Pessoa física</option><option value="OUTRO">Outro</option></select></label>
+                    <label>CPF/CNPJ<input name="fornecedorDocumento" maxlength="18" [(ngModel)]="fornecedorForm.cpfCnpj" /></label>
+                    <label>Categoria do serviço<input name="fornecedorCategoria" maxlength="100" [(ngModel)]="fornecedorForm.categoriaServico" placeholder="Ex.: água, energia, internet, contabilidade" /></label>
+                    <label>Telefone<input name="fornecedorTelefone" maxlength="30" [(ngModel)]="fornecedorForm.telefone" /></label>
+                    <label>E-mail<input name="fornecedorEmail" type="email" maxlength="200" [(ngModel)]="fornecedorForm.email" /></label>
+                    <label class="largo">Observação<input name="fornecedorObservacao" [(ngModel)]="fornecedorForm.observacao" /></label>
+                  </div>
+                  <div class="acoes">
+                    <button type="button" (click)="salvarFornecedor()" [disabled]="salvandoFornecedor || !fornecedorForm.nome.trim()">{{salvandoFornecedor ? 'Salvando...' : 'Salvar fornecedor'}}</button>
+                    <button type="button" class="secundario" (click)="mostrarFornecedor=false">Cancelar</button>
+                  </div>
+                </div>
+              }
+            }
+            @if (form.origem==='CADASTRADA') {<div class="largo fonte-acoes">
+              <button type="button" class="secundario" (click)="abrirCadastroFonte()">
+                {{mostrarFonte ? 'Fechar cadastro de fonte' : '+ Cadastrar fonte pagadora/recebedora'}}
+              </button>
+            </div>
+            }
+            @if (mostrarFonte && form.origem==='CADASTRADA') {
+              <div class="largo cadastro-fonte">
+                <h3>{{fonteEditandoId ? 'Alterar fonte cadastrada' : 'Cadastrar fonte pagadora/recebedora'}}</h3>
+                <p>A fonte ficará disponível somente para a unidade legionária selecionada.</p>
+                @if (erroFonte) { <div class="alerta erro" role="alert">{{erroFonte}}</div> }
+                <label>Nome da fonte pagadora/recebedora
+                  <input name="fonteNome" maxlength="200" [(ngModel)]="fonteNome" placeholder="Ex.: Coleta Secreta, João, Fornecedor" />
+                </label>
+                <div class="acoes">
+                  <button type="button" (click)="salvarFonte()" [disabled]="salvandoFonte || !fonteNome.trim()">{{salvandoFonte ? 'Salvando...' : 'Salvar fonte'}}</button>
+                  <button type="button" class="secundario" (click)="mostrarFonte=false;fonteEditandoId='';fonteNome=''">Cancelar</button>
+                </div>
+                @if (fontes.length) {
+                  <div class="lista-fontes"><strong>Fontes já cadastradas</strong>
+                    @for (fonte of fontes;track fonte.id) {
+                      <div class="fonte-lista-item">
+                        <span>{{fonte.nome}}</span>
+                        <button type="button" class="secundario" (click)="editarFonte(fonte)">Editar</button>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+            <label>Valor (R$)<input required type="number" name="valor" min="0.01" step="0.01" [(ngModel)]="form.valor" /></label>
+            <label>Forma de pagamento<select name="forma" [(ngModel)]="form.formaPagamento"><option value="DINHEIRO">Dinheiro</option><option value="PIX">Pix</option><option value="TRANSFERENCIA">Transferência</option><option value="BOLETO">Boleto</option><option value="CARTAO">Cartão</option><option value="CHEQUE">Cheque</option><option value="OUTRA">Outra</option></select></label>
+            <label class="largo">Finalidade<input name="finalidade" [(ngModel)]="form.finalidade" required maxlength="3000" /></label>
+            <label class="largo">Observação<input name="observacao" [(ngModel)]="form.observacao" /></label>
+          </div><div class="acoes"><button [disabled]="salvando||!form.contaId||!form.categoriaId||!dataLancamentoValida||(form.origem==='FORNECEDOR'&&!fornecedorSelecionadoId)" type="submit">Salvar lançamento</button><button type="button" class="secundario" (click)="mostrarLancamento=false">Cancelar</button></div>
+        </form>
+      }
+      <div class="tabela"><table><thead><tr><th>Data</th><th>Tipo</th><th>Categoria</th><th>Pagador/Recebedor</th><th>Finalidade</th><th>Conta</th><th>Valor</th></tr></thead><tbody>
+        @for (l of lancamentos;track l.id){<tr><td>{{l.data | date:'dd/MM/yyyy':'UTC'}}</td><td>{{l.tipo}}</td><td>{{l.categoria}}</td><td>{{l.contraparte}}</td><td>{{l.finalidade}}</td><td>{{l.conta}}</td><td [class.receita]="l.tipo==='RECEITA'" [class.despesa]="l.tipo==='DESPESA'">{{moeda(l.valor)}}</td></tr>}
+        @if(lancamentos.length===0){<tr><td colspan="7">Ainda não há lançamentos para esta reunião.</td></tr>}
+      </tbody></table></div></section>
+    }
+  }
+</main>

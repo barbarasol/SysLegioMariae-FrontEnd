@@ -1,0 +1,13 @@
+.tesouraria{padding:24px;max-width:1500px;margin:auto;color:var(--text-color,#223044)}.cabecalho{margin-bottom:20px}h1{font-size:1.65rem;margin:0 0 6px}h2{font-size:1.12rem;margin:0 0 14px}h3{font-size:1rem}.cabecalho p{color:#64748b;margin:0}.cartao,.filtros{background:var(--card-bg,#fff);border:1px solid #dbe3ee;border-radius:12px;padding:18px;margin-bottom:16px}.filtros,.campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:13px;align-items:end}.filtro-acoes,.acoes{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.campos{margin:15px 0}.largo{grid-column:1/-1}label{display:flex;flex-direction:column;gap:6px;font-size:.87rem;font-weight:600}input,select{width:100%;padding:10px 11px;border:1px solid #a8b8cd;border-radius:7px;background:var(--card-bg,#fff);color:inherit;box-sizing:border-box}button{border:0;border-radius:7px;background:#245c9b;color:white;padding:10px 13px;cursor:pointer}button.secundario{background:#e8eff7;color:#24435f}button:disabled{opacity:.6;cursor:not-allowed}.alerta{padding:11px;border-radius:8px;background:#eaf7eb;margin-bottom:12px}.erro{background:#fff0f0;color:#a32424}.tabela{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.87rem}th,td{border-bottom:1px solid #e2e8f0;text-align:left;padding:11px 8px;white-space:nowrap}td:nth-child(5){white-space:normal;min-width:150px}thead{background:#f3f6f9}.selecionada{background:#eef6ff}.receita{color:#0b7b40}.despesa{color:#ad2934}.linha-titulo{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap}.formulario{background:#f8fafc;border:1px solid #d8e5f2;padding:16px;border-radius:10px;margin-bottom:17px}@media(max-width:700px){.tesouraria{padding:12px}.cartao,.filtros{padding:12px}}
+
+.fonte-acoes{display:flex;justify-content:flex-start;margin-top:2px}
+.cadastro-fonte{border:1px solid #c2d7ec;background:#fff;border-radius:9px;padding:15px}
+.cadastro-fonte p{color:#64748b;font-size:.87rem;margin:4px 0 12px}
+.cadastro-fonte .acoes{margin-top:12px}
+.lista-fontes{margin-top:15px;border-top:1px solid #e2e8f0;padding-top:10px}
+.fonte-lista-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid #f1f5f9}
+
+.fornecedor-acoes{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cadastro-fornecedor{border:1px solid #c2d7ec;background:#fff;border-radius:9px;padding:15px}
+.cadastro-fornecedor p{color:#64748b;font-size:.87rem;margin:4px 0 12px}
+.cadastro-fornecedor .acoes{margin-top:12px}

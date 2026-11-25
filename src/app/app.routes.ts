@@ -134,6 +134,40 @@ export const routes: Routes = [
           .then(m => m.UnidadeInstitucional)
       },
       {
+        path: 'tesouraria',
+        loadComponent: () =>
+          import('./pages/tesouraria/tesouraria')
+            .then(m => m.Tesouraria)
+      },
+      {
+        path: 'chamadas',
+        loadComponent: () =>
+          import('./pages/em-desenvolvimento/em-desenvolvimento')
+            .then(m => m.EmDesenvolvimento),
+        data: { titulo: 'Chamadas' }
+      },
+      {
+        path: 'agendas',
+        loadComponent: () =>
+          import('./pages/em-desenvolvimento/em-desenvolvimento')
+            .then(m => m.EmDesenvolvimento),
+        data: { titulo: 'Agendas' }
+      },
+      {
+        path: 'atas',
+        loadComponent: () =>
+          import('./pages/em-desenvolvimento/em-desenvolvimento')
+            .then(m => m.EmDesenvolvimento),
+        data: { titulo: 'Atas' }
+      },
+      {
+        path: 'relatorios',
+        loadComponent: () =>
+          import('./pages/em-desenvolvimento/em-desenvolvimento')
+            .then(m => m.EmDesenvolvimento),
+        data: { titulo: 'Relatórios' }
+      },
+      {
         path: 'gerenciamento-platform-owner/versoes',
         canActivate: [platformOwnerGuard],
         loadComponent: () =>
