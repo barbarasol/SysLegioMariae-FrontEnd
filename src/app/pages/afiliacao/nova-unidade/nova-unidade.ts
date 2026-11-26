@@ -51,6 +51,8 @@ export class NovaUnidade implements OnInit {
   private fusoPesquisaTimer: ReturnType<typeof setTimeout> | null = null;
   private fusoPesquisaSeq = 0;
   private igrejasConsultaSeq = 0;
+  private municipiosConsultaSeq = 0;
+  private subdivisoesConsultaSeq = 0;
 
   /** Nomes obtidos junto ao detalhe da unidade; independem dos catálogos assíncronos. */
   private nomesDetalheEdicao: {
@@ -429,7 +431,8 @@ export class NovaUnidade implements OnInit {
     }
 
     return this.municipios.filter(
-      (item) => item.nome.toLocaleLowerCase().includes(filtro)
+      (item) => item.nome.toLocaleLowerCase().includes(filtro) ||
+      item.id === this.solicitacao.municipioId
     );
   }
 
@@ -447,7 +450,7 @@ export class NovaUnidade implements OnInit {
         item.codigo ?? ''
       ].join(' ').toLocaleLowerCase();
 
-      return texto.includes(filtro);
+      return texto.includes(filtro) || item.id === this.solicitacao.subdivisaoLocalId;
     });
   }
 
@@ -1454,7 +1457,7 @@ export class NovaUnidade implements OnInit {
             (pais) => String(pais.sigla ?? '').toUpperCase() === 'BR'
           );
 
-          if (brasil && !this.solicitacao.paisId) {
+          if (brasil && this.modo === 'novo' && !this.solicitacao.paisId) {
             this.solicitacao.paisId = brasil.id;
             this.carregarUfs();
           }
@@ -1512,103 +1515,139 @@ export class NovaUnidade implements OnInit {
       });
   }
 
-  carregarMunicipios(
-    municipioSelecionar?: string,
-    subdivisaoSelecionar?: string
-  ): void {
-    if (!this.solicitacao.ufId) {
-      return;
+  /** Ignora acentos, caixa e pontuação ao associar os nomes do CEP ao cadastro local. */
+  private normalizarNomeGeografico(valor: unknown): string {
+    return String(valor ?? '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
+  }
+
+  private municipioPorCep(
+    municipios: MunicipioOpcao[], municipioId?: string, municipioNome?: string
+  ): MunicipioOpcao | undefined {
+    const peloId = municipios.find(item => String(item.id) === String(municipioId ?? ''));
+    if (peloId) return peloId;
+    const nome = this.normalizarNomeGeografico(municipioNome);
+    return nome ? municipios.find(item => this.normalizarNomeGeografico(item.nome) === nome) : undefined;
+  }
+
+  private subdivisaoPorCep(
+    subdivisoes: SubdivisaoLocalOpcao[], subdivisaoId?: string,
+    subdivisaoNome?: string, bairro?: string, subdivisaoCodigo?: string
+  ): SubdivisaoLocalOpcao | undefined {
+    const peloId = subdivisoes.find(item => String(item.id) === String(subdivisaoId ?? ''));
+    if (peloId) return peloId;
+
+    const codigo = this.normalizarNomeGeografico(subdivisaoCodigo);
+    if (codigo) {
+      const encontradas = subdivisoes.filter(item => this.normalizarNomeGeografico(item.codigo) === codigo);
+      if (encontradas.length === 1) return encontradas[0];
     }
 
+    const nome = this.normalizarNomeGeografico(subdivisaoNome);
+    if (nome) {
+      const encontradas = subdivisoes.filter(item => this.normalizarNomeGeografico(item.nome) === nome);
+      if (encontradas.length === 1) return encontradas[0];
+    }
+
+    // Ex.: 'Ceilândia Sul (Ceilândia)' na BrasilAPI: a RA é o termo entre parênteses.
+    const parenteses = /\(([^)]+)\)/.exec(bairro ?? '');
+    const indicacao = this.normalizarNomeGeografico(parenteses?.[1] ?? bairro);
+    if (!indicacao) return undefined;
+    const exatas = subdivisoes.filter(item => this.normalizarNomeGeografico(item.nome) === indicacao);
+    if (exatas.length === 1) return exatas[0];
+    const prefixos = subdivisoes.filter(item => {
+      const nomeRA = this.normalizarNomeGeografico(item.nome);
+      return nomeRA.length >= 4 && indicacao.startsWith(nomeRA + ' ');
+    });
+    return prefixos.length === 1 ? prefixos[0] : undefined;
+  }
+
+  carregarMunicipios(
+    municipioSelecionar?: string,
+    subdivisaoSelecionar?: string,
+    municipioNome?: string,
+    subdivisaoNome?: string,
+    bairroCep?: string,
+    subdivisaoCodigo?: string
+  ): void {
+    const ufId = this.solicitacao.ufId;
+    if (!ufId) return;
+    const seq = ++this.municipiosConsultaSeq;
     this.carregandoMunicipios = true;
 
-    this.cadastroUnidadeService
-      .listarMunicipios(this.solicitacao.ufId)
-      .pipe(
-        finalize(() => {
+    this.cadastroUnidadeService.listarMunicipios(ufId)
+      .pipe(finalize(() => {
+        if (seq === this.municipiosConsultaSeq) {
           this.carregandoMunicipios = false;
           this.cdr.detectChanges();
-        })
-      )
+        }
+      }))
       .subscribe({
         next: (municipios) => {
+          if (seq !== this.municipiosConsultaSeq || this.solicitacao.ufId !== ufId) return;
           this.municipios = municipios;
-
-          if (municipioSelecionar) {
-            const existe = municipios.some(
-              (item) => item.id === municipioSelecionar
-            );
-
-            if (existe) {
-              this.solicitacao.municipioId = municipioSelecionar;
-
-              this.carregarSubdivisoesLocais(
-                subdivisaoSelecionar
-              );
+          if (municipioSelecionar || municipioNome) {
+            const encontrado = this.municipioPorCep(municipios, municipioSelecionar, municipioNome);
+            if (encontrado) {
+              this.solicitacao.municipioId = String(encontrado.id);
+              this.filtroMunicipio = '';
+              this.carregarSubdivisoesLocais(subdivisaoSelecionar, subdivisaoNome, bairroCep, subdivisaoCodigo);
               this.carregarIgrejas();
+            } else {
+              this.toastService.erro('Município retornado pelo CEP não localizado no catálogo da UF selecionada.');
             }
           }
         },
         error: (error: HttpErrorResponse) => {
+          if (seq !== this.municipiosConsultaSeq) return;
           this.municipios = [];
-          this.toastService.erro(
-            mensagemDeErro(
-              error,
-              'Não foi possível carregar os Municípios/Localidades.'
-            )
-          );
+          this.toastService.erro(mensagemDeErro(error, 'Não foi possível carregar os Municípios/Localidades.'));
         }
       });
   }
 
   carregarSubdivisoesLocais(
-    subdivisaoSelecionar?: string
+    subdivisaoSelecionar?: string,
+    subdivisaoNome?: string,
+    bairroCep?: string,
+    subdivisaoCodigo?: string
   ): void {
-    if (!this.solicitacao.municipioId) {
+    const municipioId = this.solicitacao.municipioId;
+    if (!municipioId) {
       this.subdivisoesLocais = [];
       return;
     }
-
+    const seq = ++this.subdivisoesConsultaSeq;
     this.carregandoSubdivisoes = true;
-
-    this.cadastroUnidadeService
-      .listarSubdivisoesLocais(
-        this.solicitacao.municipioId
-      )
-      .pipe(
-        finalize(() => {
+    this.cadastroUnidadeService.listarSubdivisoesLocais(municipioId)
+      .pipe(finalize(() => {
+        if (seq === this.subdivisoesConsultaSeq) {
           this.carregandoSubdivisoes = false;
           this.cdr.detectChanges();
-        })
-      )
+        }
+      }))
       .subscribe({
         next: (subdivisoes) => {
+          if (seq !== this.subdivisoesConsultaSeq || this.solicitacao.municipioId !== municipioId) return;
           this.subdivisoesLocais = subdivisoes;
-
-          if (subdivisaoSelecionar) {
-            const existe = subdivisoes.some(
-              (item) => item.id === subdivisaoSelecionar
+          if (subdivisaoSelecionar || subdivisaoNome || subdivisaoCodigo || bairroCep) {
+            const encontrada = this.subdivisaoPorCep(
+              subdivisoes, subdivisaoSelecionar, subdivisaoNome, bairroCep, subdivisaoCodigo
             );
-
-            if (existe) {
-              if (!this.solicitacao.sedeEnderecoProprio) {
-                this.solicitacao.subdivisaoLocalId = subdivisaoSelecionar;
-                // Uma nova pesquisa de CEP feita durante a edição pode atualizar a RA.
-                this.subdivisaoLocalAlteradaPeloUsuario = true;
-              }
-              // A lista de Igrejas já é carregada pelo município.
-              // Não repetir uma requisição filtrada pela subdivisão.
+            if (encontrada && !this.solicitacao.sedeEnderecoProprio) {
+              this.solicitacao.subdivisaoLocalId = String(encontrada.id);
+              this.filtroSubdivisao = '';
+              this.subdivisaoLocalAlteradaPeloUsuario = false;
+            } else if (!encontrada && this.codigoPostalEncontrado?.ufSigla?.toUpperCase() === 'DF') {
+              this.mensagemCodigoPostal = 'CEP localizado. Não foi possível associar automaticamente a Região Administrativa; selecione-a na lista.';
             }
           }
         },
         error: (error: HttpErrorResponse) => {
+          if (seq !== this.subdivisoesConsultaSeq) return;
           this.subdivisoesLocais = [];
-          this.toastService.erro(
-            mensagemDeErro(
-              error,
-              'Não foi possível carregar as Subdivisões Locais.'
-            )
-          );
+          this.toastService.erro(mensagemDeErro(error, 'Não foi possível carregar as Subdivisões Locais.'));
         }
       });
   }
@@ -2027,47 +2066,165 @@ export class NovaUnidade implements OnInit {
       });
   }
 
+  /**
+   * Reconstitui as opções geográficas ao editar uma unidade.
+   * O detalhe chega antes dos catálogos; por isso os selects só ficam
+   * coerentes quando UF -> município -> subdivisão são carregados nessa ordem.
+   * Requisições antigas não podem sobrescrever uma nova pesquisa de CEP.
+   */
   private carregarLocalizacaoEdicao(unidade: UnidadeDetalhe): void {
-    this.cadastroUnidadeService.listarUfs(unidade.paisId).subscribe({
+    const paisId = String(unidade.paisId ?? '');
+    const ufIdOriginal = String(unidade.ufId ?? '');
+    const municipioIdOriginal = String(unidade.municipioId ?? '');
+    const raIdOriginal = String(unidade.sedeSubdivisaoLocalId ?? unidade.subdivisaoLocalId ?? '');
+    const cepOriginal = String(unidade.codigoPostal ?? '');
+    const nomes = this.nomesDetalheEdicao;
+
+    // Impede que respostas antigas de municípios/RA da edição concorram com
+    // uma seleção posterior de CEP ou município feita pelo usuário.
+    const seqMunicipio = ++this.municipiosConsultaSeq;
+    const seqSubdivisao = ++this.subdivisoesConsultaSeq;
+    this.filtroMunicipio = '';
+    this.filtroSubdivisao = '';
+    this.carregandoUfs = true;
+    this.carregandoMunicipios = true;
+    this.carregandoSubdivisoes = true;
+
+    this.cadastroUnidadeService.listarUfs(paisId).subscribe({
       next: (ufs) => {
+        if (this.solicitacao.paisId !== paisId ||
+            this.solicitacao.codigoPostal !== cepOriginal ||
+            seqMunicipio !== this.municipiosConsultaSeq) return;
         this.ufs = ufs;
-        this.cadastroUnidadeService.listarMunicipios(unidade.ufId).subscribe({
+        const uf = ufs.find(item => String(item.id) === ufIdOriginal) ??
+          ufs.find(item => this.normalizarNomeGeografico(item.nome) ===
+            this.normalizarNomeGeografico(nomes?.uf));
+        if (!uf) {
+          this.toastService.erro('A UF da unidade não foi localizada no cadastro. Selecione a UF novamente.');
+          this.carregandoMunicipios = false;
+          this.carregandoSubdivisoes = false;
+          return;
+        }
+        this.solicitacao.ufId = String(uf.id);
+        const ufId = String(uf.id);
+        this.cadastroUnidadeService.listarMunicipios(ufId).subscribe({
           next: (municipios) => {
+            if (seqMunicipio !== this.municipiosConsultaSeq ||
+                this.solicitacao.ufId !== ufId ||
+                this.solicitacao.codigoPostal !== cepOriginal) return;
             this.municipios = municipios;
+            const municipio = this.municipioPorCep(
+              municipios, municipioIdOriginal, nomes?.municipio
+            );
+            if (!municipio) {
+              this.toastService.erro('Município da unidade não localizado na UF selecionada. Pesquise o CEP para atualizar.');
+              this.carregandoSubdivisoes = false;
+              return;
+            }
+            this.solicitacao.municipioId = String(municipio.id);
+            this.filtroMunicipio = '';
+            const municipioId = String(municipio.id);
 
-            this.cadastroUnidadeService
-              .listarSubdivisoesLocais(unidade.municipioId)
-              .subscribe({
-                next: (subdivisoes) => {
-                  this.subdivisoesLocais = subdivisoes;
-                },
-                error: () => (this.subdivisoesLocais = [])
-              });
+            this.cadastroUnidadeService.listarSubdivisoesLocais(municipioId).subscribe({
+              next: (subdivisoes) => {
+                if (seqSubdivisao !== this.subdivisoesConsultaSeq ||
+                    seqMunicipio !== this.municipiosConsultaSeq ||
+                    this.solicitacao.municipioId !== municipioId ||
+                    this.solicitacao.codigoPostal !== cepOriginal) return;
+                this.subdivisoesLocais = subdivisoes;
+                const ra = this.subdivisaoPorCep(
+                  subdivisoes, raIdOriginal, nomes?.subdivisao,
+                  unidade.sedeBairro ?? undefined
+                );
+                // Não substituir a RA se o usuário já a modificou.
+                if (ra && !this.subdivisaoLocalAlteradaPeloUsuario) {
+                  this.solicitacao.subdivisaoLocalId = String(ra.id);
+                  if (this.solicitacao.sedeEnderecoProprio) {
+                    this.solicitacao.sedeSubdivisaoLocalId = String(ra.id);
+                  }
+                  this.filtroSubdivisao = '';
+                }
+                this.cdr.detectChanges();
+              },
+              error: (error: HttpErrorResponse) => {
+                if (seqSubdivisao !== this.subdivisoesConsultaSeq) return;
+                this.subdivisoesLocais = [];
+                this.toastService.erro(mensagemDeErro(error, 'Não foi possível carregar as Regiões Administrativas.'));
+                this.carregandoSubdivisoes = false;
+                this.cdr.detectChanges();
+              },
+              complete: () => {
+                if (seqSubdivisao === this.subdivisoesConsultaSeq) {
+                  this.carregandoSubdivisoes = false;
+                  this.cdr.detectChanges();
+                }
+              }
+            });
 
-            this.cadastroUnidadeService
-              .listarIgrejas(unidade.municipioId)
+            const seqIgreja = ++this.igrejasConsultaSeq;
+            this.carregandoIgrejas = true;
+            this.cadastroUnidadeService.listarIgrejas(municipioId)
+              .pipe(finalize(() => {
+                if (seqIgreja === this.igrejasConsultaSeq) {
+                  this.carregandoIgrejas = false;
+                  this.cdr.detectChanges();
+                }
+              }))
               .subscribe({
                 next: (igrejas) => {
+                  if (seqIgreja !== this.igrejasConsultaSeq ||
+                      this.solicitacao.municipioId !== municipioId) return;
                   this.igrejas = igrejas;
-                  const igreja = igrejas.find((item) => item.id === unidade.igrejaId);
-                  if (igreja) {
-                    this.solicitacao.igrejaId = igreja.id;
-                    // Dados da unidade já foram carregados: não reaplicar endereço da igreja.
-                  }
+                  const igreja = igrejas.find(item => String(item.id) === String(unidade.igrejaId));
+                  if (igreja) this.solicitacao.igrejaId = String(igreja.id);
+                  this.cdr.detectChanges();
                 },
-                error: () => (this.igrejas = [])
+                error: (error: HttpErrorResponse) => {
+                  if (seqIgreja !== this.igrejasConsultaSeq) return;
+                  this.igrejas = [];
+                  this.toastService.erro(mensagemDeErro(error, 'Não foi possível carregar as igrejas da unidade.'));
+                }
               });
+            this.cdr.detectChanges();
           },
-          error: () => (this.municipios = [])
+          error: (error: HttpErrorResponse) => {
+            if (seqMunicipio !== this.municipiosConsultaSeq) return;
+            this.municipios = [];
+            this.toastService.erro(mensagemDeErro(error, 'Não foi possível carregar os municípios da UF.'));
+            this.carregandoMunicipios = false;
+            this.carregandoSubdivisoes = false;
+            this.cdr.detectChanges();
+          },
+          complete: () => {
+            if (seqMunicipio === this.municipiosConsultaSeq) {
+              this.carregandoMunicipios = false;
+              this.cdr.detectChanges();
+            }
+          }
         });
+        this.cdr.detectChanges();
       },
-      error: () => (this.ufs = [])
+      error: (error: HttpErrorResponse) => {
+        if (seqMunicipio !== this.municipiosConsultaSeq) return;
+        this.ufs = [];
+        this.toastService.erro(mensagemDeErro(error, 'Não foi possível carregar a UF da unidade.'));
+        this.carregandoUfs = false;
+        this.carregandoMunicipios = false;
+        this.carregandoSubdivisoes = false;
+        this.cdr.detectChanges();
+      },
+      complete: () => {
+        if (seqMunicipio === this.municipiosConsultaSeq) {
+          this.carregandoUfs = false;
+          this.cdr.detectChanges();
+        }
+      }
     });
 
     // Descobre o tipo da unidade superior para manter o select coerente.
     if (unidade.unidadeSuperiorId) {
       const superior = this.todasUnidades.find(
-        (item) => item.id === unidade.unidadeSuperiorId
+        item => String(item.id) === String(unidade.unidadeSuperiorId)
       );
       if (superior) {
         this.solicitacao.tipoSuperior = superior.tipo;
@@ -2076,8 +2233,9 @@ export class NovaUnidade implements OnInit {
           next: (unidades) => {
             this.todasUnidades = unidades;
             this.solicitacao.tipoSuperior = unidades.find(
-              (item) => item.id === unidade.unidadeSuperiorId
+              item => String(item.id) === String(unidade.unidadeSuperiorId)
             )?.tipo ?? '';
+            this.cdr.detectChanges();
           }
         });
       }
@@ -2104,45 +2262,47 @@ export class NovaUnidade implements OnInit {
     this.solicitacao.localidade =
       codigoPostal.localidade ?? '';
 
-    if (codigoPostal.ufId) {
-      const mesmoMunicipio =
-        codigoPostal.ufId === this.solicitacao.ufId &&
+    // O CEP pode devolver os nomes corretos com IDs ausentes ou distintos em tipo
+    // (número/string). Selecionar pelo catálogo e limpar filtros antigos evita que
+    // o select mostre "Selecione" apesar de termos encontrado BRASÍLIA.
+    const ufCorrespondente = this.ufs.find(uf =>
+      (codigoPostal.ufId && String(uf.id) === String(codigoPostal.ufId)) ||
+      (!!codigoPostal.ufSigla &&
+        this.normalizarNomeGeografico(uf.sigla) === this.normalizarNomeGeografico(codigoPostal.ufSigla))
+    );
+    const ufId = ufCorrespondente?.id ?? codigoPostal.ufId ?? '';
+    if (ufId) {
+      const mesmoMunicipio = String(ufId) === String(this.solicitacao.ufId) &&
         !!codigoPostal.municipioId &&
-        codigoPostal.municipioId === this.solicitacao.municipioId;
-      const igrejaAnterior = mesmoMunicipio
-        ? this.solicitacao.igrejaId
-        : '';
-      const preservarRaSedePropria =
-        mesmoMunicipio && this.solicitacao.sedeEnderecoProprio;
+        String(codigoPostal.municipioId) === String(this.solicitacao.municipioId);
+      const igrejaAnterior = mesmoMunicipio ? this.solicitacao.igrejaId : '';
+      const preservarRaSedePropria = mesmoMunicipio && this.solicitacao.sedeEnderecoProprio;
 
-      this.solicitacao.ufId = codigoPostal.ufId;
+      this.solicitacao.ufId = String(ufId);
       this.solicitacao.municipioId = '';
-      if (!preservarRaSedePropria) {
-        this.solicitacao.subdivisaoLocalId = '';
-      }
+      if (!preservarRaSedePropria) this.solicitacao.subdivisaoLocalId = '';
       this.solicitacao.igrejaId = igrejaAnterior;
+      this.filtroMunicipio = '';
+      this.filtroSubdivisao = '';
       this.filtroIgreja = '';
-
       this.municipios = [];
       this.subdivisoesLocais = [];
       this.igrejas = [];
       this.igrejasConsultaSeq++;
 
-      // Após identificar o município, carregar as Igrejas já existentes
-      // independentemente da RA sugerida pelo CEP.
+      // Aguarda os municípios da UF para selecionar Brasília pelo ID real ou pelo nome.
+      // Em seguida carrega as subdivisões e seleciona Ceilândia se houver associação única.
       this.carregarMunicipios(
         codigoPostal.municipioId ?? undefined,
-        preservarRaSedePropria
-          ? undefined
-          : (codigoPostal.subdivisaoLocalId ?? undefined)
+        preservarRaSedePropria ? undefined : (codigoPostal.subdivisaoLocalId ?? undefined),
+        codigoPostal.municipioNome ?? codigoPostal.localidade ?? undefined,
+        preservarRaSedePropria ? undefined : (codigoPostal.subdivisaoLocalNome ?? undefined),
+        preservarRaSedePropria ? undefined : (codigoPostal.bairro ?? undefined),
+        preservarRaSedePropria ? undefined : (codigoPostal.subdivisaoLocalCodigo ?? undefined)
       );
     }
 
-    if (codigoPostal.ufSigla?.toUpperCase() === 'DF' && !codigoPostal.subdivisaoLocalId) {
-      this.toastService.erro('CEP localizado, mas sem RA mapeada. Selecione a Região Administrativa manualmente.');
-    } else {
-      this.toastService.sucesso(`${this.rotuloCodigoPostal} localizado com sucesso.`);
-    }
+    this.toastService.sucesso(`${this.rotuloCodigoPostal} localizado. Atualizando município e subdivisão...`);
   }
 
   private invalidarCodigoPostalVinculado(): void {

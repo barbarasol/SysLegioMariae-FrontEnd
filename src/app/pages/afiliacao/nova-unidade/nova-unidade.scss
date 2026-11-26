@@ -618,3 +618,25 @@ input[name="novaSubdivisaoNome"] {
     grid-template-columns: 1fr;
   }
 }
+
+// Mantém o nome da unidade visível nas etapas Estrutura, Detalhes e Revisão.
+.unidade-em-cadastro {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding: 12px 18px;
+  background: #fff8f8;
+  border-bottom: 1px solid #eadfe0;
+  color: #6f1d22;
+  font-size: 14px;
+
+  &__rotulo {
+    color: #705a5c;
+  }
+
+  &__nome {
+    overflow-wrap: anywhere;
+    font-weight: 700;
+  }
+}

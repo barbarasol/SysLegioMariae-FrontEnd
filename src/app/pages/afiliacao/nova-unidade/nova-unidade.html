@@ -39,6 +39,16 @@
       </div>
     </div>
 
+    @if (etapa >= 2 && solicitacao.nome.trim()) {
+      <div class="unidade-em-cadastro" role="status">
+        <i class="bi bi-building" aria-hidden="true"></i>
+        <span class="unidade-em-cadastro__rotulo">
+          {{ modo === 'novo' ? 'Unidade em cadastro:' : 'Unidade selecionada:' }}
+        </span>
+        <strong class="unidade-em-cadastro__nome">{{ (tipoSelecionado?.nome || solicitacao.tipo).toUpperCase() }} {{ solicitacao.nome }}</strong>
+      </div>
+    }
+
     <!-- ETAPA 1 -->
     @if (etapa === 1) {
       <div class="form-section">
